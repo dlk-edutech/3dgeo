@@ -1686,6 +1686,10 @@
                 const cir = (geoState.circles || []).find(c => c.id === pt.rule.circleId);
                 return cir ? `đ.tròn ${cir.name || '(C)'}` : 'đường tròn';
             }
+            if (pt.rule.type === 'onCircleDisk') {
+                const cir = (geoState.circles || []).find(c => c.id === pt.rule.circleId);
+                return cir ? `hình tròn ${cir.name || '(C)'}` : 'bề mặt hình tròn';
+            }
             if (pt.rule.type === 'onFace') {
                 const face = geoState.faces.find(f => f.id === pt.rule.faceId);
                 return face ? `mặt ${face.name}` : 'bề mặt';
@@ -1693,6 +1697,10 @@
             if (pt.rule.type === 'onSphere') {
                 const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId);
                 return sol ? `mặt cầu ${sol.name || '(S)'}` : 'mặt cầu';
+            }
+            if (pt.rule.type === 'onCone' || pt.rule.type === 'onFrustum') {
+                const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId);
+                return sol ? `${sol.name || 'mặt tròn xoay'}` : 'mặt tròn xoay';
             }
             return '';
         }
@@ -1703,7 +1711,7 @@
             if (!panel || !containerEl) return;
 
             const animPoints = geoState.points.filter(pt =>
-                !pt.hidden && pt.rule && ['onEdge', 'onCircle', 'onFace', 'onSphere'].includes(pt.rule.type) && (pt.animUI || pt.animating)
+                !pt.hidden && pt.rule && ['onEdge', 'onCircle', 'onCircleDisk', 'onFace', 'onSphere', 'onCone', 'onFrustum'].includes(pt.rule.type) && (pt.animUI || pt.animating)
             );
 
             if (animPoints.length === 0) {
@@ -1802,7 +1810,7 @@
 
         function toggleAllActiveAnimations() {
             const animPoints = geoState.points.filter(pt =>
-                !pt.hidden && pt.rule && ['onEdge', 'onCircle', 'onFace', 'onSphere'].includes(pt.rule.type) && (pt.animUI || pt.animating)
+                !pt.hidden && pt.rule && ['onEdge', 'onCircle', 'onCircleDisk', 'onFace', 'onSphere', 'onCone', 'onFrustum'].includes(pt.rule.type) && (pt.animUI || pt.animating)
             );
             const anyPlaying = animPoints.some(pt => pt.animating);
             animPoints.forEach(pt => {
@@ -1893,7 +1901,7 @@
         let scene, camera, renderer, controls;
         let basePlaneMesh, gridHelper;
         let isBasePlaneVisible = true;
-        let showFaceTint = false;
+        let showFaceTint = true;
 
         let geoState = { points: [], segments: [], faces: [], circles: [], solids: [] };
         let historyStack = [];
@@ -2136,6 +2144,11 @@
                         if (n.lengthSq() > 1e-7) return n.normalize();
                     }
                 }
+                const cir = (geoState.circles || []).find(c => c.id === faceId);
+                if (cir && cir.faceId !== faceId) {
+                    const cirGeom = computeCircleGeometry(cir);
+                    if (cirGeom && cirGeom.normal) return cirGeom.normal.clone().normalize();
+                }
             }
             const up = new THREE.Vector3(0, 1, 0);
             if (fallbackA && fallbackB) {
@@ -2369,6 +2382,18 @@
                             pt.x = pos.x; pt.y = pos.y; pt.z = pos.z;
                         }
                     }
+                    else if (r.type === 'onCircleDisk') {
+                        const cir = geoState.circles.find(c => c.id === r.circleId);
+                        const geom = computeCircleGeometry(cir);
+                        if (geom) {
+                            const ang = r.angle || 0;
+                            const rr = typeof r.rRatio === 'number' ? r.rRatio : 0.5;
+                            const pos = geom.center.clone()
+                                .addScaledVector(geom.uAxis, geom.radius * rr * Math.cos(ang))
+                                .addScaledVector(geom.vAxis, geom.radius * rr * Math.sin(ang));
+                            pt.x = pos.x; pt.y = pos.y; pt.z = pos.z;
+                        }
+                    }
                     else if (r.type === 'onSphere') {
                         const sol = (geoState.solids || []).find(s => s.id === r.solidId);
                         const sGeom = computeSphereGeometry(sol);
@@ -2378,6 +2403,46 @@
                             pt.x = sGeom.center.x + sGeom.radius * Math.sin(phi) * Math.cos(theta);
                             pt.y = sGeom.center.y + sGeom.radius * Math.cos(phi);
                             pt.z = sGeom.center.z + sGeom.radius * Math.sin(phi) * Math.sin(theta);
+                        }
+                    }
+                    else if (r.type === 'onCone') {
+                        const sol = (geoState.solids || []).find(s => s.id === r.solidId);
+                        if (sol && sol.kind === 'cone') {
+                            const cir = geoState.circles.find(c => c.id === sol.circleId);
+                            const S = geoState.points.find(p => p.id === sol.apexId);
+                            const geom = computeCircleGeometry(cir);
+                            if (geom && S) {
+                                const ang = r.angle || 0;
+                                const t = typeof r.t === 'number' ? r.t : 0.5;
+                                const rimPt = geom.center.clone()
+                                    .addScaledVector(geom.uAxis, geom.radius * Math.cos(ang))
+                                    .addScaledVector(geom.vAxis, geom.radius * Math.sin(ang));
+                                const vS = new THREE.Vector3(S.x, S.y, S.z);
+                                const pos = vS.clone().lerp(rimPt, t);
+                                pt.x = pos.x; pt.y = pos.y; pt.z = pos.z;
+                            }
+                        }
+                    }
+                    else if (r.type === 'onFrustum') {
+                        const sol = (geoState.solids || []).find(s => s.id === r.solidId);
+                        if (sol && sol.kind === 'frustum') {
+                            const cir1 = geoState.circles.find(c => c.id === sol.circle1Id);
+                            const cir2 = geoState.circles.find(c => c.id === sol.circle2Id);
+                            const g1 = computeCircleGeometry(cir1);
+                            const g2 = computeCircleGeometry(cir2);
+                            if (g1 && g2) {
+                                const { u2, v2 } = alignSecondCircleBasis(g1.uAxis, g1.vAxis, g1.normal, g2.normal);
+                                const ang = r.angle || 0;
+                                const t = typeof r.t === 'number' ? r.t : 0.5;
+                                const p1 = g1.center.clone()
+                                    .addScaledVector(g1.uAxis, g1.radius * Math.cos(ang))
+                                    .addScaledVector(g1.vAxis, g1.radius * Math.sin(ang));
+                                const p2 = g2.center.clone()
+                                    .addScaledVector(u2, g2.radius * Math.cos(ang))
+                                    .addScaledVector(v2, g2.radius * Math.sin(ang));
+                                const pos = p1.clone().lerp(p2, t);
+                                pt.x = pos.x; pt.y = pos.y; pt.z = pos.z;
+                            }
                         }
                     }
                     else if (r.type === 'circleCenter3Pts') {
@@ -2517,6 +2582,20 @@
                                         const v2 = new THREE.Vector3(p2.x - p0.x, p2.y - p0.y, p2.z - p0.z);
                                         const normal = new THREE.Vector3().crossVectors(v1, v2).normalize();
                                         const dist = new THREE.Vector3().subVectors(vM, v0).dot(normal);
+                                        if (Math.abs(dist) > 1e-3) {
+                                            const H = vM.clone().addScaledVector(normal, -dist);
+                                            pt.x = H.x; pt.y = H.y; pt.z = H.z;
+                                        } else {
+                                            const top = vM.clone().addScaledVector(normal, 3);
+                                            pt.x = top.x; pt.y = top.y; pt.z = top.z;
+                                        }
+                                    }
+                                } else {
+                                    const cir = (geoState.circles || []).find(c => c.id === r.faceId);
+                                    const cirGeom = computeCircleGeometry(cir);
+                                    if (cirGeom) {
+                                        const normal = cirGeom.normal.clone().normalize();
+                                        const dist = new THREE.Vector3().subVectors(vM, cirGeom.center).dot(normal);
                                         if (Math.abs(dist) > 1e-3) {
                                             const H = vM.clone().addScaledVector(normal, -dist);
                                             pt.x = H.x; pt.y = H.y; pt.z = H.z;
@@ -2894,10 +2973,8 @@
                     for (let i = 0; i < radSegs; i++) {
                         const pA = ringPts[i];
                         const pB = ringPts[i + 1];
-                        // Mặt xung quanh hình nón
+                        // Mặt xung quanh hình nón (mặt đáy đã được tạo tự động bởi đường tròn đáy)
                         vertices.push(vS.x, vS.y, vS.z, pA.x, pA.y, pA.z, pB.x, pB.y, pB.z);
-                        // Mặt đáy hình nón (để che khuất nét đứt phía sau)
-                        vertices.push(geom.center.x, geom.center.y, geom.center.z, pB.x, pB.y, pB.z, pA.x, pA.y, pA.z);
                     }
 
                     const coneGeo = new THREE.BufferGeometry();
@@ -2909,7 +2986,7 @@
                             color: 0xbae6fd,
                             side: THREE.DoubleSide,
                             transparent: true,
-                            opacity: 0.24,
+                            opacity: 0.22,
                             depthWrite: false
                         });
                         const tintMesh = new THREE.Mesh(coneGeo, tintMat);
@@ -2923,8 +3000,8 @@
                         depthWrite: true,
                         side: THREE.DoubleSide,
                         polygonOffset: true,
-                        polygonOffsetFactor: 0.25,
-                        polygonOffsetUnits: 1.5
+                        polygonOffsetFactor: 1.5,
+                        polygonOffsetUnits: 4.0
                     });
                     const depthMesh = new THREE.Mesh(coneGeo, depthMat);
                     depthMesh.userData = { solidId: sol.id, solidKind: 'cone', solidName: sol.name || 'Hình nón' };
@@ -2984,12 +3061,9 @@
                     for (let i = 0; i < radSegs; i++) {
                         const a1 = ring1[i], b1 = ring1[i + 1];
                         const a2 = ring2[i], b2 = ring2[i + 1];
-                        // Mặt xung quanh hình trụ / hình nón cụt
+                        // Mặt xung quanh hình trụ / hình nón cụt (hai mặt đáy đã được tạo tự động bởi 2 đường tròn đáy)
                         vertices.push(a1.x, a1.y, a1.z, b1.x, b1.y, b1.z, b2.x, b2.y, b2.z);
                         vertices.push(a1.x, a1.y, a1.z, b2.x, b2.y, b2.z, a2.x, a2.y, a2.z);
-                        // Hai mặt đáy
-                        vertices.push(g1.center.x, g1.center.y, g1.center.z, b1.x, b1.y, b1.z, a1.x, a1.y, a1.z);
-                        vertices.push(g2.center.x, g2.center.y, g2.center.z, a2.x, a2.y, a2.z, b2.x, b2.y, b2.z);
                     }
 
                     const frustumGeo = new THREE.BufferGeometry();
@@ -3001,7 +3075,7 @@
                             color: 0xbae6fd,
                             side: THREE.DoubleSide,
                             transparent: true,
-                            opacity: 0.24,
+                            opacity: 0.22,
                             depthWrite: false
                         });
                         const tintMesh = new THREE.Mesh(frustumGeo, tintMat);
@@ -3015,8 +3089,8 @@
                         depthWrite: true,
                         side: THREE.DoubleSide,
                         polygonOffset: true,
-                        polygonOffsetFactor: 0.25,
-                        polygonOffsetUnits: 1.5
+                        polygonOffsetFactor: 1.5,
+                        polygonOffsetUnits: 4.0
                     });
                     const depthMesh = new THREE.Mesh(frustumGeo, depthMat);
                     depthMesh.userData = { solidId: sol.id, solidKind: 'frustum', solidName: sol.name || 'Hình trụ / Nón cụt' };
@@ -3245,7 +3319,7 @@
                 const isHoveredCir = hoveredCircleId === cir.id && ['solid-cone', 'solid-cylinder', 'solid-sphere', 'delete-obj', 'hide'].includes(currentTool);
                 const cirColor = isSelectedCir ? 0xdc2626 : (isHoveredCir ? (currentTool === 'delete-obj' ? 0xdc2626 : 0xd97706) : 0x0f172a);
 
-                const segmentsCount = 96;
+                const segmentsCount = 128;
                 const circlePts = [];
                 for (let i = 0; i <= segmentsCount; i++) {
                     const theta = (i / segmentsCount) * Math.PI * 2;
@@ -3256,6 +3330,56 @@
                 }
 
                 const cirGeo = new THREE.BufferGeometry().setFromPoints(circlePts);
+
+                // Tạo bề mặt hình tròn (miền khép kín của đường tròn) để tô màu bề mặt & xử lý che khuất chuẩn 3D
+                const diskPos = [];
+                for (let i = 0; i < segmentsCount; i++) {
+                    const pA = circlePts[i];
+                    const pB = circlePts[i + 1];
+                    diskPos.push(
+                        geom.center.x, geom.center.y, geom.center.z,
+                        pA.x, pA.y, pA.z,
+                        pB.x, pB.y, pB.z
+                    );
+                }
+                const diskGeo = new THREE.BufferGeometry();
+                diskGeo.setAttribute('position', new THREE.Float32BufferAttribute(diskPos, 3));
+                diskGeo.computeVertexNormals();
+
+                if (showFaceTint || isHoveredCir || isSelectedCir) {
+                    const diskTintMat = new THREE.MeshBasicMaterial({
+                        color: isSelectedCir ? 0xfca5a5 : (isHoveredCir ? (currentTool === 'delete-obj' ? 0xfca5a5 : 0xfde68a) : 0xbae6fd),
+                        transparent: true,
+                        opacity: (isSelectedCir || isHoveredCir) ? 0.28 : 0.22,
+                        side: THREE.DoubleSide,
+                        depthWrite: false
+                    });
+                    const diskTintMesh = new THREE.Mesh(diskGeo, diskTintMat);
+                    diskTintMesh.renderOrder = 0;
+                    scene.add(diskTintMesh);
+                    circleMeshes.push(diskTintMesh);
+                }
+
+                const diskDepthMat = new THREE.MeshBasicMaterial({
+                    colorWrite: false,
+                    depthWrite: true,
+                    depthTest: true,
+                    side: THREE.DoubleSide,
+                    polygonOffset: true,
+                    polygonOffsetFactor: 1.5,
+                    polygonOffsetUnits: 4.0
+                });
+                const diskDepthMesh = new THREE.Mesh(diskGeo.clone(), diskDepthMat);
+                diskDepthMesh.renderOrder = 1;
+                diskDepthMesh.userData = {
+                    isCircleDisk: true,
+                    circleId: cir.id,
+                    faceId: cir.id,
+                    faceName: `hình tròn ${cir.name || '(C)'}`
+                };
+                scene.add(diskDepthMesh);
+                circleMeshes.push(diskDepthMesh);
+                faceMeshes.push(diskDepthMesh);
 
                 const dashedCirMat = new THREE.LineDashedMaterial({
                     color: cirColor,
@@ -3302,7 +3426,7 @@
                 else if (isHovered && currentTool === 'delete-obj') tex = texPointSelected;
                 else if (isHovered) tex = texPointHover;
                 else if (pt.trace) tex = texPointTrace;
-                else if (pt.rule && ['onEdge', 'onFace', 'onCircle', 'onSphere'].includes(pt.rule.type)) tex = texPointConstrained;
+                else if (pt.rule && ['onEdge', 'onFace', 'onCircle', 'onCircleDisk', 'onSphere', 'onCone', 'onFrustum'].includes(pt.rule.type)) tex = texPointConstrained;
 
                 const ptGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(pt.x, pt.y, pt.z)]);
                 const ptMat = new THREE.PointsMaterial({
@@ -3555,42 +3679,11 @@
             const cirTargetAfter = checkCircleHit();
             if (cirTargetAfter) return cirTargetAfter;
 
-            // Kiểm tra va chạm với Khối tròn xoay (Khi ẩn/xóa hoặc lấy điểm trên Mặt cầu)
-            if (['delete-obj', 'hide', 'point2d'].includes(currentTool) && hitSolidMeshes.length > 0) {
-                const solidHits = raycaster.intersectObjects(hitSolidMeshes);
-                if (solidHits.length > 0) {
-                    const topSolidHit = solidHits[0];
-                    const { solidId, solidKind, solidName } = topSolidHit.object.userData;
-                    if (currentTool === 'delete-obj' || currentTool === 'hide') {
-                        return {
-                            type: 'solid',
-                            solidId,
-                            solidKind,
-                            pos: topSolidHit.point.clone(),
-                            label: solidName || 'khối tròn xoay'
-                        };
-                    } else if (currentTool === 'point2d' && solidKind === 'sphere') {
-                        const sol = (geoState.solids || []).find(s => s.id === solidId);
-                        const sGeom = computeSphereGeometry(sol);
-                        if (sGeom) {
-                            const rel = new THREE.Vector3().subVectors(topSolidHit.point, sGeom.center).normalize();
-                            const phi = Math.acos(Math.max(-1, Math.min(1, rel.y)));
-                            const theta = Math.atan2(rel.z, rel.x);
-                            const exactPos = sGeom.center.clone().addScaledVector(rel, sGeom.radius);
-                            return {
-                                type: 'sphere',
-                                solidId,
-                                phi,
-                                theta,
-                                pos: exactPos,
-                                label: `Trên ${solidName || 'mặt cầu'}`
-                            };
-                        }
-                    }
-                }
-            }
-
+            // Kiểm tra va chạm với Bề mặt (Đa giác, Hình tròn, Khối tròn xoay, Mặt nền) theo thứ tự khoảng cách gần nhất
             const surfaceCandidates = [...faceMeshes];
+            if (['delete-obj', 'hide', 'point2d'].includes(currentTool) && hitSolidMeshes.length > 0) {
+                surfaceCandidates.push(...hitSolidMeshes);
+            }
             if (isBasePlaneVisible) surfaceCandidates.push(basePlaneMesh);
 
             const surfaceHits = raycaster.intersectObjects(surfaceCandidates);
@@ -3607,6 +3700,124 @@
                         ),
                         label: `Trên mặt nền (P)`
                     };
+                } else if (topHit.object.userData && topHit.object.userData.solidId) {
+                    const { solidId, solidKind, solidName } = topHit.object.userData;
+                    if (currentTool === 'delete-obj' || currentTool === 'hide') {
+                        return {
+                            type: 'solid',
+                            solidId,
+                            solidKind,
+                            pos: topHit.point.clone(),
+                            label: solidName || 'khối tròn xoay'
+                        };
+                    } else if (currentTool === 'point2d') {
+                        const sol = (geoState.solids || []).find(s => s.id === solidId);
+                        if (solidKind === 'sphere') {
+                            const sGeom = computeSphereGeometry(sol);
+                            if (sGeom) {
+                                const rel = new THREE.Vector3().subVectors(topHit.point, sGeom.center).normalize();
+                                const phi = Math.acos(Math.max(-1, Math.min(1, rel.y)));
+                                const theta = Math.atan2(rel.z, rel.x);
+                                const exactPos = sGeom.center.clone().addScaledVector(rel, sGeom.radius);
+                                return {
+                                    type: 'sphere',
+                                    solidId,
+                                    phi,
+                                    theta,
+                                    pos: exactPos,
+                                    label: `Trên ${solidName || 'mặt cầu'}`
+                                };
+                            }
+                        } else if (solidKind === 'cone' && sol) {
+                            const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
+                            const S = geoState.points.find(p => p.id === sol.apexId);
+                            const geom = computeCircleGeometry(cir);
+                            if (geom && S) {
+                                const vS = new THREE.Vector3(S.x, S.y, S.z);
+                                const vSO = new THREE.Vector3().subVectors(geom.center, vS);
+                                const vSP = new THREE.Vector3().subVectors(topHit.point, vS);
+                                const denom = vSO.dot(geom.normal);
+                                let t = Math.abs(denom) > 1e-5 ? (vSP.dot(geom.normal) / denom) : 0.5;
+                                t = Math.max(0.05, Math.min(0.95, t));
+                                const centerT = vS.clone().addScaledVector(vSO, t);
+                                const delta = new THREE.Vector3().subVectors(topHit.point, centerT);
+                                const angle = Math.atan2(delta.dot(geom.vAxis), delta.dot(geom.uAxis));
+                                const rimPt = geom.center.clone()
+                                    .addScaledVector(geom.uAxis, geom.radius * Math.cos(angle))
+                                    .addScaledVector(geom.vAxis, geom.radius * Math.sin(angle));
+                                const exactPos = vS.clone().lerp(rimPt, t);
+                                return {
+                                    type: 'cone',
+                                    solidId,
+                                    t,
+                                    angle,
+                                    pos: exactPos,
+                                    label: `Trên ${solidName || 'hình nón'}`
+                                };
+                            }
+                        } else if (solidKind === 'frustum' && sol) {
+                            const cir1 = (geoState.circles || []).find(c => c.id === sol.circle1Id);
+                            const cir2 = (geoState.circles || []).find(c => c.id === sol.circle2Id);
+                            const g1 = computeCircleGeometry(cir1);
+                            const g2 = computeCircleGeometry(cir2);
+                            if (g1 && g2) {
+                                const { u2, v2 } = alignSecondCircleBasis(g1.uAxis, g1.vAxis, g1.normal, g2.normal);
+                                const axis = new THREE.Vector3().subVectors(g2.center, g1.center);
+                                const relP = new THREE.Vector3().subVectors(topHit.point, g1.center);
+                                const denom = axis.dot(g1.normal);
+                                let t = Math.abs(denom) > 1e-5 ? (relP.dot(g1.normal) / denom) : (axis.lengthSq() > 1e-6 ? relP.dot(axis) / axis.lengthSq() : 0.5);
+                                t = Math.max(0.05, Math.min(0.95, t));
+                                const centerT = g1.center.clone().addScaledVector(axis, t);
+                                const delta = new THREE.Vector3().subVectors(topHit.point, centerT);
+                                const angle = Math.atan2(delta.dot(g1.vAxis), delta.dot(g1.uAxis));
+                                const p1 = g1.center.clone()
+                                    .addScaledVector(g1.uAxis, g1.radius * Math.cos(angle))
+                                    .addScaledVector(g1.vAxis, g1.radius * Math.sin(angle));
+                                const p2 = g2.center.clone()
+                                    .addScaledVector(u2, g2.radius * Math.cos(angle))
+                                    .addScaledVector(v2, g2.radius * Math.sin(angle));
+                                const exactPos = p1.clone().lerp(p2, t);
+                                return {
+                                    type: 'frustum',
+                                    solidId,
+                                    t,
+                                    angle,
+                                    pos: exactPos,
+                                    label: `Trên ${solidName || 'khối tròn xoay'}`
+                                };
+                            }
+                        }
+                    }
+                } else if (topHit.object.userData && topHit.object.userData.isCircleDisk) {
+                    const circleId = topHit.object.userData.circleId;
+                    const cir = (geoState.circles || []).find(c => c.id === circleId);
+                    const geom = computeCircleGeometry(cir);
+                    if (geom) {
+                        const rel = new THREE.Vector3().subVectors(topHit.point, geom.center);
+                        const xComp = rel.dot(geom.uAxis);
+                        const yComp = rel.dot(geom.vAxis);
+                        const angle = Math.atan2(yComp, xComp);
+                        const rRatio = Math.min(0.98, Math.hypot(xComp, yComp) / Math.max(1e-5, geom.radius));
+                        // Khi dùng công cụ xóa/ẩn hoặc chọn đường tròn tạo khối tròn xoay thì chọn trực tiếp đường tròn đó
+                        if (['delete-obj', 'hide', 'solid-cone', 'solid-cylinder'].includes(currentTool) || (currentTool === 'solid-sphere' && selectedPointIds.length === 0)) {
+                            return {
+                                type: 'circle',
+                                circleId,
+                                angle,
+                                pos: topHit.point.clone(),
+                                label: `đường tròn ${cir.name || '(C)'}`
+                            };
+                        }
+                        return {
+                            type: 'circleDisk',
+                            circleId,
+                            faceId: circleId,
+                            rRatio,
+                            angle,
+                            pos: topHit.point.clone(),
+                            label: `Trên bề mặt ${topHit.object.userData.faceName || 'hình tròn'}`
+                        };
+                    }
                 } else {
                     const faceId = topHit.object.userData.faceId;
                     const face = geoState.faces.find(f => f.id === faceId);
@@ -3655,8 +3866,14 @@
                 rule = { type: 'onEdge', segId: target.segId, t: target.t };
             } else if (target.type === 'circle') {
                 rule = { type: 'onCircle', circleId: target.circleId, angle: target.angle };
+            } else if (target.type === 'circleDisk') {
+                rule = { type: 'onCircleDisk', circleId: target.circleId, rRatio: target.rRatio, angle: target.angle };
             } else if (target.type === 'sphere') {
                 rule = { type: 'onSphere', solidId: target.solidId, phi: target.phi, theta: target.theta };
+            } else if (target.type === 'cone') {
+                rule = { type: 'onCone', solidId: target.solidId, t: target.t, angle: target.angle };
+            } else if (target.type === 'frustum') {
+                rule = { type: 'onFrustum', solidId: target.solidId, t: target.t, angle: target.angle };
             } else if (target.type === 'face') {
                 rule = { type: 'onFace', faceId: target.faceId, u: target.u, v: target.v };
             } else if (target.type === 'intersection') {
@@ -3691,47 +3908,88 @@
 
             const adj = {};
             geoState.points.forEach(p => adj[p.id] = []);
+            const addAdjEdge = (u, v) => {
+                if (u === v) return;
+                if ((u === p1Id && v === p2Id) || (u === p2Id && v === p1Id)) return;
+                if (adj[u] && !adj[u].includes(v)) adj[u].push(v);
+                if (adj[v] && !adj[v].includes(u)) adj[v].push(u);
+            };
+
             geoState.segments.forEach(s => {
-                if (!s.isLine && !(s.p1Id === p1Id && s.p2Id === p2Id) && !(s.p1Id === p2Id && s.p2Id === p1Id)) {
-                    if (adj[s.p1Id]) adj[s.p1Id].push(s.p2Id);
-                    if (adj[s.p2Id]) adj[s.p2Id].push(s.p1Id);
+                if (s.isLine) return;
+                addAdjEdge(s.p1Id, s.p2Id);
+                // Hỗ trợ các điểm thuộc cạnh (onEdge) tham gia khép kín miền đa giác trên mặt
+                const onEdgePts = geoState.points
+                    .filter(pt => !pt.hidden && pt.rule && pt.rule.type === 'onEdge' && pt.rule.segId === s.id && typeof pt.rule.t === 'number' && pt.rule.t > 0 && pt.rule.t < 1)
+                    .sort((a, b) => a.rule.t - b.rule.t);
+                if (onEdgePts.length > 0) {
+                    const chain = [s.p1Id, ...onEdgePts.map(pt => pt.id), s.p2Id];
+                    for (let i = 0; i < chain.length; i++) {
+                        for (let j = i + 1; j < chain.length; j++) {
+                            addAdjEdge(chain[i], chain[j]);
+                        }
+                    }
                 }
             });
 
-            const visited = new Set([p1Id]);
             const queue = [[p1Id]];
             const foundCycles = [];
 
             while (queue.length > 0) {
                 const path = queue.shift();
                 const last = path[path.length - 1];
-                if (path.length > 6) continue;
+                if (path.length > 7) continue;
 
                 for (const next of (adj[last] || [])) {
                     if (next === p2Id && path.length >= 2) {
                         foundCycles.push([...path, p2Id]);
-                    } else if (!visited.has(next)) {
-                        visited.add(next);
+                    } else if (next !== p2Id && !path.includes(next)) {
                         queue.push([...path, next]);
                     }
                 }
             }
 
             foundCycles.forEach(cycleIds => {
-                if (arePointsCoplanar(cycleIds)) {
+                const n = cycleIds.length;
+                let hasChord = false;
+                if (n > 3) {
+                    for (let i = 0; i < n && !hasChord; i++) {
+                        for (let j = i + 2; j < n; j++) {
+                            if (i === 0 && j === n - 1) continue;
+                            const u = cycleIds[i];
+                            const v = cycleIds[j];
+                            if (adj[u] && adj[u].includes(v)) {
+                                hasChord = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!hasChord && arePointsCoplanar(cycleIds)) {
                     addFaceIfNotExists(cycleIds);
                 }
             });
         }
 
         function arePointsCoplanar(pointIds) {
-            if (pointIds.length <= 3) return true;
+            if (!pointIds || pointIds.length < 3) return false;
             const pts = pointIds.map(id => geoState.points.find(p => p.id === id));
+            if (pts.some(p => !p)) return false;
             const v0 = new THREE.Vector3(pts[0].x, pts[0].y, pts[0].z);
-            const v1 = new THREE.Vector3(pts[1].x, pts[1].y, pts[1].z).sub(v0);
-            const v2 = new THREE.Vector3(pts[2].x, pts[2].y, pts[2].z).sub(v0);
-            const normal = new THREE.Vector3().crossVectors(v1, v2).normalize();
-            for (let i = 3; i < pts.length; i++) {
+            let normal = null;
+            for (let i = 1; i < pts.length - 1 && !normal; i++) {
+                const v1 = new THREE.Vector3(pts[i].x, pts[i].y, pts[i].z).sub(v0);
+                for (let j = i + 1; j < pts.length; j++) {
+                    const v2 = new THREE.Vector3(pts[j].x, pts[j].y, pts[j].z).sub(v0);
+                    const cross = new THREE.Vector3().crossVectors(v1, v2);
+                    if (cross.lengthSq() > 1e-5) {
+                        normal = cross.normalize();
+                        break;
+                    }
+                }
+            }
+            if (!normal) return false;
+            for (let i = 1; i < pts.length; i++) {
                 const vi = new THREE.Vector3(pts[i].x, pts[i].y, pts[i].z).sub(v0);
                 if (Math.abs(vi.dot(normal)) > 0.08) return false;
             }
@@ -3804,6 +4062,11 @@
             geoState.faces.forEach(f => {
                 if (!f.hidden) {
                     html += `<option value="${f.id}">Mặt phẳng đa giác ${f.name}</option>`;
+                }
+            });
+            (geoState.circles || []).forEach(c => {
+                if (!c.hidden) {
+                    html += `<option value="${c.id}">Mặt phẳng hình tròn ${c.name || '(C)'}</option>`;
                 }
             });
             return html;
@@ -4022,7 +4285,7 @@
             if (currentTool === 'animate') {
                 if (target && target.type === 'point') {
                     const pt = geoState.points.find(p => p.id === target.pointId);
-                    if (pt && pt.rule && ['onEdge', 'onFace', 'onCircle', 'onSphere'].includes(pt.rule.type)) {
+                    if (pt && pt.rule && ['onEdge', 'onFace', 'onCircle', 'onCircleDisk', 'onSphere', 'onCone', 'onFrustum'].includes(pt.rule.type)) {
                         pt.animating = !pt.animating;
                         pt.animUI = true;
                         if (typeof pt.animSpeedMult !== 'number') pt.animSpeedMult = 1.0;
@@ -4032,7 +4295,7 @@
                     } else {
                         const guideSpan = document.getElementById('guide-span');
                         if (guideSpan) {
-                            guideSpan.innerHTML = `<span style="color:#fbbf24;">Lưu ý: Chỉ các điểm thuộc Đoạn thẳng, Đường thẳng, Đường tròn, Mặt cầu hoặc Bề mặt đa giác mới di chuyển tự động trên đối tượng cha!</span>`;
+                            guideSpan.innerHTML = `<span style="color:#fbbf24;">Lưu ý: Chỉ các điểm thuộc Đoạn thẳng, Đường thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay mới di chuyển tự động trên đối tượng cha!</span>`;
                         }
                     }
                 }
@@ -4274,11 +4537,11 @@
                         return;
                     }
                 }
-                if (selectedPointIds.length === 1 && (target.type === 'face' || target.type === 'plane')) {
+                if (selectedPointIds.length === 1 && (target.type === 'face' || target.type === 'circleDisk' || target.type === 'plane')) {
                     const M = geoState.points.find(p => p.id === selectedPointIds[0]);
                     if (M) {
                         saveHistory();
-                        const faceId = target.type === 'face' ? target.faceId : null;
+                        const faceId = (target.type === 'face' || target.type === 'circleDisk') ? target.faceId : null;
                         const hId = createNewPoint(M.x, M.y, M.z, 'H', {
                             type: 'perpFacePoint', mId: M.id, faceId
                         });
@@ -4291,9 +4554,9 @@
             }
 
             if (currentTool === 'circle-center') {
-                if (selectedPointIds.length === 1 && (target.type === 'face' || target.type === 'plane')) {
+                if (selectedPointIds.length === 1 && (target.type === 'face' || target.type === 'circleDisk' || target.type === 'plane')) {
                     const O = geoState.points.find(p => p.id === selectedPointIds[0]);
-                    const defaultFaceId = target.type === 'face' ? target.faceId : '';
+                    const defaultFaceId = (target.type === 'face' || target.type === 'circleDisk') ? target.faceId : '';
                     openModal(
                         `Dựng Đường tròn tâm $${O.name}$`,
                         `<div class="modal-field">
@@ -4748,7 +5011,7 @@
 
         function canPointBeDragged(pt) {
             if (!pt.rule) return true;
-            return ['plane', '3d', 'onEdge', 'onCircle', 'onSphere', 'onFace', 'rectD'].includes(pt.rule.type);
+            return ['plane', '3d', 'onEdge', 'onCircle', 'onCircleDisk', 'onSphere', 'onCone', 'onFrustum', 'onFace', 'rectD'].includes(pt.rule.type);
         }
 
         function handleDragExistingPoint(event) {
@@ -4825,6 +5088,21 @@
                     }
                 }
             }
+            else if (rType === 'onCircleDisk') {
+                const cir = (geoState.circles || []).find(c => c.id === pt.rule.circleId);
+                const geom = computeCircleGeometry(cir);
+                if (geom) {
+                    const cPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(geom.normal, geom.center);
+                    const hit = new THREE.Vector3();
+                    if (raycaster.ray.intersectPlane(cPlane, hit)) {
+                        const rel = new THREE.Vector3().subVectors(hit, geom.center);
+                        const xComp = rel.dot(geom.uAxis);
+                        const yComp = rel.dot(geom.vAxis);
+                        pt.rule.angle = Math.atan2(yComp, xComp);
+                        pt.rule.rRatio = Math.min(0.98, Math.hypot(xComp, yComp) / Math.max(1e-5, geom.radius));
+                    }
+                }
+            }
             else if (rType === 'onSphere') {
                 const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId);
                 const sGeom = computeSphereGeometry(sol);
@@ -4839,6 +5117,46 @@
                             rel.normalize();
                             pt.rule.phi = Math.acos(Math.max(-1, Math.min(1, rel.y)));
                             pt.rule.theta = Math.atan2(rel.z, rel.x);
+                        }
+                    }
+                }
+            }
+            else if (rType === 'onCone' || rType === 'onFrustum') {
+                const solidHits = raycaster.intersectObjects(hitSolidMeshes.filter(m => m.userData && m.userData.solidId === pt.rule.solidId));
+                if (solidHits.length > 0) {
+                    const hitPt = solidHits[0].point;
+                    const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId);
+                    if (rType === 'onCone' && sol) {
+                        const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
+                        const S = geoState.points.find(p => p.id === sol.apexId);
+                        const geom = computeCircleGeometry(cir);
+                        if (geom && S) {
+                            const vS = new THREE.Vector3(S.x, S.y, S.z);
+                            const vSO = new THREE.Vector3().subVectors(geom.center, vS);
+                            const vSP = new THREE.Vector3().subVectors(hitPt, vS);
+                            const denom = vSO.dot(geom.normal);
+                            let t = Math.abs(denom) > 1e-5 ? (vSP.dot(geom.normal) / denom) : 0.5;
+                            t = Math.max(0.05, Math.min(0.95, t));
+                            const centerT = vS.clone().addScaledVector(vSO, t);
+                            const delta = new THREE.Vector3().subVectors(hitPt, centerT);
+                            pt.rule.t = t;
+                            pt.rule.angle = Math.atan2(delta.dot(geom.vAxis), delta.dot(geom.uAxis));
+                        }
+                    } else if (rType === 'onFrustum' && sol) {
+                        const cir1 = (geoState.circles || []).find(c => c.id === sol.circle1Id);
+                        const cir2 = (geoState.circles || []).find(c => c.id === sol.circle2Id);
+                        const g1 = computeCircleGeometry(cir1);
+                        const g2 = computeCircleGeometry(cir2);
+                        if (g1 && g2) {
+                            const axis = new THREE.Vector3().subVectors(g2.center, g1.center);
+                            const relP = new THREE.Vector3().subVectors(hitPt, g1.center);
+                            const denom = axis.dot(g1.normal);
+                            let t = Math.abs(denom) > 1e-5 ? (relP.dot(g1.normal) / denom) : (axis.lengthSq() > 1e-6 ? relP.dot(axis) / axis.lengthSq() : 0.5);
+                            t = Math.max(0.05, Math.min(0.95, t));
+                            const centerT = g1.center.clone().addScaledVector(axis, t);
+                            const delta = new THREE.Vector3().subVectors(hitPt, centerT);
+                            pt.rule.t = t;
+                            pt.rule.angle = Math.atan2(delta.dot(g1.vAxis), delta.dot(g1.uAxis));
                         }
                     }
                 }
@@ -5212,7 +5530,7 @@
                             if (pt.rule.t <= -1.5) { pt.animDir = 1; directionFlipped = true; }
                         }
                         anyPointAnimated = true;
-                    } else if (pt.rule.type === 'onCircle') {
+                    } else if (pt.rule.type === 'onCircle' || pt.rule.type === 'onCircleDisk' || pt.rule.type === 'onCone' || pt.rule.type === 'onFrustum') {
                         pt.rule.angle = (pt.rule.angle || 0) + 0.022 * mult * dir;
                         anyPointAnimated = true;
                     } else if (pt.rule.type === 'onSphere') {
