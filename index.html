@@ -320,6 +320,107 @@
             background: #991b1b; color: #fef2f2; border: 1px solid #f87171;
         }
 
+        /* Nhãn số đo hiển thị trên 3D Canvas */
+        .measure-label {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.94);
+            border: 1.5px solid #0d9488;
+            color: #0f172a;
+            font-size: 12.5px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.14);
+        }
+        .measure-label.angle-tag {
+            border-color: #d97706;
+            color: #92400e;
+            background: rgba(255, 251, 235, 0.95);
+        }
+        .measure-label.volume-tag {
+            border-color: #2563eb;
+            color: #1e40af;
+            background: rgba(239, 246, 255, 0.95);
+        }
+
+        /* Bảng Đo đạc & Quy chuẩn độ dài */
+        #measurement-panel {
+            position: absolute; top: 60px; right: 12px; z-index: 27;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(8px);
+            border: 1px solid #cbd5e1; border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            padding: 10px 12px; width: 300px; max-height: calc(100vh - 200px);
+            display: none; flex-direction: column; gap: 8px;
+        }
+        .measure-panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;
+            font-size: 12.5px; font-weight: 800; color: #0f172a;
+        }
+        .measure-panel-header span { display: flex; align-items: center; gap: 6px; color: #0d9488; }
+        .measure-header-actions { display: flex; gap: 6px; align-items: center; }
+        .measure-mini-btn {
+            background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;
+            border-radius: 6px; padding: 3px 7px; font-size: 11px; font-weight: 700;
+            cursor: pointer; transition: 0.15s;
+        }
+        .measure-mini-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .measure-mini-btn.primary { background: #0d9488; color: #fff; border-color: #0f766e; }
+        .measure-mini-btn.primary:hover { background: #0f766e; }
+        .measure-scale-box {
+            display: flex; align-items: center; justify-content: space-between; gap: 6px;
+            background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;
+            padding: 6px 9px; font-size: 12px; color: #166534; font-weight: 700;
+        }
+        .measure-scale-box.uncalibrated {
+            background: #fffbeb; border-color: #fcd34d; color: #92400e;
+        }
+        .measure-quick-tools {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+        }
+        .measure-qtool-btn {
+            background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 7px;
+            padding: 5px 4px; font-size: 11px; font-weight: 700; color: #334155;
+            cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px;
+            transition: 0.15s;
+        }
+        .measure-qtool-btn svg { width: 15px; height: 15px; }
+        .measure-qtool-btn:hover { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+        .measure-qtool-btn.active { background: #2563eb; border-color: #1d4ed8; color: #ffffff; }
+        #measure-rows-container {
+            display: flex; flex-direction: column; gap: 5px;
+            overflow-y: auto; max-height: 220px;
+        }
+        .measure-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 6px;
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+            padding: 5px 8px; font-size: 12.5px;
+        }
+        .measure-row-left { display: flex; align-items: center; gap: 7px; overflow: hidden; }
+        .measure-badge-type {
+            font-size: 10.5px; font-weight: 800; padding: 2px 5px; border-radius: 5px;
+            background: #ccfbf1; color: #0f766e; flex-shrink: 0;
+        }
+        .measure-badge-type.angle { background: #fef3c7; color: #b45309; }
+        .measure-badge-type.volume { background: #dbeafe; color: #1d4ed8; }
+        .measure-row-text {
+            font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .measure-row-val { font-weight: 800; color: #0d9488; }
+        .measure-row-val.angle { color: #d97706; }
+        .measure-row-val.volume { color: #2563eb; }
+        .measure-row-actions { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+        .measure-icon-btn {
+            background: transparent; border: none; color: #64748b; cursor: pointer;
+            padding: 2px 4px; border-radius: 4px; font-size: 12px; line-height: 1;
+        }
+        .measure-icon-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .measure-icon-btn.del:hover { background: #fee2e2; color: #dc2626; }
+
         /* Danh sách Đối tượng bị ẩn */
         #hidden-objects-panel {
             position: absolute; bottom: 14px; right: 14px; z-index: 28;
@@ -578,6 +679,43 @@
                 <button onclick="unhideAllObjects()">Hiện tất cả</button>
             </div>
             <div id="hidden-list"></div>
+        </div>
+
+        <!-- Bảng Đo đạc & Quy chuẩn Độ dài -->
+        <div id="measurement-panel">
+            <div class="measure-panel-header">
+                <span>
+                    <svg class="svg-ic" style="width:15px;height:15px;" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>
+                    ĐO ĐẠC THEO QUY CHUẨN
+                </span>
+                <div class="measure-header-actions">
+                    <button class="measure-mini-btn primary" onclick="openQuickMeasureBuilderModal()" title="Mở hộp thoại chọn đối tượng đo nhanh">+ Đo theo DS</button>
+                    <button class="measure-mini-btn" onclick="clearAllMeasurements()" title="Xóa tất cả kết quả đo">Xóa số đo</button>
+                </div>
+            </div>
+            <div id="measure-scale-status" class="measure-scale-box uncalibrated">
+                <span id="measure-scale-text">Quy chuẩn: Chưa quy định</span>
+                <button class="measure-mini-btn" onclick="openReferenceScaleModal()">Đặt quy chuẩn</button>
+            </div>
+            <div class="measure-quick-tools">
+                <button class="measure-qtool-btn" data-mtool="measure-scale" onclick="selectTool('measure-scale')" title="Quy định 1 độ dài làm chuẩn (VD: AB = 5)">
+                    <svg class="svg-ic" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/></svg>
+                    Quy chuẩn
+                </button>
+                <button class="measure-qtool-btn" data-mtool="measure-dist" onclick="selectTool('measure-dist')" title="Đo khoảng cách (2 điểm, điểm-đường, điểm-mặt)">
+                    <svg class="svg-ic" viewBox="0 0 24 24"><line x1="4" y1="20" x2="20" y2="4"/><polyline points="14 4 20 4 20 10"/><polyline points="10 20 4 20 4 14"/></svg>
+                    Khoảng cách
+                </button>
+                <button class="measure-qtool-btn" data-mtool="measure-angle" onclick="selectTool('measure-angle')" title="Đo góc (3 điểm, 2 đường, đường-mặt, 2 mặt)">
+                    <svg class="svg-ic" viewBox="0 0 24 24"><polyline points="21 19 4 19 17 5"/><path d="M13 19a9 9 0 0 0-2.6-6.3"/></svg>
+                    Đo góc
+                </button>
+                <button class="measure-qtool-btn" data-mtool="measure-volume" onclick="selectTool('measure-volume')" title="Đo thể tích (Khối chóp, Tứ diện, Nón, Trụ, Cầu)">
+                    <svg class="svg-ic" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    Thể tích
+                </button>
+            </div>
+            <div id="measure-rows-container"></div>
         </div>
 
         <div id="canvas-container"></div>
@@ -840,7 +978,11 @@
             reverseDir: `<svg viewBox="0 0 24 24"><polyline points="17 2 21 6 17 10"/><line x1="3" y1="6" x2="21" y2="6"/><polyline points="7 14 3 18 7 22"/><line x1="21" y1="18" x2="3" y2="18"/></svg>`,
             minus: `<svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
             plus: `<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
-            closeX: `<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+            closeX: `<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+            measureScale: `<svg viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>`,
+            measureDist: `<svg viewBox="0 0 24 24"><line x1="4" y1="20" x2="20" y2="4"/><polyline points="14 4 20 4 20 10"/><polyline points="10 20 4 20 4 14"/><circle cx="4" cy="20" r="2" fill="currentColor"/><circle cx="20" cy="4" r="2" fill="currentColor"/></svg>`,
+            measureAngle: `<svg viewBox="0 0 24 24"><polyline points="21 19 4 19 17 5"/><path d="M13.5 19a9.5 9.5 0 0 0-2.8-6.7"/><circle cx="4" cy="19" r="2" fill="currentColor"/></svg>`,
+            measureVolume: `<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`
         };
 
         // =========================================================================
@@ -1010,41 +1152,67 @@
                 tip: '<b>Mặt cầu $S(I; R)$:</b> Chọn <b>Tâm $I$</b> rồi chọn <b>Điểm $A$ trên mặt cầu</b> (hoặc click vào mặt nền / khoảng trống để nhập bán kính $R$, hoặc click vào Đường tròn lớn)'
             },
 
-            // NHÓM 6: Chuyển động, Tạo vết, Ẩn/Hiện, Xóa đối tượng & Hệ thống
+            // NHÓM 6: Đo đạc theo quy chuẩn (Quy chuẩn độ dài, Khoảng cách, Góc, Thể tích)
             {
-                id: 'animate', group: 6, groupName: 'Nhóm 6: Quỹ tích & Hệ thống',
+                id: 'measure-scale', group: 6, groupName: 'Nhóm 6: Đo đạc & Tính toán',
+                name: 'Quy định độ dài chuẩn (VD: AB = 5)', type: 'mode',
+                iconHtml: SVG_ICONS.measureScale,
+                tip: '<b>Quy định độ dài chuẩn (VD: $AB = 5$):</b> Chọn <b>1 Đoạn thẳng</b> (hoặc <b>2 Điểm $A, B$</b>) để gán độ dài làm quy chuẩn cho mọi phép đo'
+            },
+            {
+                id: 'measure-dist', group: 6, groupName: 'Nhóm 6: Đo đạc & Tính toán',
+                name: 'Đo khoảng cách (Điểm, Đường, Mặt)', type: 'mode',
+                iconHtml: SVG_ICONS.measureDist,
+                tip: '<b>Đo khoảng cách theo quy chuẩn:</b> Click <b>1 Đoạn thẳng</b>, <b>2 Điểm</b>, <b>Điểm & Đường thẳng</b> $d(M, \\Delta)$, hoặc <b>Điểm & Mặt phẳng</b> $d(M, (P))$'
+            },
+            {
+                id: 'measure-angle', group: 6, groupName: 'Nhóm 6: Đo đạc & Tính toán',
+                name: 'Đo góc (3 Điểm, Đường, Mặt)', type: 'mode',
+                iconHtml: SVG_ICONS.measureAngle,
+                tip: '<b>Đo góc ($0^\\circ \\to 180^\\circ$):</b> Chọn <b>3 Điểm $A, B, C$</b> ($\\widehat{ABC}$), hoặc <b>2 Đường thẳng</b>, hoặc <b>Đường thẳng & Mặt phẳng</b>, hoặc <b>2 Mặt phẳng</b>'
+            },
+            {
+                id: 'measure-volume', group: 6, groupName: 'Nhóm 6: Đo đạc & Tính toán',
+                name: 'Đo thể tích (Khối chóp, Tứ diện, Tròn xoay)', type: 'mode',
+                iconHtml: SVG_ICONS.measureVolume,
+                tip: '<b>Đo thể tích theo quy chuẩn:</b> Click <b>Khối tròn xoay</b> (Nón, Trụ, Cầu), hoặc chọn <b>Mặt đáy & Đỉnh $S$</b> (Khối chóp), hoặc <b>4 Điểm</b> (Tứ diện)'
+            },
+
+            // NHÓM 7: Chuyển động, Tạo vết, Ẩn/Hiện, Xóa đối tượng & Hệ thống
+            {
+                id: 'animate', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Chuyển động tự động trên đối tượng cha', type: 'mode',
                 iconHtml: SVG_ICONS.play,
                 tip: '<b>Chuyển động trên đối tượng cha:</b> Click vào điểm thuộc cạnh / đường thẳng / đường tròn / đa giác / mặt cầu để mở bảng điều khiển chuyển động'
             },
             {
-                id: 'trace', group: 6, groupName: 'Nhóm 6: Quỹ tích & Hệ thống',
+                id: 'trace', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Bật / Tắt Tạo vết (Trace)', type: 'mode',
                 iconHtml: SVG_ICONS.sparkles,
                 tip: '<b>Bật / Tắt Tạo vết (Trace):</b> Click vào điểm hoặc đoạn thẳng để để lại vết quỹ tích khi di chuyển'
             },
             {
-                id: 'clear-traces', group: 6, groupName: 'Nhóm 6: Quỹ tích & Hệ thống',
+                id: 'clear-traces', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Xóa vết quỹ tích', type: 'action',
                 actionFn: () => clearAllTraces(),
                 iconHtml: SVG_ICONS.eraser,
                 tip: '<b>Xóa toàn bộ vết quỹ tích đã vẽ</b>'
             },
             {
-                id: 'hide', group: 6, groupName: 'Nhóm 6: Quỹ tích & Hệ thống',
+                id: 'hide', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Ẩn đối tượng', type: 'mode',
                 iconHtml: SVG_ICONS.eyeSlash,
                 tip: '<b>Ẩn đối tượng:</b> Click vào Điểm, Đoạn thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay để ẩn (Có danh sách góc phải để hiện lại)'
             },
             {
-                id: 'delete-obj', group: 6, groupName: 'Nhóm 6: Quỹ tích & Hệ thống',
+                id: 'delete-obj', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Xóa đối tượng (& các đối tượng con)', type: 'mode',
                 extraClass: 'danger',
                 iconHtml: SVG_ICONS.deleteObj,
                 tip: '<b>Xóa 1 đối tượng & đối tượng con:</b> Click vào Điểm, Đoạn/Đường thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay để xóa cùng toàn bộ đối tượng con phụ thuộc'
             },
             {
-                id: 'undo-action', group: 6, groupName: 'Nhóm 6: Quỹ tích & Hệ thống',
+                id: 'undo-action', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Hoàn tác (Undo)', type: 'action',
                 extraClass: 'warning',
                 actionFn: () => undo(),
@@ -1052,21 +1220,21 @@
                 tip: '<b>Hoàn tác (Undo - Ctrl+Z)</b>'
             },
             {
-                id: 'demo-pyramid', group: 6, groupName: 'Nhóm 6: Quỹ tích & Hệ thống',
+                id: 'demo-pyramid', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Tạo nhanh Hình chóp mẫu S.ABCDE', type: 'action',
                 actionFn: () => createDemoPyramid(),
                 iconHtml: SVG_ICONS.pyramid,
                 tip: '<b>Tạo nhanh Hình chóp mẫu $S.ABCDE$</b>'
             },
             {
-                id: 'export-png', group: 6, groupName: 'Nhóm 6: Quỹ tích & Hệ thống',
+                id: 'export-png', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Tải ảnh hình vẽ (.PNG)', type: 'action',
                 actionFn: () => exportCanvasPng(),
                 iconHtml: SVG_ICONS.downloadPng,
-                tip: '<b>Tải ảnh PNG (.png):</b> Lưu hình vẽ 3D hiện tại (bao gồm cả tên các điểm) thành file ảnh PNG sắc nét'
+                tip: '<b>Tải ảnh PNG (.png):</b> Lưu hình vẽ 3D hiện tại (bao gồm cả tên các điểm & số đo) thành file ảnh PNG sắc nét'
             },
             {
-                id: 'clear-all', group: 6, groupName: 'Nhóm 6: Quỹ tích & Hệ thống',
+                id: 'clear-all', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Xóa toàn bộ hình vẽ', type: 'action',
                 extraClass: 'danger',
                 actionFn: () => clearAll(),
@@ -1075,10 +1243,10 @@
             }
         ];
 
-        const DEFAULT_PINNED_IDS = ['delete-obj', 'undo-action', 'clear-traces', 'reset-camera', 'toggle-face-tint', 'export-png'];
+        const DEFAULT_PINNED_IDS = ['measure-scale', 'measure-dist', 'measure-angle', 'measure-volume', 'delete-obj', 'undo-action', 'reset-camera', 'toggle-face-tint', 'export-png'];
         const DEFAULT_HIDDEN_VERTICAL_IDS = ['reset-camera', 'toggle-face-tint'];
 
-        const TOOLBAR_STORAGE_KEY = 'make_math_ez_3d_toolbar_v9';
+        const TOOLBAR_STORAGE_KEY = 'make_math_ez_3d_toolbar_v10';
         let toolbarConfig = {
             sortMode: 'group',
             customOrder: MASTER_TOOLS.map(t => t.id),
@@ -1650,6 +1818,21 @@
             geoState.circles = (geoState.circles || []).filter(cir => !delCircles.has(cir.id));
             geoState.faces = geoState.faces.filter(face => !delFaces.has(face.id));
             geoState.solids = (geoState.solids || []).filter(sol => !delSolids.has(sol.id));
+            if (geoState.measurements) {
+                geoState.measurements = geoState.measurements.filter(m => {
+                    if (m.p1Id && delPoints.has(m.p1Id)) return false;
+                    if (m.p2Id && delPoints.has(m.p2Id)) return false;
+                    if (m.p3Id && delPoints.has(m.p3Id)) return false;
+                    if (m.p4Id && delPoints.has(m.p4Id)) return false;
+                    if (m.segId && delSegs.has(m.segId)) return false;
+                    if (m.seg2Id && delSegs.has(m.seg2Id)) return false;
+                    if (m.faceId && (delFaces.has(m.faceId) || delCircles.has(m.faceId))) return false;
+                    if (m.face2Id && (delFaces.has(m.face2Id) || delCircles.has(m.face2Id))) return false;
+                    if (m.circleId && delCircles.has(m.circleId)) return false;
+                    if (m.solidId && delSolids.has(m.solidId)) return false;
+                    return true;
+                });
+            }
 
             selectedPointIds = selectedPointIds.filter(id => !delPoints.has(id));
             selectedCircleIds = selectedCircleIds.filter(id => !delCircles.has(id));
@@ -1903,7 +2086,7 @@
         let isBasePlaneVisible = true;
         let showFaceTint = true;
 
-        let geoState = { points: [], segments: [], faces: [], circles: [], solids: [] };
+        let geoState = { points: [], segments: [], faces: [], circles: [], solids: [], measureScale: null, measurements: [] };
         let historyStack = [];
 
         let pointSprites = [];
@@ -1914,6 +2097,7 @@
         let faceMeshes = [];
         let solidMeshes = [];
         let hitSolidMeshes = [];
+        let measureMeshes = [];
         let dynamicSilhouetteUpdaters = [];
         let helperMeshes = [];
         let snapIndicator = null;
@@ -1926,6 +2110,8 @@
         let currentTool = 'view';
         let selectedPointIds = [];
         let selectedCircleIds = [];
+        let measureSelection = { segIds: [], faceIds: [] };
+        let pendingMeasureToolAfterScale = null;
         let hoveredPointId = null;
         let hoveredCircleId = null;
 
@@ -1946,6 +2132,87 @@
         const snapBadge = document.getElementById('snap-badge');
         const tooltipEl = document.getElementById('tool-tooltip');
 
+        const AUTOSAVE_STORAGE_KEY = 'make_math_ez_3d_autosave_v1';
+        let autoSaveTimer = null;
+
+        function initSharedPointTextures() {
+            const oldTextures = [texPointNormal, texPointConstrained, texPointSelected, texPointHover, texPointTrace, texSnapEdge, texSnapIntersection];
+            oldTextures.forEach(t => { if (t && typeof t.dispose === 'function') t.dispose(); });
+            texPointNormal = createCirclePointTexture('#000000');
+            texPointConstrained = createCirclePointTexture('#0284c7');
+            texPointSelected = createCirclePointTexture('#dc2626');
+            texPointHover = createCirclePointTexture('#d97706');
+            texPointTrace = createCirclePointTexture('#9333ea', '#f3e8ff');
+            texSnapEdge = createCirclePointTexture('#16a34a');
+            texSnapIntersection = createIntersectionTexture();
+        }
+
+        function disposeSceneMeshLists(meshArrays) {
+            if (!scene) return;
+            const disposedGeos = new Set();
+            const disposedMats = new Set();
+            meshArrays.forEach(arr => {
+                if (!Array.isArray(arr)) return;
+                arr.forEach(obj => {
+                    if (!obj) return;
+                    scene.remove(obj);
+                    if (obj.geometry && !disposedGeos.has(obj.geometry)) {
+                        disposedGeos.add(obj.geometry);
+                        if (typeof obj.geometry.dispose === 'function') obj.geometry.dispose();
+                    }
+                    if (obj.material) {
+                        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+                        mats.forEach(mat => {
+                            if (mat && !disposedMats.has(mat)) {
+                                disposedMats.add(mat);
+                                if (typeof mat.dispose === 'function') mat.dispose();
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        function saveAutoStateToStorage() {
+            try {
+                if (!geoState || !Array.isArray(geoState.points)) return;
+                localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(geoState));
+            } catch (e) {}
+        }
+
+        function scheduleAutoSaveState() {
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                saveAutoStateToStorage();
+            }, 180);
+        }
+
+        function restoreAutoSavedState() {
+            try {
+                const raw = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+                if (!raw) return false;
+                const parsed = JSON.parse(raw);
+                if (!parsed || !Array.isArray(parsed.points) || parsed.points.length === 0) return false;
+                const allValid = parsed.points.every(pt =>
+                    pt && typeof pt.x === 'number' && typeof pt.y === 'number' && typeof pt.z === 'number' &&
+                    Number.isFinite(pt.x) && Number.isFinite(pt.y) && Number.isFinite(pt.z)
+                );
+                if (!allValid) return false;
+                geoState = {
+                    points: parsed.points || [],
+                    segments: parsed.segments || [],
+                    faces: parsed.faces || [],
+                    circles: parsed.circles || [],
+                    solids: parsed.solids || [],
+                    measureScale: parsed.measureScale || null,
+                    measurements: parsed.measurements || []
+                };
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
         function init() {
             if (typeof THREE === 'undefined') {
                 container.innerHTML = `<div style="padding:30px;text-align:center;color:#dc2626;font-size:15px;">
@@ -1956,14 +2223,7 @@
             }
 
             ensureOrbitControlsInline();
-
-            texPointNormal = createCirclePointTexture('#000000');
-            texPointConstrained = createCirclePointTexture('#0284c7');
-            texPointSelected = createCirclePointTexture('#dc2626');
-            texPointHover = createCirclePointTexture('#d97706');
-            texPointTrace = createCirclePointTexture('#9333ea', '#f3e8ff');
-            texSnapEdge = createCirclePointTexture('#16a34a');
-            texSnapIntersection = createIntersectionTexture();
+            initSharedPointTextures();
 
             dragPlane = new THREE.Plane();
             raycaster = new THREE.Raycaster();
@@ -1989,9 +2249,9 @@
             camera.userData.frustumSize = frustumSize;
             camera.position.set(20, 13.5, 28);
 
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
             renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
             container.appendChild(renderer.domElement);
 
             createBasePlane();
@@ -2000,7 +2260,7 @@
             const traceMat = new THREE.PointsMaterial({
                 size: 6,
                 sizeAttenuation: false,
-                map: createCirclePointTexture('#9333ea', '#9333ea'),
+                map: texPointTrace,
                 transparent: true,
                 alphaTest: 0.2,
                 depthTest: false
@@ -2034,7 +2294,27 @@
             dom.addEventListener('pointermove', onPointerMove);
             dom.addEventListener('pointerup', onPointerUp);
             dom.addEventListener('dblclick', onDoubleClick);
+
+            // Tự động bảo vệ & khôi phục ngữ cảnh WebGL nếu GPU bị quá tải tạm thời
+            dom.addEventListener('webglcontextlost', (e) => {
+                e.preventDefault();
+                saveAutoStateToStorage();
+            }, false);
+            dom.addEventListener('webglcontextrestored', () => {
+                initSharedPointTextures();
+                if (tracePointsCloud && tracePointsCloud.material) {
+                    tracePointsCloud.material.map = texPointTrace;
+                    tracePointsCloud.material.needsUpdate = true;
+                }
+                if (snapIndicator && snapIndicator.material) {
+                    snapIndicator.material.map = texSnapEdge;
+                    snapIndicator.material.needsUpdate = true;
+                }
+                updateSceneFromState();
+            }, false);
+
             window.addEventListener('resize', onWindowResize);
+            window.addEventListener('beforeunload', () => saveAutoStateToStorage());
             window.addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
                     e.preventDefault();
@@ -2052,7 +2332,14 @@
             });
 
             setupStaticTooltips();
-            createDemoPyramid();
+            if (restoreAutoSavedState()) {
+                selectTool('view');
+                resetCamera();
+                updateSceneFromState();
+                updateAnimationControlPanel();
+            } else {
+                createDemoPyramid(false);
+            }
             animate();
         }
 
@@ -2353,6 +2640,9 @@
             for (let pass = 0; pass < 3; pass++) {
                 geoState.points.forEach(pt => {
                     if (!pt.rule) return;
+                    const prevX = Number.isFinite(pt.x) ? pt.x : 0;
+                    const prevY = Number.isFinite(pt.y) ? pt.y : 0;
+                    const prevZ = Number.isFinite(pt.z) ? pt.z : 0;
                     const r = pt.rule;
 
                     if (r.type === 'plane') {
@@ -2672,6 +2962,14 @@
                             pt.z = C.z + r.ratio * (A.z - B.z);
                         }
                     }
+
+                    // Bảo vệ tuyệt đối chống tọa độ NaN / Infinity làm mất hình trên WebGL
+                    if (!Number.isFinite(pt.x) || !Number.isFinite(pt.y) || !Number.isFinite(pt.z) ||
+                        Math.abs(pt.x) > 1e4 || Math.abs(pt.y) > 1e4 || Math.abs(pt.z) > 1e4) {
+                        pt.x = prevX;
+                        pt.y = prevY;
+                        pt.z = prevZ;
+                    }
                 });
             }
 
@@ -2682,7 +2980,7 @@
             if (!tracePointsCloud) return;
             let addedPointTrace = false;
             geoState.points.forEach(pt => {
-                if (pt.trace && !pt.hidden) {
+                if (pt.trace && !pt.hidden && Number.isFinite(pt.x) && Number.isFinite(pt.y) && Number.isFinite(pt.z)) {
                     const len = tracePositions.length;
                     if (len < 3 || Math.hypot(tracePositions[len-3] - pt.x, tracePositions[len-2] - pt.y, tracePositions[len-1] - pt.z) > 0.04) {
                         tracePositions.push(pt.x, pt.y, pt.z);
@@ -2711,7 +3009,10 @@
                         const lineMat = new THREE.LineBasicMaterial({ color: 0x9333ea, transparent: true, opacity: 0.35 });
                         traceLinesGroup.add(new THREE.Line(lineGeo, lineMat));
                         if (traceLinesGroup.children.length > 250) {
-                            traceLinesGroup.remove(traceLinesGroup.children[0]);
+                            const oldest = traceLinesGroup.children[0];
+                            traceLinesGroup.remove(oldest);
+                            if (oldest.geometry) oldest.geometry.dispose();
+                            if (oldest.material) oldest.material.dispose();
                         }
                     }
                 }
@@ -2725,7 +3026,10 @@
             }
             if (traceLinesGroup) {
                 while (traceLinesGroup.children.length > 0) {
-                    traceLinesGroup.remove(traceLinesGroup.children[0]);
+                    const child = traceLinesGroup.children[0];
+                    traceLinesGroup.remove(child);
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) child.material.dispose();
                 }
             }
         }
@@ -2733,6 +3037,7 @@
         function saveHistory() {
             historyStack.push(JSON.parse(JSON.stringify(geoState)));
             if (historyStack.length > 50) historyStack.shift();
+            scheduleAutoSaveState();
         }
 
         function undo() {
@@ -2740,8 +3045,10 @@
             geoState = historyStack.pop();
             if (!geoState.circles) geoState.circles = [];
             if (!geoState.solids) geoState.solids = [];
+            if (!geoState.measurements) geoState.measurements = [];
             selectedPointIds = [];
             selectedCircleIds = [];
+            measureSelection = { segIds: [], faceIds: [] };
             clearHelpers();
             updateSceneFromState();
             updateAnimationControlPanel();
@@ -2749,9 +3056,10 @@
 
         function clearAll() {
             saveHistory();
-            geoState = { points: [], segments: [], faces: [], circles: [], solids: [] };
+            geoState = { points: [], segments: [], faces: [], circles: [], solids: [], measureScale: null, measurements: [] };
             selectedPointIds = [];
             selectedCircleIds = [];
+            measureSelection = { segIds: [], faceIds: [] };
             clearAllTraces();
             clearHelpers();
             updateSceneFromState();
@@ -2881,14 +3189,17 @@
             if (!scene) return;
             recomputeAllDependentGeometry();
 
-            pointSprites.forEach(m => scene.remove(m));
-            edgeMeshes.forEach(m => scene.remove(m));
-            hitEdgeMeshes.forEach(m => scene.remove(m));
-            circleMeshes.forEach(m => scene.remove(m));
-            hitCircleMeshes.forEach(m => scene.remove(m));
-            faceMeshes.forEach(m => scene.remove(m));
-            solidMeshes.forEach(m => scene.remove(m));
-            hitSolidMeshes.forEach(m => scene.remove(m));
+            disposeSceneMeshLists([
+                pointSprites,
+                edgeMeshes,
+                hitEdgeMeshes,
+                circleMeshes,
+                hitCircleMeshes,
+                faceMeshes,
+                solidMeshes,
+                hitSolidMeshes,
+                measureMeshes
+            ]);
             pointSprites = [];
             edgeMeshes = [];
             hitEdgeMeshes = [];
@@ -2897,6 +3208,7 @@
             faceMeshes = [];
             solidMeshes = [];
             hitSolidMeshes = [];
+            measureMeshes = [];
             dynamicSilhouetteUpdaters = [];
 
             computeEdgeIntersections();
@@ -3444,36 +3756,100 @@
                 pointSprites.push(ptObj);
             });
 
+            renderMeasurement3DHelpers();
+            rebuildLabelsDOM();
             updateLabels();
             updateHiddenObjectsPanel();
+            updateMeasurementPanel();
+            scheduleAutoSaveState();
         }
 
-        function updateLabels() {
-            if (!camera) return;
+        let cachedPointLabelItems = [];
+        let cachedMeasureLabelItems = [];
+
+        function rebuildLabelsDOM() {
+            if (!labelsContainer) return;
             labelsContainer.innerHTML = '';
-            const width = container.clientWidth;
-            const height = container.clientHeight;
+            cachedPointLabelItems = [];
+            cachedMeasureLabelItems = [];
 
             geoState.points.forEach(pt => {
                 if (pt.hidden) return;
-                const vec = new THREE.Vector3(pt.x, pt.y, pt.z);
-                vec.project(camera);
-                if (vec.z > 1) return;
-
-                const x = (vec.x * 0.5 + 0.5) * width;
-                const y = (-(vec.y * 0.5) + 0.5) * height;
-
                 const div = document.createElement('div');
                 div.className = 'point-label';
                 div.innerHTML = formatPointNameHTML(pt.name);
-                div.style.left = `${x}px`;
-                div.style.top = `${y}px`;
                 if (selectedPointIds.includes(pt.id) || (hoveredPointId === pt.id && currentTool === 'delete-obj')) {
                     div.style.color = '#dc2626';
                 } else if (pt.trace) {
                     div.style.color = '#9333ea';
                 }
                 labelsContainer.appendChild(div);
+                cachedPointLabelItems.push({ pt, div });
+            });
+
+            (geoState.measurements || []).forEach(m => {
+                if (m.hiddenLabel) return;
+                const res = evaluateMeasurement(m);
+                if (!res || !res.anchorPos) return;
+                const div = document.createElement('div');
+                div.className = 'measure-label' + (m.category === 'angle' ? ' angle-tag' : (m.category === 'volume' ? ' volume-tag' : ''));
+                div.innerHTML = res.badgeHtml || res.plainBadgeText || '';
+                labelsContainer.appendChild(div);
+                renderMathInElementSafe(div);
+                cachedMeasureLabelItems.push({ m, div, anchorPos: res.anchorPos });
+            });
+        }
+
+        function updateLabels() {
+            if (!camera || !labelsContainer) return;
+            if (cachedPointLabelItems.length === 0 && cachedMeasureLabelItems.length === 0 && geoState.points.some(p => !p.hidden)) {
+                rebuildLabelsDOM();
+            }
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            const tempVec = new THREE.Vector3();
+
+            cachedPointLabelItems.forEach(({ pt, div }) => {
+                if (pt.hidden || !Number.isFinite(pt.x) || !Number.isFinite(pt.y) || !Number.isFinite(pt.z)) {
+                    div.style.display = 'none';
+                    return;
+                }
+                tempVec.set(pt.x, pt.y, pt.z).project(camera);
+                if (tempVec.z > 1 || !Number.isFinite(tempVec.x) || !Number.isFinite(tempVec.y)) {
+                    div.style.display = 'none';
+                    return;
+                }
+                const x = (tempVec.x * 0.5 + 0.5) * width;
+                const y = (-(tempVec.y * 0.5) + 0.5) * height;
+                div.style.display = 'block';
+                div.style.left = `${x}px`;
+                div.style.top = `${y}px`;
+            });
+
+            // Hiển thị các nhãn đo đạc trực tiếp trên 3D Canvas (kèm chống chồng lấp tự động)
+            const placedMeasureBoxes = [];
+            cachedMeasureLabelItems.forEach(({ m, div, anchorPos }) => {
+                if (m.hiddenLabel || !anchorPos) {
+                    div.style.display = 'none';
+                    return;
+                }
+                tempVec.copy(anchorPos).project(camera);
+                if (tempVec.z > 1 || !Number.isFinite(tempVec.x) || !Number.isFinite(tempVec.y)) {
+                    div.style.display = 'none';
+                    return;
+                }
+                let x = (tempVec.x * 0.5 + 0.5) * width;
+                let y = (-(tempVec.y * 0.5) + 0.5) * height;
+
+                for (let attempt = 0; attempt < 6; attempt++) {
+                    const hit = placedMeasureBoxes.some(b => Math.abs(b.x - x) < 95 && Math.abs(b.y - y) < 26);
+                    if (!hit) break;
+                    y += 27;
+                }
+                placedMeasureBoxes.push({ x, y });
+                div.style.display = 'block';
+                div.style.left = `${x}px`;
+                div.style.top = `${y}px`;
             });
         }
 
@@ -3636,7 +4012,7 @@
                             type: 'circle',
                             circleId, angle,
                             pos: exactPos,
-                            label: (currentTool === 'delete-obj' || prioritizeCircle) ? `${label}` : `Trên ${label}`
+                            label: (currentTool === 'delete-obj' || prioritizeCircle || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
                         };
                     }
                 }
@@ -3672,7 +4048,7 @@
                     type: 'edge',
                     segId, p1Id, p2Id, t,
                     pos: exactPos,
-                    label: currentTool === 'delete-obj' ? `${label}` : `Trên ${label}`
+                    label: (currentTool === 'delete-obj' || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
                 };
             }
 
@@ -3681,7 +4057,7 @@
 
             // Kiểm tra va chạm với Bề mặt (Đa giác, Hình tròn, Khối tròn xoay, Mặt nền) theo thứ tự khoảng cách gần nhất
             const surfaceCandidates = [...faceMeshes];
-            if (['delete-obj', 'hide', 'point2d'].includes(currentTool) && hitSolidMeshes.length > 0) {
+            if (['delete-obj', 'hide', 'point2d', 'measure-volume'].includes(currentTool) && hitSolidMeshes.length > 0) {
                 surfaceCandidates.push(...hitSolidMeshes);
             }
             if (isBasePlaneVisible) surfaceCandidates.push(basePlaneMesh);
@@ -3702,7 +4078,7 @@
                     };
                 } else if (topHit.object.userData && topHit.object.userData.solidId) {
                     const { solidId, solidKind, solidName } = topHit.object.userData;
-                    if (currentTool === 'delete-obj' || currentTool === 'hide') {
+                    if (currentTool === 'delete-obj' || currentTool === 'hide' || currentTool === 'measure-volume') {
                         return {
                             type: 'solid',
                             solidId,
@@ -3815,7 +4191,7 @@
                             rRatio,
                             angle,
                             pos: topHit.point.clone(),
-                            label: `Trên bề mặt ${topHit.object.userData.faceName || 'hình tròn'}`
+                            label: currentTool.startsWith('measure-') ? `Mặt hình tròn ${cir.name || '(C)'}` : `Trên bề mặt ${topHit.object.userData.faceName || 'hình tròn'}`
                         };
                     }
                 } else {
@@ -3836,7 +4212,7 @@
                         type: 'face',
                         faceId, u, v,
                         pos: topHit.point.clone(),
-                        label: currentTool === 'delete-obj' ? `bề mặt ${faceTitle}` : `Trên bề mặt ${faceTitle}`
+                        label: (currentTool === 'delete-obj' || currentTool.startsWith('measure-')) ? `Mặt phẳng ${faceTitle}` : `Trên bề mặt ${faceTitle}`
                     };
                 }
             }
@@ -3934,16 +4310,41 @@
 
             const queue = [[p1Id]];
             const foundCycles = [];
+            let iterations = 0;
+            const maxIterations = 600;
 
-            while (queue.length > 0) {
+            while (queue.length > 0 && iterations < maxIterations) {
+                iterations++;
                 const path = queue.shift();
                 const last = path[path.length - 1];
-                if (path.length > 7) continue;
+                if (path.length >= 6) continue;
 
                 for (const next of (adj[last] || [])) {
-                    if (next === p2Id && path.length >= 2) {
-                        foundCycles.push([...path, p2Id]);
-                    } else if (next !== p2Id && !path.includes(next)) {
+                    if (next === p2Id) {
+                        if (path.length >= 2) {
+                            const cycleIds = [...path, p2Id];
+                            if (arePointsCoplanar(cycleIds)) {
+                                foundCycles.push(cycleIds);
+                            }
+                        }
+                    } else if (!path.includes(next)) {
+                        // Cắt tỉa sớm dây cung (chord) ngay trong quá trình tìm kiếm để tránh bùng nổ tổ hợp
+                        let createsChord = false;
+                        for (let i = 0; i < path.length - 1; i++) {
+                            const prev = path[i];
+                            if (adj[next] && adj[next].includes(prev)) {
+                                createsChord = true;
+                                break;
+                            }
+                        }
+                        if (createsChord) continue;
+
+                        // Cắt tỉa sớm nhánh không đồng phẳng trong không gian 3D
+                        const candidateIds = [...path, next, p2Id];
+                        if (candidateIds.length >= 4 && !arePointsCoplanar(candidateIds)) {
+                            continue;
+                        }
+
                         queue.push([...path, next]);
                     }
                 }
@@ -3965,7 +4366,7 @@
                         }
                     }
                 }
-                if (!hasChord && arePointsCoplanar(cycleIds)) {
+                if (!hasChord) {
                     addFaceIfNotExists(cycleIds);
                 }
             });
@@ -4025,6 +4426,1294 @@
                 }
             }
             addFaceIfNotExists(pointIds);
+        }
+
+        // =====================================================================
+        // HỆ THỐNG ĐO ĐẠC 3D THEO ĐỘ DÀI QUY CHUẨN (KHOẢNG CÁCH, GÓC, THỂ TÍCH)
+        // =====================================================================
+        let measurePendingItems = [];
+
+        function parsePositiveMeasureInput(rawStr) {
+            if (!rawStr) return NaN;
+            let s = String(rawStr).trim().replace(/,/g, '.');
+            s = s.replace(/√\s*\(([^)]+)\)/g, 'Math.sqrt($1)');
+            s = s.replace(/√\s*(\d+(\.\d+)?)/g, 'Math.sqrt($1)');
+            s = s.replace(/sqrt\s*\(([^)]+)\)/gi, 'Math.sqrt($1)');
+            const val = parseMathFraction(s);
+            if (!isNaN(val) && val > 0) return val;
+            try {
+                if (/^[0-9+\-*/().\sMathsqrt]+$/.test(s)) {
+                    const evaluated = Function('"use strict"; return (' + s + ')')();
+                    if (typeof evaluated === 'number' && isFinite(evaluated) && evaluated > 0) {
+                        return evaluated;
+                    }
+                }
+            } catch (_) {}
+            return NaN;
+        }
+
+        function formatMeasureNumber(val, decimals = 2) {
+            if (typeof val !== 'number' || !isFinite(val)) return '0';
+            const rounded = Math.round(val * Math.pow(10, decimals)) / Math.pow(10, decimals);
+            if (Math.abs(rounded - Math.round(rounded)) < 1e-6) {
+                return String(Math.round(rounded));
+            }
+            return rounded.toFixed(decimals).replace(/\.?0+$/, '');
+        }
+
+        function getMeasureScaleInfo() {
+            const ms = geoState.measureScale;
+            if (!ms || !ms.p1Id || !ms.p2Id || !(ms.value > 0)) return null;
+            const p1 = geoState.points.find(p => p.id === ms.p1Id && !p.hidden);
+            const p2 = geoState.points.find(p => p.id === ms.p2Id && !p.hidden);
+            if (!p1 || !p2) return null;
+            const rawDist = Math.hypot(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z);
+            if (rawDist < 1e-6) return null;
+            return {
+                p1,
+                p2,
+                name: `${p1.name}${p2.name}`,
+                value: ms.value,
+                rawDist,
+                scale: ms.value / rawDist
+            };
+        }
+
+        function hasValidMeasureScale() {
+            return getMeasureScaleInfo() !== null;
+        }
+
+        function getPlaneDataFromId(planeId) {
+            if (!planeId) return null;
+            const face = geoState.faces.find(f => f.id === planeId && !f.hidden);
+            if (face && face.pointIds && face.pointIds.length >= 3) {
+                const pts = face.pointIds.map(id => geoState.points.find(p => p.id === id)).filter(Boolean);
+                if (pts.length >= 3) {
+                    const v0 = new THREE.Vector3(pts[0].x, pts[0].y, pts[0].z);
+                    let normal = null;
+                    for (let i = 1; i < pts.length - 1 && !normal; i++) {
+                        const v1 = new THREE.Vector3(pts[i].x, pts[i].y, pts[i].z).sub(v0);
+                        for (let j = i + 1; j < pts.length; j++) {
+                            const v2 = new THREE.Vector3(pts[j].x, pts[j].y, pts[j].z).sub(v0);
+                            const cross = new THREE.Vector3().crossVectors(v1, v2);
+                            if (cross.lengthSq() > 1e-6) {
+                                normal = cross.normalize();
+                                break;
+                            }
+                        }
+                    }
+                    if (normal) {
+                        const center = new THREE.Vector3();
+                        pts.forEach(p => center.add(new THREE.Vector3(p.x, p.y, p.z)));
+                        center.divideScalar(pts.length);
+                        return {
+                            origin: v0,
+                            normal,
+                            center,
+                            pts,
+                            name: face.name || `(${pts.map(p => p.name).join('')})`,
+                            kind: 'face'
+                        };
+                    }
+                }
+            }
+            const cir = (geoState.circles || []).find(c => c.id === planeId && !c.hidden);
+            if (cir) {
+                const geom = computeCircleGeometry(cir);
+                if (geom) {
+                    return {
+                        origin: geom.center.clone(),
+                        normal: geom.normal.clone().normalize(),
+                        center: geom.center.clone(),
+                        radius: geom.radius,
+                        name: cir.name || '(C)',
+                        kind: 'circle'
+                    };
+                }
+            }
+            return null;
+        }
+
+        function computePolygonArea3DWorld(pts) {
+            if (!pts || pts.length < 3) return 0;
+            const v0 = new THREE.Vector3(pts[0].x, pts[0].y, pts[0].z);
+            const sumCross = new THREE.Vector3(0, 0, 0);
+            for (let i = 1; i < pts.length - 1; i++) {
+                const v1 = new THREE.Vector3(pts[i].x, pts[i].y, pts[i].z).sub(v0);
+                const v2 = new THREE.Vector3(pts[i + 1].x, pts[i + 1].y, pts[i + 1].z).sub(v0);
+                sumCross.add(new THREE.Vector3().crossVectors(v1, v2));
+            }
+            return 0.5 * sumCross.length();
+        }
+
+        function evaluateMeasurement(m) {
+            const scaleInfo = getMeasureScaleInfo();
+            const k = scaleInfo ? scaleInfo.scale : 1;
+            if (!m) return null;
+
+            if (m.category === 'dist') {
+                if (m.subType === 'point-point') {
+                    const A = geoState.points.find(p => p.id === m.p1Id && !p.hidden);
+                    const B = geoState.points.find(p => p.id === m.p2Id && !p.hidden);
+                    if (!A || !B) return null;
+                    const vA = new THREE.Vector3(A.x, A.y, A.z);
+                    const vB = new THREE.Vector3(B.x, B.y, B.z);
+                    const val = vA.distanceTo(vB) * k;
+                    const anchor = vA.clone().lerp(vB, 0.5);
+                    return {
+                        categoryLabel: 'K.CÁCH',
+                        titleHtml: `$${A.name}${B.name}$`,
+                        valueStr: formatMeasureNumber(val),
+                        badgeHtml: `$${A.name}${B.name} = ${formatMeasureNumber(val)}$`,
+                        plainBadgeText: `${A.name}${B.name} = ${formatMeasureNumber(val)}`,
+                        anchorPos: anchor,
+                        helperLine: [vA, vB]
+                    };
+                }
+                if (m.subType === 'circle-radius') {
+                    const cir = (geoState.circles || []).find(c => c.id === m.circleId && !c.hidden);
+                    const geom = computeCircleGeometry(cir);
+                    if (!cir || !geom) return null;
+                    const R = geom.radius * k;
+                    const C = 2 * Math.PI * R;
+                    const rimPt = geom.center.clone().addScaledVector(geom.uAxis, geom.radius);
+                    return {
+                        categoryLabel: 'Đ.TRÒN',
+                        titleHtml: `Bán kính $${cir.name || '(C)'}$`,
+                        valueStr: `R = ${formatMeasureNumber(R)} (C ≈ ${formatMeasureNumber(C)})`,
+                        badgeHtml: `$R_{${cir.name || '(C)'}} = ${formatMeasureNumber(R)}$`,
+                        plainBadgeText: `R = ${formatMeasureNumber(R)}`,
+                        anchorPos: geom.center.clone().lerp(rimPt, 0.55),
+                        helperLine: [geom.center.clone(), rimPt]
+                    };
+                }
+                if (m.subType === 'point-line') {
+                    const P = geoState.points.find(p => p.id === m.ptId && !p.hidden);
+                    const seg = geoState.segments.find(s => s.id === m.segId && !s.hidden);
+                    if (!P || !seg) return null;
+                    const A = geoState.points.find(p => p.id === seg.p1Id);
+                    const B = geoState.points.find(p => p.id === seg.p2Id);
+                    if (!A || !B) return null;
+                    const vP = new THREE.Vector3(P.x, P.y, P.z);
+                    const vA = new THREE.Vector3(A.x, A.y, A.z);
+                    const vB = new THREE.Vector3(B.x, B.y, B.z);
+                    const ab = new THREE.Vector3().subVectors(vB, vA);
+                    if (ab.lengthSq() < 1e-8) return null;
+                    const t = new THREE.Vector3().subVectors(vP, vA).dot(ab) / ab.lengthSq();
+                    const vH = vA.clone().addScaledVector(ab, t);
+                    const val = vP.distanceTo(vH) * k;
+                    return {
+                        categoryLabel: 'K.CÁCH',
+                        titleHtml: `$d(${P.name}, ${A.name}${B.name})$`,
+                        valueStr: formatMeasureNumber(val),
+                        badgeHtml: `$d(${P.name}, ${A.name}${B.name}) = ${formatMeasureNumber(val)}$`,
+                        plainBadgeText: `d(${P.name}, ${A.name}${B.name}) = ${formatMeasureNumber(val)}`,
+                        anchorPos: vP.clone().lerp(vH, 0.5),
+                        helperLine: [vP, vH],
+                        footPoint: vH
+                    };
+                }
+                if (m.subType === 'point-plane') {
+                    const P = geoState.points.find(p => p.id === m.ptId && !p.hidden);
+                    const plane = getPlaneDataFromId(m.planeId);
+                    if (!P || !plane) return null;
+                    const vP = new THREE.Vector3(P.x, P.y, P.z);
+                    const signedDist = new THREE.Vector3().subVectors(vP, plane.origin).dot(plane.normal);
+                    const vH = vP.clone().addScaledVector(plane.normal, -signedDist);
+                    const val = Math.abs(signedDist) * k;
+                    return {
+                        categoryLabel: 'K.CÁCH',
+                        titleHtml: `$d(${P.name}, ${plane.name})$`,
+                        valueStr: formatMeasureNumber(val),
+                        badgeHtml: `$d(${P.name}, ${plane.name}) = ${formatMeasureNumber(val)}$`,
+                        plainBadgeText: `d(${P.name}, ${plane.name}) = ${formatMeasureNumber(val)}`,
+                        anchorPos: vP.clone().lerp(vH, 0.5),
+                        helperLine: [vP, vH],
+                        footPoint: vH
+                    };
+                }
+                if (m.subType === 'line-line') {
+                    const seg1 = geoState.segments.find(s => s.id === m.seg1Id && !s.hidden);
+                    const seg2 = geoState.segments.find(s => s.id === m.seg2Id && !s.hidden);
+                    if (!seg1 || !seg2) return null;
+                    const A1 = geoState.points.find(p => p.id === seg1.p1Id);
+                    const B1 = geoState.points.find(p => p.id === seg1.p2Id);
+                    const A2 = geoState.points.find(p => p.id === seg2.p1Id);
+                    const B2 = geoState.points.find(p => p.id === seg2.p2Id);
+                    if (!A1 || !B1 || !A2 || !B2) return null;
+                    const vA1 = new THREE.Vector3(A1.x, A1.y, A1.z);
+                    const vB1 = new THREE.Vector3(B1.x, B1.y, B1.z);
+                    const vA2 = new THREE.Vector3(A2.x, A2.y, A2.z);
+                    const vB2 = new THREE.Vector3(B2.x, B2.y, B2.z);
+                    const u = new THREE.Vector3().subVectors(vB1, vA1);
+                    const v = new THREE.Vector3().subVectors(vB2, vA2);
+                    const w0 = new THREE.Vector3().subVectors(vA1, vA2);
+                    const crossUV = new THREE.Vector3().crossVectors(u, v);
+                    let rawDist = 0;
+                    if (crossUV.length() > 1e-6) {
+                        rawDist = Math.abs(w0.dot(crossUV)) / crossUV.length();
+                    } else {
+                        rawDist = new THREE.Vector3().crossVectors(w0, u).length() / Math.max(1e-6, u.length());
+                    }
+                    const val = rawDist * k;
+                    const mid1 = vA1.clone().lerp(vB1, 0.5);
+                    const mid2 = vA2.clone().lerp(vB2, 0.5);
+                    const name1 = `${A1.name}${B1.name}`;
+                    const name2 = `${A2.name}${B2.name}`;
+                    return {
+                        categoryLabel: 'K.CÁCH',
+                        titleHtml: `$d(${name1}, ${name2})$`,
+                        valueStr: formatMeasureNumber(val),
+                        badgeHtml: `$d(${name1}, ${name2}) = ${formatMeasureNumber(val)}$`,
+                        plainBadgeText: `d(${name1}, ${name2}) = ${formatMeasureNumber(val)}`,
+                        anchorPos: mid1.clone().lerp(mid2, 0.5),
+                        helperLine: [mid1, mid2]
+                    };
+                }
+            }
+
+            if (m.category === 'angle') {
+                if (m.subType === '3pts') {
+                    const A = geoState.points.find(p => p.id === m.p1Id && !p.hidden);
+                    const B = geoState.points.find(p => p.id === m.p2Id && !p.hidden);
+                    const C = geoState.points.find(p => p.id === m.p3Id && !p.hidden);
+                    if (!A || !B || !C) return null;
+                    const vA = new THREE.Vector3(A.x, A.y, A.z);
+                    const vB = new THREE.Vector3(B.x, B.y, B.z);
+                    const vC = new THREE.Vector3(C.x, C.y, C.z);
+                    const u = new THREE.Vector3().subVectors(vA, vB);
+                    const v = new THREE.Vector3().subVectors(vC, vB);
+                    if (u.lengthSq() < 1e-8 || v.lengthSq() < 1e-8) return null;
+                    const cosTheta = Math.max(-1, Math.min(1, u.clone().normalize().dot(v.clone().normalize())));
+                    const deg = (Math.acos(cosTheta) * 180) / Math.PI;
+                    const bisector = u.clone().normalize().add(v.clone().normalize());
+                    if (bisector.lengthSq() < 1e-6) bisector.set(0, 1, 0);
+                    else bisector.normalize();
+                    const arcRadius = Math.min(0.85, 0.28 * Math.min(u.length(), v.length()));
+                    return {
+                        categoryLabel: 'GÓC',
+                        titleHtml: `$\\widehat{${A.name}${B.name}${C.name}}$`,
+                        valueStr: `${formatMeasureNumber(deg, 1)}°`,
+                        badgeHtml: `$\\widehat{${A.name}${B.name}${C.name}} = ${formatMeasureNumber(deg, 1)}^\\circ$`,
+                        plainBadgeText: `∠${A.name}${B.name}${C.name} = ${formatMeasureNumber(deg, 1)}°`,
+                        anchorPos: vB.clone().addScaledVector(bisector, arcRadius * 1.35),
+                        angleArc: { vertex: vB, dirA: u.clone().normalize(), dirC: v.clone().normalize(), radius: arcRadius }
+                    };
+                }
+                if (m.subType === 'line-line') {
+                    const seg1 = geoState.segments.find(s => s.id === m.seg1Id && !s.hidden);
+                    const seg2 = geoState.segments.find(s => s.id === m.seg2Id && !s.hidden);
+                    if (!seg1 || !seg2) return null;
+                    const A1 = geoState.points.find(p => p.id === seg1.p1Id);
+                    const B1 = geoState.points.find(p => p.id === seg1.p2Id);
+                    const A2 = geoState.points.find(p => p.id === seg2.p1Id);
+                    const B2 = geoState.points.find(p => p.id === seg2.p2Id);
+                    if (!A1 || !B1 || !A2 || !B2) return null;
+                    const u = new THREE.Vector3(B1.x - A1.x, B1.y - A1.y, B1.z - A1.z);
+                    const v = new THREE.Vector3(B2.x - A2.x, B2.y - A2.y, B2.z - A2.z);
+                    if (u.lengthSq() < 1e-8 || v.lengthSq() < 1e-8) return null;
+                    const absCos = Math.min(1, Math.abs(u.clone().normalize().dot(v.clone().normalize())));
+                    const deg = (Math.acos(absCos) * 180) / Math.PI;
+                    const mid1 = new THREE.Vector3((A1.x + B1.x) * 0.5, (A1.y + B1.y) * 0.5, (A1.z + B1.z) * 0.5);
+                    const mid2 = new THREE.Vector3((A2.x + B2.x) * 0.5, (A2.y + B2.y) * 0.5, (A2.z + B2.z) * 0.5);
+                    const name1 = `${A1.name}${B1.name}`;
+                    const name2 = `${A2.name}${B2.name}`;
+                    return {
+                        categoryLabel: 'GÓC',
+                        titleHtml: `$(${name1}, ${name2})$`,
+                        valueStr: `${formatMeasureNumber(deg, 1)}°`,
+                        badgeHtml: `$(${name1}, ${name2}) = ${formatMeasureNumber(deg, 1)}^\\circ$`,
+                        plainBadgeText: `(${name1}, ${name2}) = ${formatMeasureNumber(deg, 1)}°`,
+                        anchorPos: mid1.lerp(mid2, 0.5)
+                    };
+                }
+                if (m.subType === 'line-plane') {
+                    const seg = geoState.segments.find(s => s.id === m.segId && !s.hidden);
+                    const plane = getPlaneDataFromId(m.planeId);
+                    if (!seg || !plane) return null;
+                    const A = geoState.points.find(p => p.id === seg.p1Id);
+                    const B = geoState.points.find(p => p.id === seg.p2Id);
+                    if (!A || !B) return null;
+                    const u = new THREE.Vector3(B.x - A.x, B.y - A.y, B.z - A.z);
+                    if (u.lengthSq() < 1e-8) return null;
+                    const sinPhi = Math.min(1, Math.abs(u.clone().normalize().dot(plane.normal)));
+                    const deg = (Math.asin(sinPhi) * 180) / Math.PI;
+                    const midSeg = new THREE.Vector3((A.x + B.x) * 0.5, (A.y + B.y) * 0.5, (A.z + B.z) * 0.5);
+                    const segName = `${A.name}${B.name}`;
+                    return {
+                        categoryLabel: 'GÓC',
+                        titleHtml: `$(${segName}, ${plane.name})$`,
+                        valueStr: `${formatMeasureNumber(deg, 1)}°`,
+                        badgeHtml: `$(${segName}, ${plane.name}) = ${formatMeasureNumber(deg, 1)}^\\circ$`,
+                        plainBadgeText: `(${segName}, ${plane.name}) = ${formatMeasureNumber(deg, 1)}°`,
+                        anchorPos: midSeg.lerp(plane.center, 0.35)
+                    };
+                }
+                if (m.subType === 'plane-plane') {
+                    const p1 = getPlaneDataFromId(m.plane1Id);
+                    const p2 = getPlaneDataFromId(m.plane2Id);
+                    if (!p1 || !p2) return null;
+                    const absCos = Math.min(1, Math.abs(p1.normal.dot(p2.normal)));
+                    const deg = (Math.acos(absCos) * 180) / Math.PI;
+                    return {
+                        categoryLabel: 'GÓC',
+                        titleHtml: `$(${p1.name}, ${p2.name})$`,
+                        valueStr: `${formatMeasureNumber(deg, 1)}°`,
+                        badgeHtml: `$(${p1.name}, ${p2.name}) = ${formatMeasureNumber(deg, 1)}^\\circ$`,
+                        plainBadgeText: `(${p1.name}, ${p2.name}) = ${formatMeasureNumber(deg, 1)}°`,
+                        anchorPos: p1.center.clone().lerp(p2.center, 0.5)
+                    };
+                }
+            }
+
+            if (m.category === 'volume') {
+                const k3 = k * k * k;
+                if (m.subType === 'solid') {
+                    const sol = (geoState.solids || []).find(s => s.id === m.solidId && !s.hidden);
+                    if (!sol) return null;
+                    if (sol.kind === 'sphere') {
+                        const sGeom = computeSphereGeometry(sol);
+                        if (!sGeom) return null;
+                        const vol = (4 / 3) * Math.PI * Math.pow(sGeom.radius, 3) * k3;
+                        return {
+                            categoryLabel: 'THỂ TÍCH',
+                            titleHtml: `$V_{${sol.name || 'Cầu'}}$`,
+                            valueStr: formatMeasureNumber(vol),
+                            badgeHtml: `$V_{${sol.name || 'Cầu'}} = ${formatMeasureNumber(vol)}$`,
+                            plainBadgeText: `V = ${formatMeasureNumber(vol)}`,
+                            anchorPos: sGeom.center.clone().add(new THREE.Vector3(0, sGeom.radius * 0.45, 0))
+                        };
+                    }
+                    if (sol.kind === 'cone') {
+                        const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
+                        const S = geoState.points.find(p => p.id === sol.apexId);
+                        const geom = computeCircleGeometry(cir);
+                        if (!geom || !S) return null;
+                        const vS = new THREE.Vector3(S.x, S.y, S.z);
+                        const hRaw = Math.abs(new THREE.Vector3().subVectors(vS, geom.center).dot(geom.normal));
+                        const baseAreaRaw = Math.PI * geom.radius * geom.radius;
+                        const vol = (1 / 3) * baseAreaRaw * hRaw * k3;
+                        return {
+                            categoryLabel: 'THỂ TÍCH',
+                            titleHtml: `$V_{\\text{Nón }(${S.name}, ${cir.name || 'C'})}$`,
+                            valueStr: formatMeasureNumber(vol),
+                            badgeHtml: `$V_{\\text{Nón}} = ${formatMeasureNumber(vol)}$`,
+                            plainBadgeText: `V(Nón) = ${formatMeasureNumber(vol)}`,
+                            anchorPos: geom.center.clone().lerp(vS, 0.38)
+                        };
+                    }
+                    if (sol.kind === 'frustum') {
+                        const cir1 = (geoState.circles || []).find(c => c.id === sol.circle1Id);
+                        const cir2 = (geoState.circles || []).find(c => c.id === sol.circle2Id);
+                        const g1 = computeCircleGeometry(cir1);
+                        const g2 = computeCircleGeometry(cir2);
+                        if (!g1 || !g2) return null;
+                        const hRaw = Math.abs(new THREE.Vector3().subVectors(g2.center, g1.center).dot(g1.normal));
+                        const r1 = g1.radius;
+                        const r2 = g2.radius;
+                        const vol = (Math.PI * hRaw / 3) * (r1 * r1 + r1 * r2 + r2 * r2) * k3;
+                        const isCyl = Math.abs(r1 - r2) < 1e-3;
+                        const labelTag = isCyl ? 'Trụ' : 'Nón cụt';
+                        return {
+                            categoryLabel: 'THỂ TÍCH',
+                            titleHtml: `$V_{\\text{${labelTag}}}$`,
+                            valueStr: formatMeasureNumber(vol),
+                            badgeHtml: `$V_{\\text{${labelTag}}} = ${formatMeasureNumber(vol)}$`,
+                            plainBadgeText: `V(${labelTag}) = ${formatMeasureNumber(vol)}`,
+                            anchorPos: g1.center.clone().lerp(g2.center, 0.5)
+                        };
+                    }
+                }
+                if (m.subType === 'pyramid') {
+                    const S = geoState.points.find(p => p.id === m.apexId && !p.hidden);
+                    const plane = getPlaneDataFromId(m.basePlaneId);
+                    if (!S || !plane) return null;
+                    const vS = new THREE.Vector3(S.x, S.y, S.z);
+                    const hRaw = Math.abs(new THREE.Vector3().subVectors(vS, plane.origin).dot(plane.normal));
+                    let baseAreaRaw = 0;
+                    let baseShortName = plane.name.replace(/[()]/g, '');
+                    if (plane.kind === 'face') {
+                        baseAreaRaw = computePolygonArea3DWorld(plane.pts);
+                    } else if (plane.kind === 'circle') {
+                        baseAreaRaw = Math.PI * plane.radius * plane.radius;
+                    }
+                    const vol = (1 / 3) * baseAreaRaw * hRaw * k3;
+                    return {
+                        categoryLabel: 'THỂ TÍCH',
+                        titleHtml: `$V_{${S.name}.${baseShortName}}$`,
+                        valueStr: formatMeasureNumber(vol),
+                        badgeHtml: `$V_{${S.name}.${baseShortName}} = ${formatMeasureNumber(vol)}$`,
+                        plainBadgeText: `V(${S.name}.${baseShortName}) = ${formatMeasureNumber(vol)}`,
+                        anchorPos: plane.center.clone().lerp(vS, 0.35)
+                    };
+                }
+                if (m.subType === 'prism') {
+                    const topPt = geoState.points.find(p => p.id === m.topPtId && !p.hidden);
+                    const plane = getPlaneDataFromId(m.basePlaneId);
+                    if (!topPt || !plane) return null;
+                    const vTop = new THREE.Vector3(topPt.x, topPt.y, topPt.z);
+                    const hRaw = Math.abs(new THREE.Vector3().subVectors(vTop, plane.origin).dot(plane.normal));
+                    let baseAreaRaw = 0;
+                    let baseShortName = plane.name.replace(/[()]/g, '');
+                    if (plane.kind === 'face') {
+                        baseAreaRaw = computePolygonArea3DWorld(plane.pts);
+                    } else if (plane.kind === 'circle') {
+                        baseAreaRaw = Math.PI * plane.radius * plane.radius;
+                    }
+                    const vol = baseAreaRaw * hRaw * k3;
+                    return {
+                        categoryLabel: 'THỂ TÍCH',
+                        titleHtml: `$V_{\\text{Lăng trụ }(${baseShortName})}$`,
+                        valueStr: formatMeasureNumber(vol),
+                        badgeHtml: `$V_{\\text{L.Trụ}} = ${formatMeasureNumber(vol)}$`,
+                        plainBadgeText: `V(L.Trụ) = ${formatMeasureNumber(vol)}`,
+                        anchorPos: plane.center.clone().lerp(vTop, 0.5)
+                    };
+                }
+                if (m.subType === 'tetrahedron') {
+                    const A = geoState.points.find(p => p.id === m.p1Id && !p.hidden);
+                    const B = geoState.points.find(p => p.id === m.p2Id && !p.hidden);
+                    const C = geoState.points.find(p => p.id === m.p3Id && !p.hidden);
+                    const D = geoState.points.find(p => p.id === m.p4Id && !p.hidden);
+                    if (!A || !B || !C || !D) return null;
+                    const vA = new THREE.Vector3(A.x, A.y, A.z);
+                    const vB = new THREE.Vector3(B.x, B.y, B.z);
+                    const vC = new THREE.Vector3(C.x, C.y, C.z);
+                    const vD = new THREE.Vector3(D.x, D.y, D.z);
+                    const ab = new THREE.Vector3().subVectors(vB, vA);
+                    const ac = new THREE.Vector3().subVectors(vC, vA);
+                    const ad = new THREE.Vector3().subVectors(vD, vA);
+                    const rawVol = Math.abs(ab.dot(new THREE.Vector3().crossVectors(ac, ad))) / 6;
+                    const vol = rawVol * k3;
+                    const center = new THREE.Vector3().add(vA).add(vB).add(vC).add(vD).multiplyScalar(0.25);
+                    const name = `${A.name}${B.name}${C.name}${D.name}`;
+                    return {
+                        categoryLabel: 'THỂ TÍCH',
+                        titleHtml: `$V_{${name}}$`,
+                        valueStr: formatMeasureNumber(vol),
+                        badgeHtml: `$V_{${name}} = ${formatMeasureNumber(vol)}$`,
+                        plainBadgeText: `V(${name}) = ${formatMeasureNumber(vol)}`,
+                        anchorPos: center
+                    };
+                }
+            }
+            return null;
+        }
+
+        function renderMeasurement3DHelpers() {
+            if (!scene || !geoState.measurements) return;
+            geoState.measurements.forEach(m => {
+                const res = evaluateMeasurement(m);
+                if (!res) return;
+
+                if (res.helperLine && res.helperLine.length === 2 && (m.subType === 'point-line' || m.subType === 'point-plane')) {
+                    const lineGeo = new THREE.BufferGeometry().setFromPoints(res.helperLine);
+                    const lineMat = new THREE.LineDashedMaterial({
+                        color: 0xd97706,
+                        dashSize: 0.14,
+                        gapSize: 0.09,
+                        depthTest: false,
+                        transparent: true,
+                        opacity: 0.85
+                    });
+                    const line = new THREE.Line(lineGeo, lineMat);
+                    line.computeLineDistances();
+                    line.renderOrder = 14;
+                    scene.add(line);
+                    edgeMeshes.push(line);
+                }
+
+                if (res.angleArc) {
+                    const { vertex, dirA, dirC, radius } = res.angleArc;
+                    const arcPts = [];
+                    const steps = 24;
+                    for (let i = 0; i <= steps; i++) {
+                        const t = i / steps;
+                        const dir = dirA.clone().lerp(dirC, t);
+                        if (dir.lengthSq() > 1e-6) {
+                            dir.normalize();
+                            arcPts.push(vertex.clone().addScaledVector(dir, radius));
+                        }
+                    }
+                    if (arcPts.length >= 2) {
+                        const arcGeo = new THREE.BufferGeometry().setFromPoints(arcPts);
+                        const arcMat = new THREE.LineBasicMaterial({
+                            color: 0x059669,
+                            depthTest: false,
+                            transparent: true,
+                            opacity: 0.9
+                        });
+                        const arcLine = new THREE.Line(arcGeo, arcMat);
+                        arcLine.renderOrder = 14;
+                        scene.add(arcLine);
+                        edgeMeshes.push(arcLine);
+                    }
+                }
+            });
+        }
+
+        function updateMeasurementPanel() {
+            const panel = document.getElementById('measurement-panel');
+            const scaleBox = document.getElementById('measure-scale-status');
+            const scaleText = document.getElementById('measure-scale-text');
+            const listEl = document.getElementById('measure-rows-container');
+            if (!panel || !scaleBox || !scaleText || !listEl) return;
+
+            const scaleInfo = getMeasureScaleInfo();
+            const hasMeasurements = geoState.measurements && geoState.measurements.length > 0;
+            const isMeasureToolActive = ['measure-scale', 'measure-dist', 'measure-angle', 'measure-volume'].includes(currentTool);
+
+            panel.querySelectorAll('.measure-qtool-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-mtool') === currentTool);
+            });
+
+            if (!scaleInfo && !hasMeasurements && !isMeasureToolActive) {
+                panel.style.display = 'none';
+                return;
+            }
+
+            panel.style.display = 'flex';
+            if (scaleInfo) {
+                scaleBox.classList.remove('uncalibrated');
+                scaleText.innerHTML = `Quy chuẩn: $${scaleInfo.name} = ${formatMeasureNumber(scaleInfo.value)}$`;
+                renderMathInElementSafe(scaleText);
+            } else {
+                scaleBox.classList.add('uncalibrated');
+                scaleText.innerHTML = `Quy chuẩn: Chưa quy định (VD: $AB = 5$)`;
+                renderMathInElementSafe(scaleText);
+            }
+
+            listEl.innerHTML = '';
+            if (!hasMeasurements) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.style.cssText = 'font-size:11.5px; color:#64748b; line-height:1.45; padding:4px 2px;';
+                emptyDiv.innerHTML = scaleInfo
+                    ? `Đã đặt quy chuẩn <b>${scaleInfo.name} = ${formatMeasureNumber(scaleInfo.value)}</b>. Chọn <b>Khoảng cách / Đo góc / Thể tích</b> rồi click đối tượng trên hình (hoặc nhấn <b>"+ Đo theo DS"</b>).`
+                    : `Trước khi đo, hãy quy định 1 độ dài chuẩn (ví dụ: <b>AB = 5</b>) bằng nút <b>"Đặt quy chuẩn"</b> phía trên.`;
+                listEl.appendChild(emptyDiv);
+            } else {
+                geoState.measurements.forEach((m, idx) => {
+                    const res = evaluateMeasurement(m);
+                    if (!res) return;
+                    const catClass = m.category === 'angle' ? 'angle' : (m.category === 'volume' ? 'volume' : '');
+                    const eyeSvg = m.hiddenLabel
+                        ? `<svg class="svg-ic" style="width:13px;height:13px;opacity:0.45;" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+                        : `<svg class="svg-ic" style="width:13px;height:13px;" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+                    const item = document.createElement('div');
+                    item.className = 'measure-row';
+                    item.innerHTML = `
+                        <div class="measure-row-left">
+                            <span class="measure-badge-type ${catClass}">${res.categoryLabel}</span>
+                            <span class="measure-row-text">${res.titleHtml}</span>
+                        </div>
+                        <div class="measure-row-actions">
+                            <span class="measure-row-val ${catClass}">${res.valueStr}</span>
+                            <button class="measure-icon-btn" title="${m.hiddenLabel ? 'Hiện nhãn trên 3D' : 'Ẩn nhãn trên 3D'}" onclick="toggleMeasurementLabel(${idx})">${eyeSvg}</button>
+                            <button class="measure-icon-btn del" title="Xóa phép đo này" onclick="removeMeasurementByIndex(${idx})">&times;</button>
+                        </div>
+                    `;
+                    listEl.appendChild(item);
+                    renderMathInElementSafe(item);
+                });
+            }
+        }
+
+        function toggleMeasurementLabel(idx) {
+            if (!geoState.measurements || idx < 0 || idx >= geoState.measurements.length) return;
+            geoState.measurements[idx].hiddenLabel = !geoState.measurements[idx].hiddenLabel;
+            rebuildLabelsDOM();
+            updateLabels();
+            updateMeasurementPanel();
+            scheduleAutoSaveState();
+        }
+
+        function removeMeasurementByIndex(idx) {
+            if (!geoState.measurements || idx < 0 || idx >= geoState.measurements.length) return;
+            saveHistory();
+            geoState.measurements.splice(idx, 1);
+            updateSceneFromState();
+        }
+
+        function clearAllMeasurements() {
+            if (!geoState.measurements || geoState.measurements.length === 0) return;
+            saveHistory();
+            geoState.measurements = [];
+            updateSceneFromState();
+        }
+
+        function openSetScaleForPairModal(p1Id, p2Id, nextToolAfterSave = null) {
+            const p1 = geoState.points.find(p => p.id === p1Id);
+            const p2 = geoState.points.find(p => p.id === p2Id);
+            if (!p1 || !p2 || p1.id === p2.id) return;
+            const currentVal = (geoState.measureScale && ((geoState.measureScale.p1Id === p1Id && geoState.measureScale.p2Id === p2Id) || (geoState.measureScale.p1Id === p2Id && geoState.measureScale.p2Id === p1Id)))
+                ? geoState.measureScale.value
+                : 5;
+
+            openModal(
+                `Quy định độ dài chuẩn cho đoạn <b>$${p1.name}${p2.name}$</b>`,
+                `<div class="modal-field">
+                    <label>Nhập độ dài quy chuẩn cho đoạn <b>$${p1.name}${p2.name}$</b> (Tất cả khoảng cách & thể tích sẽ được tính theo quy chuẩn này):</label>
+                    <input type="text" id="scale-len-input" value="${currentVal}">
+                    <div class="preset-chips">
+                        <span class="chip" onclick="setInputValue('scale-len-input', '1')">1 (a = 1)</span>
+                        <span class="chip" onclick="setInputValue('scale-len-input', '2')">2</span>
+                        <span class="chip" onclick="setInputValue('scale-len-input', '3')">3</span>
+                        <span class="chip" onclick="setInputValue('scale-len-input', '4')">4</span>
+                        <span class="chip" onclick="setInputValue('scale-len-input', '5')">5</span>
+                        <span class="chip" onclick="setInputValue('scale-len-input', '6')">6</span>
+                        <span class="chip" onclick="setInputValue('scale-len-input', 'sqrt(2)')">$\\sqrt{2}$</span>
+                        <span class="chip" onclick="setInputValue('scale-len-input', 'sqrt(3)')">$\\sqrt{3}$</span>
+                    </div>
+                </div>`,
+                () => {
+                    const val = parsePositiveMeasureInput(document.getElementById('scale-len-input').value);
+                    if (!isNaN(val) && val > 0) {
+                        saveHistory();
+                        geoState.measureScale = { p1Id: p1.id, p2Id: p2.id, value: val };
+                        measurePendingItems = [];
+                        selectedPointIds = [];
+                        if (nextToolAfterSave) {
+                            selectTool(nextToolAfterSave);
+                        } else {
+                            updateSceneFromState();
+                        }
+                        const guideSpan = document.getElementById('guide-span');
+                        if (guideSpan) {
+                            guideSpan.innerHTML = `Đã thiết lập quy chuẩn độ dài <b>$${p1.name}${p2.name} = ${formatMeasureNumber(val)}$</b>! Mọi phép đo khoảng cách và thể tích đều tính theo chuẩn này.`;
+                            renderMathInElementSafe(guideSpan);
+                        }
+                    }
+                }
+            );
+        }
+
+        function openReferenceScaleModal(nextToolAfterSave = null) {
+            const visiblePts = geoState.points.filter(p => !p.hidden);
+            if (visiblePts.length < 2) {
+                const guideSpan = document.getElementById('guide-span');
+                if (guideSpan) {
+                    guideSpan.innerHTML = `<span style="color:#fbbf24;">Cần ít nhất 2 điểm trên hình để quy định độ dài chuẩn!</span>`;
+                }
+                return;
+            }
+
+            let defaultP1Id = visiblePts[0].id;
+            let defaultP2Id = visiblePts[1].id;
+            let defaultVal = 5;
+
+            if (geoState.measureScale && geoState.measureScale.p1Id && geoState.measureScale.p2Id) {
+                defaultP1Id = geoState.measureScale.p1Id;
+                defaultP2Id = geoState.measureScale.p2Id;
+                defaultVal = geoState.measureScale.value || 5;
+            } else {
+                const ptA = visiblePts.find(p => p.name === 'A');
+                const ptB = visiblePts.find(p => p.name === 'B');
+                if (ptA && ptB) {
+                    defaultP1Id = ptA.id;
+                    defaultP2Id = ptB.id;
+                }
+            }
+
+            const buildPtOptions = (selectedId) => visiblePts.map(p =>
+                `<option value="${p.id}" ${p.id === selectedId ? 'selected' : ''}>Điểm ${p.name}</option>`
+            ).join('');
+
+            const segChipsHtml = geoState.segments
+                .filter(s => !s.hidden && !s.isLine)
+                .slice(0, 8)
+                .map(s => {
+                    const p1 = geoState.points.find(p => p.id === s.p1Id);
+                    const p2 = geoState.points.find(p => p.id === s.p2Id);
+                    if (!p1 || !p2) return '';
+                    return `<span class="chip" onclick="document.getElementById('scale-p1-select').value='${p1.id}'; document.getElementById('scale-p2-select').value='${p2.id}';">Đoạn ${p1.name}${p2.name}</span>`;
+                }).join('');
+
+            openModal(
+                `Quy định độ dài chuẩn trước khi đo (VD: $AB = 5$)`,
+                `<div class="modal-field">
+                    <label>1. Chọn 2 điểm đầu mút của đoạn thẳng làm quy chuẩn:</label>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                        <select id="scale-p1-select">${buildPtOptions(defaultP1Id)}</select>
+                        <select id="scale-p2-select">${buildPtOptions(defaultP2Id)}</select>
+                    </div>
+                    ${segChipsHtml ? `<div class="preset-chips" style="margin-top:6px;">${segChipsHtml}</div>` : ''}
+                </div>
+                <div class="modal-field">
+                    <label>2. Nhập độ dài quy chuẩn (VD: $5$, $a=1$, $\\sqrt{3}$):</label>
+                    <input type="text" id="scale-modal-val-input" value="${defaultVal}">
+                    <div class="preset-chips">
+                        <span class="chip" onclick="setInputValue('scale-modal-val-input', '1')">1 (Đơn vị a)</span>
+                        <span class="chip" onclick="setInputValue('scale-modal-val-input', '2')">2</span>
+                        <span class="chip" onclick="setInputValue('scale-modal-val-input', '3')">3</span>
+                        <span class="chip" onclick="setInputValue('scale-modal-val-input', '4')">4</span>
+                        <span class="chip" onclick="setInputValue('scale-modal-val-input', '5')">5</span>
+                        <span class="chip" onclick="setInputValue('scale-modal-val-input', '6')">6</span>
+                        <span class="chip" onclick="setInputValue('scale-modal-val-input', 'sqrt(2)')">$\\sqrt{2}$</span>
+                        <span class="chip" onclick="setInputValue('scale-modal-val-input', 'sqrt(3)')">$\\sqrt{3}$</span>
+                    </div>
+                </div>`,
+                () => {
+                    const p1Id = document.getElementById('scale-p1-select').value;
+                    const p2Id = document.getElementById('scale-p2-select').value;
+                    const val = parsePositiveMeasureInput(document.getElementById('scale-modal-val-input').value);
+                    if (p1Id && p2Id && p1Id !== p2Id && !isNaN(val) && val > 0) {
+                        saveHistory();
+                        geoState.measureScale = { p1Id, p2Id, value: val };
+                        const p1 = geoState.points.find(p => p.id === p1Id);
+                        const p2 = geoState.points.find(p => p.id === p2Id);
+                        if (nextToolAfterSave) {
+                            selectTool(nextToolAfterSave);
+                        } else {
+                            updateSceneFromState();
+                        }
+                        const guideSpan = document.getElementById('guide-span');
+                        if (guideSpan && p1 && p2) {
+                            guideSpan.innerHTML = `Đã đặt chuẩn <b>$${p1.name}${p2.name} = ${formatMeasureNumber(val)}$</b>. Hãy click chọn đối tượng trên hình để đo!`;
+                            renderMathInElementSafe(guideSpan);
+                        }
+                    }
+                }
+            );
+        }
+
+        function addMeasurementRecord(record) {
+            if (!geoState.measurements) geoState.measurements = [];
+            geoState.measurements.push({
+                id: 'meas_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                ...record
+            });
+            updateSceneFromState();
+        }
+
+        function openQuickMeasureBuilderModal() {
+            if (!hasValidMeasureScale()) {
+                openReferenceScaleModal(currentTool.startsWith('measure-') ? currentTool : 'measure-dist');
+                return;
+            }
+
+            const visiblePts = geoState.points.filter(p => !p.hidden);
+            const visibleSegs = geoState.segments.filter(s => !s.hidden);
+            const visibleFaces = geoState.faces.filter(f => !f.hidden);
+            const visibleCircles = (geoState.circles || []).filter(c => !c.hidden);
+            const visibleSolids = (geoState.solids || []).filter(s => !s.hidden);
+
+            const ptOpts = visiblePts.map(p => `<option value="${p.id}">Điểm ${p.name}</option>`).join('');
+            const segOpts = visibleSegs.map(s => {
+                const p1 = geoState.points.find(p => p.id === s.p1Id);
+                const p2 = geoState.points.find(p => p.id === s.p2Id);
+                const lbl = (p1 && p2) ? `${p1.name}${p2.name}` : s.id;
+                return `<option value="${s.id}">${s.isLine ? 'Đường thẳng' : 'Đoạn'} ${lbl}</option>`;
+            }).join('');
+
+            const planeOpts = [
+                ...visibleFaces.map(f => `<option value="${f.id}">Mặt đa giác ${f.name}</option>`),
+                ...visibleCircles.map(c => `<option value="${c.id}">Mặt hình tròn ${c.name || '(C)'}</option>`)
+            ].join('');
+
+            const solidOpts = visibleSolids.map(s => `<option value="${s.id}">${s.name || 'Khối tròn xoay'}</option>`).join('');
+
+            let defaultKind = 'dist-pt-pt';
+            if (currentTool === 'measure-angle') defaultKind = 'angle-3pts';
+            if (currentTool === 'measure-volume') defaultKind = visibleSolids.length > 0 ? 'vol-solid' : 'vol-pyramid';
+
+            window.updateQuickMeasureSubForm = () => {
+                const kind = document.getElementById('qm-kind-select').value;
+                const containerEl = document.getElementById('qm-dynamic-fields');
+                if (!containerEl) return;
+                if (kind === 'dist-pt-pt') {
+                    containerEl.innerHTML = `
+                        <label>Chọn 2 điểm $A, B$:</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <select id="qm-p1">${ptOpts}</select>
+                            <select id="qm-p2">${ptOpts}</select>
+                        </div>`;
+                    const s2 = containerEl.querySelector('#qm-p2');
+                    if (s2 && s2.options.length > 1) s2.selectedIndex = 1;
+                } else if (kind === 'dist-pt-line') {
+                    containerEl.innerHTML = `
+                        <label>Chọn Điểm $M$ và Đường/Đoạn thẳng $\\Delta$:</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <select id="qm-pt">${ptOpts}</select>
+                            <select id="qm-seg">${segOpts}</select>
+                        </div>`;
+                } else if (kind === 'dist-pt-plane') {
+                    containerEl.innerHTML = `
+                        <label>Chọn Điểm $M$ và Mặt phẳng $(P)$:</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <select id="qm-pt">${ptOpts}</select>
+                            <select id="qm-plane">${planeOpts}</select>
+                        </div>`;
+                } else if (kind === 'dist-line-line') {
+                    containerEl.innerHTML = `
+                        <label>Chọn 2 Đường/Đoạn thẳng $\\Delta_1, \\Delta_2$:</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <select id="qm-seg1">${segOpts}</select>
+                            <select id="qm-seg2">${segOpts}</select>
+                        </div>`;
+                    const s2 = containerEl.querySelector('#qm-seg2');
+                    if (s2 && s2.options.length > 1) s2.selectedIndex = 1;
+                } else if (kind === 'angle-3pts') {
+                    containerEl.innerHTML = `
+                        <label>Chọn 3 điểm $A, B$ (đỉnh góc), $C$ ($\\widehat{ABC}$):</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+                            <select id="qm-p1">${ptOpts}</select>
+                            <select id="qm-p2">${ptOpts}</select>
+                            <select id="qm-p3">${ptOpts}</select>
+                        </div>`;
+                    const s2 = containerEl.querySelector('#qm-p2');
+                    const s3 = containerEl.querySelector('#qm-p3');
+                    if (s2 && s2.options.length > 1) s2.selectedIndex = 1;
+                    if (s3 && s3.options.length > 2) s3.selectedIndex = 2;
+                } else if (kind === 'angle-line-line') {
+                    containerEl.innerHTML = `
+                        <label>Chọn 2 Đường/Đoạn thẳng $d_1, d_2$:</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <select id="qm-seg1">${segOpts}</select>
+                            <select id="qm-seg2">${segOpts}</select>
+                        </div>`;
+                    const s2 = containerEl.querySelector('#qm-seg2');
+                    if (s2 && s2.options.length > 1) s2.selectedIndex = 1;
+                } else if (kind === 'angle-line-plane') {
+                    containerEl.innerHTML = `
+                        <label>Chọn Đường/Đoạn thẳng $d$ và Mặt phẳng $(P)$:</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <select id="qm-seg">${segOpts}</select>
+                            <select id="qm-plane">${planeOpts}</select>
+                        </div>`;
+                } else if (kind === 'angle-plane-plane') {
+                    containerEl.innerHTML = `
+                        <label>Chọn 2 Mặt phẳng $(P)$ và $(Q)$:</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <select id="qm-plane1">${planeOpts}</select>
+                            <select id="qm-plane2">${planeOpts}</select>
+                        </div>`;
+                    const s2 = containerEl.querySelector('#qm-plane2');
+                    if (s2 && s2.options.length > 1) s2.selectedIndex = 1;
+                } else if (kind === 'vol-pyramid') {
+                    containerEl.innerHTML = `
+                        <label>Chọn Đỉnh chóp $S$ và Mặt đáy $(P)$:</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <select id="qm-apex">${ptOpts}</select>
+                            <select id="qm-base">${planeOpts}</select>
+                        </div>`;
+                    const sApex = containerEl.querySelector('#qm-apex');
+                    const ptS = visiblePts.findIndex(p => p.name === 'S');
+                    if (sApex && ptS >= 0) sApex.selectedIndex = ptS;
+                } else if (kind === 'vol-prism') {
+                    containerEl.innerHTML = `
+                        <label>Chọn 1 Điểm thuộc đáy trên và Mặt đáy dưới $(P)$:</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <select id="qm-top-pt">${ptOpts}</select>
+                            <select id="qm-base">${planeOpts}</select>
+                        </div>`;
+                } else if (kind === 'vol-tetra') {
+                    containerEl.innerHTML = `
+                        <label>Chọn 4 đỉnh tứ diện $A, B, C, D$:</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px;">
+                            <select id="qm-p1">${ptOpts}</select>
+                            <select id="qm-p2">${ptOpts}</select>
+                            <select id="qm-p3">${ptOpts}</select>
+                            <select id="qm-p4">${ptOpts}</select>
+                        </div>`;
+                    ['#qm-p2', '#qm-p3', '#qm-p4'].forEach((sel, idx) => {
+                        const el = containerEl.querySelector(sel);
+                        if (el && el.options.length > idx + 1) el.selectedIndex = idx + 1;
+                    });
+                } else if (kind === 'vol-solid') {
+                    containerEl.innerHTML = solidOpts
+                        ? `<label>Chọn Khối tròn xoay (Nón / Trụ / Nón cụt / Cầu):</label><select id="qm-solid">${solidOpts}</select>`
+                        : `<div style="color:#dc2626; font-size:12px;">Chưa có khối tròn xoay nào trên hình. Hãy chọn đo Thể tích Khối chóp hoặc Tứ diện!</div>`;
+                }
+                renderMathInElementSafe(containerEl);
+            };
+
+            openModal(
+                `Thêm phép đo theo quy chuẩn`,
+                `<div class="modal-field">
+                    <label>Chọn loại đại lượng cần đo:</label>
+                    <select id="qm-kind-select" onchange="window.updateQuickMeasureSubForm()">
+                        <optgroup label="1. Đo khoảng cách & độ dài">
+                            <option value="dist-pt-pt" ${defaultKind === 'dist-pt-pt' ? 'selected' : ''}>Khoảng cách 2 điểm / Độ dài đoạn AB</option>
+                            <option value="dist-pt-line">Khoảng cách từ Điểm đến Đường thẳng d(M, Δ)</option>
+                            <option value="dist-pt-plane">Khoảng cách từ Điểm đến Mặt phẳng d(M, (P))</option>
+                            <option value="dist-line-line">Khoảng cách giữa 2 Đường thẳng d(Δ₁, Δ₂)</option>
+                        </optgroup>
+                        <optgroup label="2. Đo góc (Độ °)">
+                            <option value="angle-3pts" ${defaultKind === 'angle-3pts' ? 'selected' : ''}>Góc giữa 3 điểm ∠ABC (0° → 180°)</option>
+                            <option value="angle-line-line">Góc giữa 2 đường thẳng (d₁, d₂) (0° → 90°)</option>
+                            <option value="angle-line-plane">Góc giữa đường thẳng và mặt phẳng (d, (P))</option>
+                            <option value="angle-plane-plane">Góc giữa 2 mặt phẳng ((P), (Q))</option>
+                        </optgroup>
+                        <optgroup label="3. Đo thể tích">
+                            <option value="vol-pyramid" ${defaultKind === 'vol-pyramid' ? 'selected' : ''}>Thể tích Khối chóp / Khối nón (Đỉnh S & Mặt đáy)</option>
+                            <option value="vol-tetra">Thể tích Khối tứ diện ABCD (4 đỉnh)</option>
+                            <option value="vol-prism">Thể tích Khối lăng trụ / Khối hộp (Đáy & Đỉnh đáy trên)</option>
+                            <option value="vol-solid" ${defaultKind === 'vol-solid' ? 'selected' : ''}>Thể tích Khối tròn xoay (Nón, Trụ, Nón cụt, Cầu)</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="modal-field" id="qm-dynamic-fields"></div>`,
+                () => {
+                    const kind = document.getElementById('qm-kind-select').value;
+                    saveHistory();
+                    if (kind === 'dist-pt-pt') {
+                        const p1Id = document.getElementById('qm-p1')?.value;
+                        const p2Id = document.getElementById('qm-p2')?.value;
+                        if (p1Id && p2Id && p1Id !== p2Id) addMeasurementRecord({ category: 'dist', subType: 'point-point', p1Id, p2Id });
+                    } else if (kind === 'dist-pt-line') {
+                        const ptId = document.getElementById('qm-pt')?.value;
+                        const segId = document.getElementById('qm-seg')?.value;
+                        if (ptId && segId) addMeasurementRecord({ category: 'dist', subType: 'point-line', ptId, segId });
+                    } else if (kind === 'dist-pt-plane') {
+                        const ptId = document.getElementById('qm-pt')?.value;
+                        const planeId = document.getElementById('qm-plane')?.value;
+                        if (ptId && planeId) addMeasurementRecord({ category: 'dist', subType: 'point-plane', ptId, planeId });
+                    } else if (kind === 'dist-line-line') {
+                        const seg1Id = document.getElementById('qm-seg1')?.value;
+                        const seg2Id = document.getElementById('qm-seg2')?.value;
+                        if (seg1Id && seg2Id && seg1Id !== seg2Id) addMeasurementRecord({ category: 'dist', subType: 'line-line', seg1Id, seg2Id });
+                    } else if (kind === 'angle-3pts') {
+                        const p1Id = document.getElementById('qm-p1')?.value;
+                        const p2Id = document.getElementById('qm-p2')?.value;
+                        const p3Id = document.getElementById('qm-p3')?.value;
+                        if (p1Id && p2Id && p3Id && p1Id !== p2Id && p2Id !== p3Id) addMeasurementRecord({ category: 'angle', subType: '3pts', p1Id, p2Id, p3Id });
+                    } else if (kind === 'angle-line-line') {
+                        const seg1Id = document.getElementById('qm-seg1')?.value;
+                        const seg2Id = document.getElementById('qm-seg2')?.value;
+                        if (seg1Id && seg2Id && seg1Id !== seg2Id) addMeasurementRecord({ category: 'angle', subType: 'line-line', seg1Id, seg2Id });
+                    } else if (kind === 'angle-line-plane') {
+                        const segId = document.getElementById('qm-seg')?.value;
+                        const planeId = document.getElementById('qm-plane')?.value;
+                        if (segId && planeId) addMeasurementRecord({ category: 'angle', subType: 'line-plane', segId, planeId });
+                    } else if (kind === 'angle-plane-plane') {
+                        const plane1Id = document.getElementById('qm-plane1')?.value;
+                        const plane2Id = document.getElementById('qm-plane2')?.value;
+                        if (plane1Id && plane2Id && plane1Id !== plane2Id) addMeasurementRecord({ category: 'angle', subType: 'plane-plane', plane1Id, plane2Id });
+                    } else if (kind === 'vol-pyramid') {
+                        const apexId = document.getElementById('qm-apex')?.value;
+                        const basePlaneId = document.getElementById('qm-base')?.value;
+                        if (apexId && basePlaneId) addMeasurementRecord({ category: 'volume', subType: 'pyramid', apexId, basePlaneId });
+                    } else if (kind === 'vol-prism') {
+                        const topPtId = document.getElementById('qm-top-pt')?.value;
+                        const basePlaneId = document.getElementById('qm-base')?.value;
+                        if (topPtId && basePlaneId) addMeasurementRecord({ category: 'volume', subType: 'prism', topPtId, basePlaneId });
+                    } else if (kind === 'vol-tetra') {
+                        const p1Id = document.getElementById('qm-p1')?.value;
+                        const p2Id = document.getElementById('qm-p2')?.value;
+                        const p3Id = document.getElementById('qm-p3')?.value;
+                        const p4Id = document.getElementById('qm-p4')?.value;
+                        if (p1Id && p2Id && p3Id && p4Id) addMeasurementRecord({ category: 'volume', subType: 'tetrahedron', p1Id, p2Id, p3Id, p4Id });
+                    } else if (kind === 'vol-solid') {
+                        const solidId = document.getElementById('qm-solid')?.value;
+                        if (solidId) addMeasurementRecord({ category: 'volume', subType: 'solid', solidId });
+                    }
+                }
+            );
+            window.updateQuickMeasureSubForm();
+        }
+
+        function handleMeasurementPointerDown(target) {
+            const guideSpan = document.getElementById('guide-span');
+
+            // 1. Công cụ quy định độ dài chuẩn (measure-scale)
+            if (currentTool === 'measure-scale') {
+                if (!target || target.type === 'plane') {
+                    openReferenceScaleModal();
+                    return;
+                }
+                if (target.type === 'edge' && target.p1Id && target.p2Id) {
+                    openSetScaleForPairModal(target.p1Id, target.p2Id);
+                    return;
+                }
+                if (target.type === 'point') {
+                    if (!selectedPointIds.includes(target.pointId)) {
+                        selectedPointIds.push(target.pointId);
+                    }
+                    if (selectedPointIds.length === 1) {
+                        const p1 = geoState.points.find(p => p.id === selectedPointIds[0]);
+                        if (guideSpan && p1) {
+                            guideSpan.innerHTML = `Đã chọn điểm <b>$${p1.name}$</b> $\\to$ Hãy chọn tiếp <b>điểm thứ 2</b> để quy định độ dài chuẩn!`;
+                            renderMathInElementSafe(guideSpan);
+                        }
+                        updateSceneFromState();
+                    } else if (selectedPointIds.length >= 2) {
+                        const [p1Id, p2Id] = selectedPointIds;
+                        selectedPointIds = [];
+                        openSetScaleForPairModal(p1Id, p2Id);
+                    }
+                    return;
+                }
+                openReferenceScaleModal();
+                return;
+            }
+
+            // Ràng buộc bắt buộc: Trước khi đo khoảng cách / góc / thể tích, phải có độ dài quy chuẩn
+            if (!hasValidMeasureScale()) {
+                if (guideSpan) {
+                    guideSpan.innerHTML = `<span style="color:#fbbf24;">Trước khi đo, cần quy định 1 độ dài làm quy chuẩn (VD: $AB = 5$)!</span>`;
+                    renderMathInElementSafe(guideSpan);
+                }
+                openReferenceScaleModal(currentTool);
+                return;
+            }
+
+            if (!target || target.type === 'plane') return;
+
+            // Chuẩn hóa đối tượng được click
+            let item = null;
+            if (target.type === 'point') {
+                const pt = geoState.points.find(p => p.id === target.pointId);
+                item = { kind: 'point', id: target.pointId, label: pt ? pt.name : 'Điểm' };
+            } else if (target.type === 'edge') {
+                const seg = geoState.segments.find(s => s.id === target.segId);
+                const p1 = seg ? geoState.points.find(p => p.id === seg.p1Id) : null;
+                const p2 = seg ? geoState.points.find(p => p.id === seg.p2Id) : null;
+                item = {
+                    kind: 'seg',
+                    id: target.segId,
+                    p1Id: target.p1Id,
+                    p2Id: target.p2Id,
+                    isLine: seg ? seg.isLine : false,
+                    label: (p1 && p2) ? `${p1.name}${p2.name}` : 'cạnh'
+                };
+            } else if (target.type === 'circle') {
+                const cir = (geoState.circles || []).find(c => c.id === target.circleId);
+                item = { kind: 'circle', id: target.circleId, label: cir ? (cir.name || '(C)') : '(C)' };
+            } else if (target.type === 'circleDisk') {
+                const cir = (geoState.circles || []).find(c => c.id === target.circleId);
+                item = { kind: 'plane', id: target.circleId, label: cir ? (cir.name || '(C)') : '(C)' };
+            } else if (target.type === 'face') {
+                const face = geoState.faces.find(f => f.id === target.faceId);
+                item = { kind: 'plane', id: target.faceId, label: face ? face.name : '(P)' };
+            } else if (target.type === 'solid') {
+                const sol = (geoState.solids || []).find(s => s.id === target.solidId);
+                item = { kind: 'solid', id: target.solidId, label: sol ? sol.name : 'Khối tròn xoay' };
+            }
+
+            if (!item) return;
+
+            // 2. Công cụ Đo khoảng cách (measure-dist)
+            if (currentTool === 'measure-dist') {
+                if (measurePendingItems.length === 0) {
+                    if (item.kind === 'circle') {
+                        saveHistory();
+                        addMeasurementRecord({ category: 'dist', subType: 'circle-radius', circleId: item.id });
+                        if (guideSpan) {
+                            guideSpan.innerHTML = `Đã đo bán kính & chu vi đường tròn <b>$${item.label}$</b> theo quy chuẩn!`;
+                            renderMathInElementSafe(guideSpan);
+                        }
+                        return;
+                    }
+                    measurePendingItems.push(item);
+                    if (item.kind === 'point') {
+                        selectedPointIds = [item.id];
+                        if (guideSpan) {
+                            guideSpan.innerHTML = `Đã chọn điểm <b>$${item.label}$</b> $\\to$ Chọn tiếp <b>Điểm thứ 2</b>, hoặc <b>Đoạn/Đường thẳng</b>, hoặc <b>Mặt phẳng</b> để đo khoảng cách!`;
+                            renderMathInElementSafe(guideSpan);
+                        }
+                    } else if (item.kind === 'seg') {
+                        if (guideSpan) {
+                            guideSpan.innerHTML = `Đã chọn <b>$${item.label}$</b> $\\to$ Click lại chính đoạn <b>$${item.label}$</b> để đo độ dài, hoặc chọn tiếp <b>Điểm $M$</b> / <b>Đường thẳng thứ 2</b> để đo khoảng cách!`;
+                            renderMathInElementSafe(guideSpan);
+                        }
+                    } else if (item.kind === 'plane') {
+                        if (guideSpan) {
+                            guideSpan.innerHTML = `Đã chọn mặt phẳng <b>$${item.label}$</b> $\\to$ Hãy chọn tiếp <b>1 Điểm $M$</b> để đo khoảng cách $d(M, ${item.label})$!`;
+                            renderMathInElementSafe(guideSpan);
+                        }
+                    }
+                    updateSceneFromState();
+                    return;
+                }
+
+                const first = measurePendingItems[0];
+                measurePendingItems = [];
+                selectedPointIds = [];
+
+                if (first.kind === 'seg' && item.kind === 'seg' && first.id === item.id && first.p1Id && first.p2Id) {
+                    saveHistory();
+                    addMeasurementRecord({ category: 'dist', subType: 'point-point', p1Id: first.p1Id, p2Id: first.p2Id });
+                    return;
+                }
+                if (first.kind === 'point' && item.kind === 'point' && first.id !== item.id) {
+                    saveHistory();
+                    addMeasurementRecord({ category: 'dist', subType: 'point-point', p1Id: first.id, p2Id: item.id });
+                    return;
+                }
+                if (first.kind === 'point' && item.kind === 'seg') {
+                    saveHistory();
+                    addMeasurementRecord({ category: 'dist', subType: 'point-line', ptId: first.id, segId: item.id });
+                    return;
+                }
+                if (first.kind === 'seg' && item.kind === 'point') {
+                    saveHistory();
+                    addMeasurementRecord({ category: 'dist', subType: 'point-line', ptId: item.id, segId: first.id });
+                    return;
+                }
+                if (first.kind === 'point' && item.kind === 'plane') {
+                    saveHistory();
+                    addMeasurementRecord({ category: 'dist', subType: 'point-plane', ptId: first.id, planeId: item.id });
+                    return;
+                }
+                if (first.kind === 'plane' && item.kind === 'point') {
+                    saveHistory();
+                    addMeasurementRecord({ category: 'dist', subType: 'point-plane', ptId: item.id, planeId: first.id });
+                    return;
+                }
+                if (first.kind === 'seg' && item.kind === 'seg' && first.id !== item.id) {
+                    saveHistory();
+                    addMeasurementRecord({ category: 'dist', subType: 'line-line', seg1Id: first.id, seg2Id: item.id });
+                    return;
+                }
+                updateSceneFromState();
+                return;
+            }
+
+            // 3. Công cụ Đo góc (measure-angle)
+            if (currentTool === 'measure-angle') {
+                if (item.kind === 'point') {
+                    const prevPts = measurePendingItems.filter(x => x.kind === 'point');
+                    if (prevPts.length === measurePendingItems.length) {
+                        if (!measurePendingItems.some(x => x.id === item.id)) {
+                            measurePendingItems.push(item);
+                            selectedPointIds = measurePendingItems.map(x => x.id);
+                        }
+                        if (measurePendingItems.length < 3) {
+                            const names = measurePendingItems.map(x => x.label).join(' \\to ');
+                            if (guideSpan) {
+                                guideSpan.innerHTML = `Đo góc 3 điểm: Đã chọn <b>$${names}$</b> (${measurePendingItems.length}/3) $\\to$ Chọn tiếp điểm thứ ${measurePendingItems.length + 1}!`;
+                                renderMathInElementSafe(guideSpan);
+                            }
+                            updateSceneFromState();
+                            return;
+                        } else {
+                            const [p1, p2, p3] = measurePendingItems;
+                            measurePendingItems = [];
+                            selectedPointIds = [];
+                            saveHistory();
+                            addMeasurementRecord({ category: 'angle', subType: '3pts', p1Id: p1.id, p2Id: p2.id, p3Id: p3.id });
+                            return;
+                        }
+                    } else {
+                        measurePendingItems = [item];
+                        selectedPointIds = [item.id];
+                        updateSceneFromState();
+                        return;
+                    }
+                }
+
+                // Chọn cạnh hoặc mặt phẳng để đo góc (d1, d2), (d, (P)), ((P), (Q))
+                if (item.kind === 'seg' || item.kind === 'plane') {
+                    const nonPtPending = measurePendingItems.filter(x => x.kind === 'seg' || x.kind === 'plane');
+                    if (nonPtPending.length === 0) {
+                        measurePendingItems = [item];
+                        selectedPointIds = [];
+                        if (guideSpan) {
+                            guideSpan.innerHTML = `Đã chọn <b>$${item.label}$</b> $\\to$ Hãy chọn tiếp <b>Đoạn/Đường thẳng</b> hoặc <b>Mặt phẳng</b> thứ 2 để đo góc!`;
+                            renderMathInElementSafe(guideSpan);
+                        }
+                        updateSceneFromState();
+                        return;
+                    }
+                    const first = nonPtPending[0];
+                    measurePendingItems = [];
+                    selectedPointIds = [];
+                    if (first.kind === 'seg' && item.kind === 'seg' && first.id !== item.id) {
+                        saveHistory();
+                        addMeasurementRecord({ category: 'angle', subType: 'line-line', seg1Id: first.id, seg2Id: item.id });
+                    } else if (first.kind === 'seg' && item.kind === 'plane') {
+                        saveHistory();
+                        addMeasurementRecord({ category: 'angle', subType: 'line-plane', segId: first.id, planeId: item.id });
+                    } else if (first.kind === 'plane' && item.kind === 'seg') {
+                        saveHistory();
+                        addMeasurementRecord({ category: 'angle', subType: 'line-plane', segId: item.id, planeId: first.id });
+                    } else if (first.kind === 'plane' && item.kind === 'plane' && first.id !== item.id) {
+                        saveHistory();
+                        addMeasurementRecord({ category: 'angle', subType: 'plane-plane', plane1Id: first.id, plane2Id: item.id });
+                    }
+                    updateSceneFromState();
+                    return;
+                }
+            }
+
+            // 4. Công cụ Đo thể tích (measure-volume)
+            if (currentTool === 'measure-volume') {
+                if (item.kind === 'solid') {
+                    measurePendingItems = [];
+                    selectedPointIds = [];
+                    saveHistory();
+                    addMeasurementRecord({ category: 'volume', subType: 'solid', solidId: item.id });
+                    if (guideSpan) {
+                        guideSpan.innerHTML = `Đã đo thể tích <b>${item.label}</b> theo quy chuẩn độ dài!`;
+                        renderMathInElementSafe(guideSpan);
+                    }
+                    return;
+                }
+
+                const effectiveItem = item.kind === 'circle' ? { kind: 'plane', id: item.id, label: item.label } : item;
+
+                if (measurePendingItems.length === 0) {
+                    if (effectiveItem.kind === 'plane') {
+                        measurePendingItems = [effectiveItem];
+                        if (guideSpan) {
+                            guideSpan.innerHTML = `Đã chọn mặt đáy <b>$${effectiveItem.label}$</b> $\\to$ Hãy chọn tiếp <b>Điểm đỉnh $S$</b> để tính thể tích khối chóp $V = \\frac{1}{3} S_{\\text{đáy}} \\cdot h$!`;
+                            renderMathInElementSafe(guideSpan);
+                        }
+                        return;
+                    }
+                    if (effectiveItem.kind === 'point') {
+                        measurePendingItems = [effectiveItem];
+                        selectedPointIds = [effectiveItem.id];
+                        if (guideSpan) {
+                            guideSpan.innerHTML = `Đã chọn đỉnh <b>$${effectiveItem.label}$</b> $\\to$ Chọn tiếp <b>Mặt phẳng đáy</b> (đo khối chóp) hoặc chọn đủ <b>4 đỉnh $A, B, C, D$</b> (đo tứ diện)!`;
+                            renderMathInElementSafe(guideSpan);
+                        }
+                        updateSceneFromState();
+                        return;
+                    }
+                } else {
+                    const first = measurePendingItems[0];
+                    if (first.kind === 'plane' && effectiveItem.kind === 'point') {
+                        measurePendingItems = [];
+                        selectedPointIds = [];
+                        saveHistory();
+                        addMeasurementRecord({ category: 'volume', subType: 'pyramid', basePlaneId: first.id, apexId: effectiveItem.id });
+                        return;
+                    }
+                    if (first.kind === 'point' && effectiveItem.kind === 'plane' && measurePendingItems.length === 1) {
+                        measurePendingItems = [];
+                        selectedPointIds = [];
+                        saveHistory();
+                        addMeasurementRecord({ category: 'volume', subType: 'pyramid', basePlaneId: effectiveItem.id, apexId: first.id });
+                        return;
+                    }
+                    if (effectiveItem.kind === 'point' && measurePendingItems.every(x => x.kind === 'point')) {
+                        if (!measurePendingItems.some(x => x.id === effectiveItem.id)) {
+                            measurePendingItems.push(effectiveItem);
+                            selectedPointIds = measurePendingItems.map(x => x.id);
+                        }
+                        if (measurePendingItems.length < 4) {
+                            const names = measurePendingItems.map(x => x.label).join(', ');
+                            if (guideSpan) {
+                                guideSpan.innerHTML = `Đo thể tích tứ diện: Đã chọn <b>$${names}$</b> (${measurePendingItems.length}/4) $\\to$ Chọn tiếp đỉnh thứ ${measurePendingItems.length + 1}!`;
+                                renderMathInElementSafe(guideSpan);
+                            }
+                            updateSceneFromState();
+                            return;
+                        } else {
+                            const [p1, p2, p3, p4] = measurePendingItems;
+                            measurePendingItems = [];
+                            selectedPointIds = [];
+                            saveHistory();
+                            addMeasurementRecord({ category: 'volume', subType: 'tetrahedron', p1Id: p1.id, p2Id: p2.id, p3Id: p3.id, p4Id: p4.id });
+                            return;
+                        }
+                    }
+                    measurePendingItems = [];
+                    selectedPointIds = [];
+                    updateSceneFromState();
+                }
+            }
         }
 
         function onDoubleClick(event) {
@@ -4243,6 +5932,37 @@
                 ctx.restore();
             });
 
+            // Vẽ các nhãn đo đạc lên ảnh xuất PNG
+            if (geoState.measurements && geoState.measurements.length > 0) {
+                geoState.measurements.forEach(m => {
+                    const res = evaluateMeasurement(m);
+                    if (!res || !res.anchorPos || !res.plainBadgeText) return;
+                    const vec = res.anchorPos.clone().project(camera);
+                    if (vec.z > 1) return;
+                    const cssX = (vec.x * 0.5 + 0.5) * cssW;
+                    const cssY = (-(vec.y * 0.5) + 0.5) * cssH;
+                    const px = cssX * dpr;
+                    const py = cssY * dpr;
+
+                    ctx.save();
+                    ctx.font = `bold ${Math.round(12 * dpr)}px Inter, sans-serif`;
+                    const textW = ctx.measureText(res.plainBadgeText).width;
+                    const padX = 7 * dpr;
+                    const boxW = textW + padX * 2;
+                    const boxH = 20 * dpr;
+                    ctx.fillStyle = 'rgba(255, 251, 235, 0.94)';
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 1.5 * dpr;
+                    ctx.fillRect(px - boxW / 2, py - boxH / 2, boxW, boxH);
+                    ctx.strokeRect(px - boxW / 2, py - boxH / 2, boxW, boxH);
+                    ctx.fillStyle = '#92400e';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(res.plainBadgeText, px, py);
+                    ctx.restore();
+                });
+            }
+
             outCanvas.toBlob((blob) => {
                 if (!blob) return;
                 const url = URL.createObjectURL(blob);
@@ -4279,6 +5999,12 @@
                         return;
                     }
                 }
+                return;
+            }
+
+            // XỬ LÝ NHÓM CÔNG CỤ ĐO ĐẠC (QUY CHUẨN ĐỘ DÀI, ĐO KHOẢNG CÁCH, ĐO GÓC, ĐO THỂ TÍCH)
+            if (['measure-scale', 'measure-dist', 'measure-angle', 'measure-volume'].includes(currentTool)) {
+                handleMeasurementPointerDown(target);
                 return;
             }
 
@@ -5309,7 +7035,7 @@
 
         function clearHelpers() {
             if (!scene) return;
-            helperMeshes.forEach(m => scene.remove(m));
+            disposeSceneMeshLists([helperMeshes]);
             helperMeshes = [];
         }
 
@@ -5364,6 +7090,10 @@
             'solid-cone': 'Hình nón tròn xoay: Chọn <b>1 Đường tròn đáy $(C)$</b> và <b>1 Điểm đỉnh $S$</b> (hoặc chọn 3 điểm $O, A, S$) $\\Rightarrow$ Tự dựng Hình nón có đường sinh biên & khuất nét',
             'solid-cylinder': 'Hình trụ / Hình nón cụt: Chọn <b>2 Đường tròn đáy $(C_1), (C_2)$</b> (hoặc chọn 1 Đường tròn & 1 Điểm tâm đáy thứ hai $O\'$) $\\Rightarrow$ Tự dựng Hình trụ / Nón cụt',
             'solid-sphere': 'Mặt cầu $S(I; R)$: Chọn <b>Tâm $I$</b> rồi chọn <b>Điểm $A$ trên mặt cầu</b> (hoặc click vào mặt nền để nhập bán kính $R$, hoặc click vào Đường tròn lớn)',
+            'measure-scale': 'Quy chuẩn độ dài (VD: $AB = 5$): Click vào <b>1 Đoạn thẳng</b> (hoặc chọn <b>2 Điểm $A, B$</b>) để đặt độ dài quy chuẩn cho toàn bộ phép đo',
+            'measure-dist': 'Đo khoảng cách (theo quy chuẩn): Chọn <b>2 Điểm</b>, hoặc <b>Điểm & Đường thẳng</b> $d(M, \\Delta)$, hoặc <b>Điểm & Mặt phẳng</b> $d(M, (P))$, hoặc <b>2 Đường thẳng</b> $d(\\Delta_1, \\Delta_2)$',
+            'measure-angle': 'Đo góc (Độ °): Chọn <b>3 Điểm $A, B, C$</b> ($\\widehat{ABC}$), hoặc <b>2 Đường thẳng</b> $(d_1, d_2)$, hoặc <b>Đường thẳng & Mặt phẳng</b> $(d, (P))$, hoặc <b>2 Mặt phẳng</b> $((P), (Q))$',
+            'measure-volume': 'Đo thể tích (theo quy chuẩn): Click vào <b>Khối tròn xoay</b> (Nón, Trụ, Cầu), hoặc chọn <b>Mặt đáy & Đỉnh $S$</b> (Khối chóp), hoặc chọn <b>4 đỉnh $A, B, C, D$</b> (Tứ diện)',
             'animate': 'Chuyển động tự động: Click vào <b>Điểm thuộc cạnh / đường thẳng / đường tròn / mặt cầu / bề mặt</b> để mở thanh điều khiển Tốc độ, Chạy/Dừng',
             'trace': 'Bật / Tắt Tạo vết (Trace): Click vào <b>Điểm</b> hoặc <b>Đoạn thẳng</b> để để lại vết quỹ tích khi đối tượng di chuyển',
             'hide': 'Ẩn đối tượng: Click vào <b>Điểm, Đoạn thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay</b> để ẩn đi (Click danh sách góc dưới phải để hiện lại)',
@@ -5374,6 +7104,7 @@
             currentTool = tool;
             selectedPointIds = [];
             selectedCircleIds = [];
+            measurePendingItems = [];
             clearHelpers();
             if (snapIndicator) snapIndicator.visible = false;
             snapBadge.style.display = 'none';
@@ -5395,6 +7126,10 @@
             guideSpan.innerHTML = toolGuides[tool] || '';
             renderMathInElementSafe(guideSpan);
             updateSceneFromState();
+
+            if (['measure-dist', 'measure-angle', 'measure-volume'].includes(tool) && !hasValidMeasureScale()) {
+                openReferenceScaleModal(tool);
+            }
         }
 
         function toggleToolbar() {
@@ -5460,11 +7195,14 @@
             updateSceneFromState();
         }
 
-        function createDemoPyramid() {
-            saveHistory();
-            geoState = { points: [], segments: [], faces: [], circles: [], solids: [] };
+        function createDemoPyramid(recordHistory = true) {
+            if (recordHistory && geoState && geoState.points && geoState.points.length > 0) {
+                saveHistory();
+            }
+            geoState = { points: [], segments: [], faces: [], circles: [], solids: [], measureScale: null, measurements: [] };
             selectedPointIds = [];
             selectedCircleIds = [];
+            measurePendingItems = [];
             clearAllTraces();
 
             const idA = createNewPoint(-3.2, 0, 0.8, 'A', { type: 'plane' });
@@ -5504,6 +7242,8 @@
             renderer.setSize(container.clientWidth, container.clientHeight);
             updateLabels();
         }
+
+        let lastCamStateHash = '';
 
         function animate() {
             requestAnimationFrame(animate);
@@ -5550,11 +7290,21 @@
             }
 
             if (controls && controls.enabled) controls.update();
-            updateDynamicSilhouettes();
+
+            let camChanged = false;
+            if (camera && controls) {
+                const hash = `${camera.position.x.toFixed(4)},${camera.position.y.toFixed(4)},${camera.position.z.toFixed(4)},${camera.zoom.toFixed(4)},${controls.target.x.toFixed(4)},${controls.target.y.toFixed(4)},${controls.target.z.toFixed(4)}`;
+                if (hash !== lastCamStateHash) {
+                    lastCamStateHash = hash;
+                    camChanged = true;
+                }
+            }
 
             if (anyPointAnimated) {
                 updateSceneFromState();
-            } else {
+                updateDynamicSilhouettes();
+            } else if (camChanged) {
+                updateDynamicSilhouettes();
                 updateLabels();
             }
 
