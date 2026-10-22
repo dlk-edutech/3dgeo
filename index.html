@@ -4484,7 +4484,15 @@
         }
 
         function getPlaneDataFromId(planeId) {
-            if (!planeId) return null;
+            if (!planeId || planeId === '__base_plane__') {
+                return {
+                    origin: new THREE.Vector3(0, 0, 0),
+                    normal: new THREE.Vector3(0, 1, 0),
+                    center: new THREE.Vector3(0, 0, 0),
+                    name: '(P)',
+                    kind: 'base'
+                };
+            }
             const face = geoState.faces.find(f => f.id === planeId && !f.hidden);
             if (face && face.pointIds && face.pointIds.length >= 3) {
                 const pts = face.pointIds.map(id => geoState.points.find(p => p.id === id)).filter(Boolean);
@@ -4546,6 +4554,151 @@
             return 0.5 * sumCross.length();
         }
 
+        function computeLinePlanePerpMarks(vA, vB, plane, excludeSegId = null, color = 0x059669) {
+            if (!vA || !vB || !plane || !plane.normal) return null;
+            const ab = new THREE.Vector3().subVectors(vB, vA);
+            if (ab.lengthSq() < 1e-8) return null;
+            const n = plane.normal.clone().normalize();
+            const denom = ab.dot(n);
+            let foot;
+            if (Math.abs(denom) > 1e-6) {
+                const t = new THREE.Vector3().subVectors(plane.origin, vA).dot(n) / denom;
+                foot = vA.clone().addScaledVector(ab, t);
+            } else {
+                foot = vA.clone().lerp(vB, 0.5);
+            }
+
+            const dA = new THREE.Vector3().subVectors(vA, foot);
+            const dB = new THREE.Vector3().subVectors(vB, foot);
+            const farVec = dA.lengthSq() >= dB.lengthSq() ? dA : dB;
+            const segLen = Math.max(ab.length(), farVec.length());
+            const lineDir = farVec.lengthSq() > 1e-6 ? farVec.clone().normalize() : n.clone();
+
+            const viewDir = camera
+                ? camera.position.clone().sub(controls ? controls.target : new THREE.Vector3()).normalize()
+                : new THREE.Vector3(10, 6, 14).normalize();
+
+            // Tìm các đoạn thẳng nằm trong mặt phẳng (P) đi qua hoặc có đầu mút tại chân đường vuông góc foot
+            const inPlaneDirs = [];
+            (geoState.segments || []).forEach(s => {
+                if (s.hidden || s.id === excludeSegId) return;
+                const P1 = geoState.points.find(p => p.id === s.p1Id && !p.hidden);
+                const P2 = geoState.points.find(p => p.id === s.p2Id && !p.hidden);
+                if (!P1 || !P2) return;
+                const v1 = new THREE.Vector3(P1.x, P1.y, P1.z);
+                const v2 = new THREE.Vector3(P2.x, P2.y, P2.z);
+                if (Math.abs(new THREE.Vector3().subVectors(v1, plane.origin).dot(n)) > 0.04) return;
+                if (Math.abs(new THREE.Vector3().subVectors(v2, plane.origin).dot(n)) > 0.04) return;
+                const sVec = new THREE.Vector3().subVectors(v2, v1);
+                const sLenSq = sVec.lengthSq();
+                if (sLenSq < 1e-6) return;
+
+                let dir = null;
+                const dist1 = v1.distanceTo(foot);
+                const dist2 = v2.distanceTo(foot);
+                if (dist1 < 0.05 && dist2 > 0.08) {
+                    dir = new THREE.Vector3().subVectors(v2, foot).normalize();
+                } else if (dist2 < 0.05 && dist1 > 0.08) {
+                    dir = new THREE.Vector3().subVectors(v1, foot).normalize();
+                } else {
+                    const tProj = new THREE.Vector3().subVectors(foot, v1).dot(sVec) / sLenSq;
+                    if (tProj >= -0.05 && tProj <= 1.05) {
+                        const proj = v1.clone().addScaledVector(sVec, tProj);
+                        if (proj.distanceTo(foot) < 0.05) {
+                            dir = (dist2 >= dist1
+                                ? new THREE.Vector3().subVectors(v2, foot)
+                                : new THREE.Vector3().subVectors(v1, foot)).normalize();
+                        }
+                    }
+                }
+                if (dir) {
+                    dir.addScaledVector(n, -dir.dot(n));
+                    if (dir.lengthSq() > 1e-6) {
+                        dir.normalize();
+                        if (!inPlaneDirs.some(d => Math.abs(d.dot(dir)) > 0.92)) {
+                            inPlaneDirs.push(dir);
+                        }
+                    }
+                }
+            });
+
+            let dirV1 = null;
+            let hasSeg1 = false;
+            if (inPlaneDirs.length >= 1) {
+                // Ưu tiên đoạn thẳng trong mặt phẳng có góc mở rõ nhất so với hướng nhìn camera
+                inPlaneDirs.sort((a, b) => Math.abs(a.dot(viewDir)) - Math.abs(b.dot(viewDir)));
+                dirV1 = inPlaneDirs[0].clone();
+                hasSeg1 = true;
+            } else {
+                // Chọn hướng nằm trong mặt phẳng (P) vuông góc với tia nhìn camera rồi xoay nhẹ 22°
+                // để ký hiệu vuông góc giữa đường và mặt luôn mở rộng rõ ràng như hình vẽ SGK
+                let screenHorizInPlane = new THREE.Vector3().crossVectors(viewDir, n);
+                if (screenHorizInPlane.lengthSq() < 1e-5) {
+                    const fallback = Math.abs(n.x) < 0.85 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1);
+                    screenHorizInPlane = fallback.sub(n.clone().multiplyScalar(fallback.dot(n)));
+                }
+                screenHorizInPlane.normalize();
+                if (plane.center && plane.center.distanceTo(foot) > 0.25) {
+                    const toCenter = new THREE.Vector3().subVectors(plane.center, foot);
+                    if (toCenter.dot(screenHorizInPlane) < -0.05) {
+                        screenHorizInPlane.negate();
+                    }
+                }
+                dirV1 = screenHorizInPlane.clone().applyAxisAngle(n, -0.35).normalize();
+            }
+
+            const dirV2 = new THREE.Vector3().crossVectors(n, dirV1).normalize();
+            const size = Math.min(0.46, Math.max(0.28, 0.17 * (segLen || 2.5)));
+            return {
+                foot,
+                lineDir,
+                dirV1,
+                dirV2,
+                size,
+                marks: [
+                    {
+                        vertex: foot,
+                        dirU: lineDir,
+                        dirV: dirV1,
+                        crossDirV: dirV2,
+                        size,
+                        color,
+                        drawVBaseTick: !hasSeg1,
+                        isLinePlane: true
+                    }
+                ]
+            };
+        }
+
+        function computeLineLineVertexAndRays(vA1, vB1, vA2, vB2) {
+            const u = new THREE.Vector3().subVectors(vB1, vA1);
+            const v = new THREE.Vector3().subVectors(vB2, vA2);
+            const w0 = new THREE.Vector3().subVectors(vA1, vA2);
+            const a = u.dot(u);
+            const b = u.dot(v);
+            const c = v.dot(v);
+            const d = u.dot(w0);
+            const e = v.dot(w0);
+            const denom = a * c - b * b;
+            let p1 = vA1.clone().lerp(vB1, 0.5);
+            let p2 = vA2.clone().lerp(vB2, 0.5);
+            if (denom > 1e-6) {
+                const s = (b * e - c * d) / denom;
+                const t = (a * e - b * d) / denom;
+                p1 = vA1.clone().addScaledVector(u, s);
+                p2 = vA2.clone().addScaledVector(v, t);
+            }
+            const vertex = p1.clone().lerp(p2, 0.5);
+            const dir1 = (vA1.distanceToSquared(p1) >= vB1.distanceToSquared(p1)
+                ? new THREE.Vector3().subVectors(vA1, p1)
+                : new THREE.Vector3().subVectors(vB1, p1)).normalize();
+            let dir2 = (vA2.distanceToSquared(p2) >= vB2.distanceToSquared(p2)
+                ? new THREE.Vector3().subVectors(vA2, p2)
+                : new THREE.Vector3().subVectors(vB2, p2)).normalize();
+            if (dir1.dot(dir2) < -1e-4) dir2.negate();
+            return { vertex, dir1, dir2, gap: p1.distanceTo(p2) };
+        }
+
         function evaluateMeasurement(m) {
             const scaleInfo = getMeasureScaleInfo();
             const k = scaleInfo ? scaleInfo.scale : 1;
@@ -4601,7 +4754,17 @@
                     if (ab.lengthSq() < 1e-8) return null;
                     const t = new THREE.Vector3().subVectors(vP, vA).dot(ab) / ab.lengthSq();
                     const vH = vA.clone().addScaledVector(ab, t);
-                    const val = vP.distanceTo(vH) * k;
+                    const rawDist = vP.distanceTo(vH);
+                    const val = rawDist * k;
+                    const rightAngleMarks = [];
+                    if (rawDist > 1e-3) {
+                        const dirU = new THREE.Vector3().subVectors(vP, vH).normalize();
+                        const dirV = (vA.distanceToSquared(vH) >= vB.distanceToSquared(vH)
+                            ? new THREE.Vector3().subVectors(vA, vH)
+                            : new THREE.Vector3().subVectors(vB, vH)).normalize();
+                        const rSize = Math.min(0.44, Math.max(0.26, 0.20 * Math.min(rawDist, ab.length())));
+                        rightAngleMarks.push({ vertex: vH, dirU, dirV, size: rSize, color: 0xd97706 });
+                    }
                     return {
                         categoryLabel: 'K.CÁCH',
                         titleHtml: `$d(${P.name}, ${A.name}${B.name})$`,
@@ -4610,7 +4773,8 @@
                         plainBadgeText: `d(${P.name}, ${A.name}${B.name}) = ${formatMeasureNumber(val)}`,
                         anchorPos: vP.clone().lerp(vH, 0.5),
                         helperLine: [vP, vH],
-                        footPoint: vH
+                        footPoint: vH,
+                        rightAngleMarks
                     };
                 }
                 if (m.subType === 'point-plane') {
@@ -4621,6 +4785,9 @@
                     const signedDist = new THREE.Vector3().subVectors(vP, plane.origin).dot(plane.normal);
                     const vH = vP.clone().addScaledVector(plane.normal, -signedDist);
                     const val = Math.abs(signedDist) * k;
+                    const lpSpec = Math.abs(signedDist) > 1e-3
+                        ? computeLinePlanePerpMarks(vP, vH, plane, null, 0xd97706)
+                        : null;
                     return {
                         categoryLabel: 'K.CÁCH',
                         titleHtml: `$d(${P.name}, ${plane.name})$`,
@@ -4629,7 +4796,8 @@
                         plainBadgeText: `d(${P.name}, ${plane.name}) = ${formatMeasureNumber(val)}`,
                         anchorPos: vP.clone().lerp(vH, 0.5),
                         helperLine: [vP, vH],
-                        footPoint: vH
+                        footPoint: vH,
+                        rightAngleMarks: lpSpec ? lpSpec.marks : []
                     };
                 }
                 if (m.subType === 'line-line') {
@@ -4684,11 +4852,15 @@
                     const u = new THREE.Vector3().subVectors(vA, vB);
                     const v = new THREE.Vector3().subVectors(vC, vB);
                     if (u.lengthSq() < 1e-8 || v.lengthSq() < 1e-8) return null;
-                    const cosTheta = Math.max(-1, Math.min(1, u.clone().normalize().dot(v.clone().normalize())));
+                    const normU = u.clone().normalize();
+                    const normV = v.clone().normalize();
+                    const cosTheta = Math.max(-1, Math.min(1, normU.dot(normV)));
                     const deg = (Math.acos(cosTheta) * 180) / Math.PI;
-                    const bisector = u.clone().normalize().add(v.clone().normalize());
+                    const bisector = normU.clone().add(normV);
                     if (bisector.lengthSq() < 1e-6) bisector.set(0, 1, 0);
                     else bisector.normalize();
+                    const isRightAngle = Math.abs(deg - 90) < 0.4;
+                    const rightSize = Math.min(0.54, Math.max(0.32, 0.22 * Math.min(u.length(), v.length())));
                     const arcRadius = Math.min(0.85, 0.28 * Math.min(u.length(), v.length()));
                     return {
                         categoryLabel: 'GÓC',
@@ -4696,8 +4868,13 @@
                         valueStr: `${formatMeasureNumber(deg, 1)}°`,
                         badgeHtml: `$\\widehat{${A.name}${B.name}${C.name}} = ${formatMeasureNumber(deg, 1)}^\\circ$`,
                         plainBadgeText: `∠${A.name}${B.name}${C.name} = ${formatMeasureNumber(deg, 1)}°`,
-                        anchorPos: vB.clone().addScaledVector(bisector, arcRadius * 1.35),
-                        angleArc: { vertex: vB, dirA: u.clone().normalize(), dirC: v.clone().normalize(), radius: arcRadius }
+                        anchorPos: vB.clone().addScaledVector(bisector, isRightAngle ? rightSize * 2.55 : arcRadius * 1.45),
+                        rightAngleMarks: isRightAngle
+                            ? [{ vertex: vB, dirU: normU, dirV: normV, size: rightSize, color: 0x059669 }]
+                            : null,
+                        angleArc: isRightAngle
+                            ? null
+                            : { vertex: vB, dirA: normU, dirC: normV, radius: arcRadius }
                     };
                 }
                 if (m.subType === 'line-line') {
@@ -4709,13 +4886,22 @@
                     const A2 = geoState.points.find(p => p.id === seg2.p1Id);
                     const B2 = geoState.points.find(p => p.id === seg2.p2Id);
                     if (!A1 || !B1 || !A2 || !B2) return null;
-                    const u = new THREE.Vector3(B1.x - A1.x, B1.y - A1.y, B1.z - A1.z);
-                    const v = new THREE.Vector3(B2.x - A2.x, B2.y - A2.y, B2.z - A2.z);
+                    const vA1 = new THREE.Vector3(A1.x, A1.y, A1.z);
+                    const vB1 = new THREE.Vector3(B1.x, B1.y, B1.z);
+                    const vA2 = new THREE.Vector3(A2.x, A2.y, A2.z);
+                    const vB2 = new THREE.Vector3(B2.x, B2.y, B2.z);
+                    const u = new THREE.Vector3().subVectors(vB1, vA1);
+                    const v = new THREE.Vector3().subVectors(vB2, vA2);
                     if (u.lengthSq() < 1e-8 || v.lengthSq() < 1e-8) return null;
                     const absCos = Math.min(1, Math.abs(u.clone().normalize().dot(v.clone().normalize())));
                     const deg = (Math.acos(absCos) * 180) / Math.PI;
-                    const mid1 = new THREE.Vector3((A1.x + B1.x) * 0.5, (A1.y + B1.y) * 0.5, (A1.z + B1.z) * 0.5);
-                    const mid2 = new THREE.Vector3((A2.x + B2.x) * 0.5, (A2.y + B2.y) * 0.5, (A2.z + B2.z) * 0.5);
+                    const { vertex, dir1, dir2 } = computeLineLineVertexAndRays(vA1, vB1, vA2, vB2);
+                    const isRightAngle = Math.abs(deg - 90) < 0.4;
+                    const rightSize = Math.min(0.54, Math.max(0.32, 0.22 * Math.min(u.length(), v.length())));
+                    const arcRadius = Math.min(0.75, 0.25 * Math.min(u.length(), v.length()));
+                    const bis = dir1.clone().add(dir2);
+                    if (bis.lengthSq() < 1e-6) bis.set(0, 1, 0);
+                    else bis.normalize();
                     const name1 = `${A1.name}${B1.name}`;
                     const name2 = `${A2.name}${B2.name}`;
                     return {
@@ -4724,7 +4910,13 @@
                         valueStr: `${formatMeasureNumber(deg, 1)}°`,
                         badgeHtml: `$(${name1}, ${name2}) = ${formatMeasureNumber(deg, 1)}^\\circ$`,
                         plainBadgeText: `(${name1}, ${name2}) = ${formatMeasureNumber(deg, 1)}°`,
-                        anchorPos: mid1.lerp(mid2, 0.5)
+                        anchorPos: vertex.clone().addScaledVector(bis, isRightAngle ? rightSize * 2.55 : arcRadius * 1.45),
+                        rightAngleMarks: isRightAngle
+                            ? [{ vertex, dirU: dir1, dirV: dir2, size: rightSize, color: 0x059669 }]
+                            : null,
+                        angleArc: (!isRightAngle && deg > 0.4)
+                            ? { vertex, dirA: dir1, dirC: dir2, radius: arcRadius }
+                            : null
                     };
                 }
                 if (m.subType === 'line-plane') {
@@ -4734,19 +4926,77 @@
                     const A = geoState.points.find(p => p.id === seg.p1Id);
                     const B = geoState.points.find(p => p.id === seg.p2Id);
                     if (!A || !B) return null;
-                    const u = new THREE.Vector3(B.x - A.x, B.y - A.y, B.z - A.z);
+                    const vA = new THREE.Vector3(A.x, A.y, A.z);
+                    const vB = new THREE.Vector3(B.x, B.y, B.z);
+                    const u = new THREE.Vector3().subVectors(vB, vA);
                     if (u.lengthSq() < 1e-8) return null;
                     const sinPhi = Math.min(1, Math.abs(u.clone().normalize().dot(plane.normal)));
                     const deg = (Math.asin(sinPhi) * 180) / Math.PI;
-                    const midSeg = new THREE.Vector3((A.x + B.x) * 0.5, (A.y + B.y) * 0.5, (A.z + B.z) * 0.5);
+                    const midSeg = vA.clone().lerp(vB, 0.5);
                     const segName = `${A.name}${B.name}`;
+                    const isPerp = Math.abs(deg - 90) < 0.4;
+                    if (isPerp) {
+                        const lpSpec = computeLinePlanePerpMarks(vA, vB, plane, seg.id, 0x059669);
+                        const anchor = lpSpec
+                            ? lpSpec.foot.clone()
+                                .addScaledVector(lpSpec.lineDir, lpSpec.size * 1.35)
+                                .addScaledVector(lpSpec.dirV1, lpSpec.size * 2.65)
+                            : midSeg.clone().lerp(plane.center, 0.35);
+                        return {
+                            categoryLabel: 'GÓC',
+                            titleHtml: `$(${segName}, ${plane.name})$`,
+                            valueStr: `${formatMeasureNumber(deg, 1)}°`,
+                            badgeHtml: `$(${segName}, ${plane.name}) = ${formatMeasureNumber(deg, 1)}^\\circ$`,
+                            plainBadgeText: `(${segName}, ${plane.name}) = ${formatMeasureNumber(deg, 1)}°`,
+                            anchorPos: anchor,
+                            rightAngleMarks: lpSpec ? lpSpec.marks : []
+                        };
+                    }
+
+                    // Trường hợp góc xiên giữa đường thẳng và mặt phẳng (0.4° < deg < 89.6°)
+                    const n = plane.normal.clone().normalize();
+                    const denom = u.dot(n);
+                    let angleArc = null;
+                    let helperLine = null;
+                    let rightAngleMarks = null;
+                    let anchorPos = midSeg.clone().lerp(plane.center, 0.35);
+                    if (Math.abs(denom) > 1e-5) {
+                        const tFoot = new THREE.Vector3().subVectors(plane.origin, vA).dot(n) / denom;
+                        const foot = vA.clone().addScaledVector(u, tFoot);
+                        const farPt = vA.distanceToSquared(foot) >= vB.distanceToSquared(foot) ? vA : vB;
+                        const signedH = new THREE.Vector3().subVectors(farPt, plane.origin).dot(n);
+                        const projPt = farPt.clone().addScaledVector(n, -signedH);
+                        const dirLine = new THREE.Vector3().subVectors(farPt, foot);
+                        const dirProj = new THREE.Vector3().subVectors(projPt, foot);
+                        if (dirLine.length() > 0.15 && dirProj.length() > 0.15) {
+                            const nLine = dirLine.clone().normalize();
+                            const nProj = dirProj.clone().normalize();
+                            const arcR = Math.min(0.75, 0.26 * Math.min(dirLine.length(), dirProj.length()));
+                            angleArc = { vertex: foot, dirA: nLine, dirC: nProj, radius: arcR };
+                            helperLine = [farPt, projPt];
+                            const bis = nLine.clone().add(nProj).normalize();
+                            anchorPos = foot.clone().addScaledVector(bis, arcR * 1.4);
+                            const rSize = Math.min(0.32, 0.18 * Math.min(Math.abs(signedH), dirProj.length()));
+                            rightAngleMarks = [{
+                                vertex: projPt,
+                                dirU: new THREE.Vector3().subVectors(farPt, projPt).normalize(),
+                                dirV: new THREE.Vector3().subVectors(foot, projPt).normalize(),
+                                size: rSize,
+                                color: 0x059669,
+                                drawVBaseTick: true
+                            }];
+                        }
+                    }
                     return {
                         categoryLabel: 'GÓC',
                         titleHtml: `$(${segName}, ${plane.name})$`,
                         valueStr: `${formatMeasureNumber(deg, 1)}°`,
                         badgeHtml: `$(${segName}, ${plane.name}) = ${formatMeasureNumber(deg, 1)}^\\circ$`,
                         plainBadgeText: `(${segName}, ${plane.name}) = ${formatMeasureNumber(deg, 1)}°`,
-                        anchorPos: midSeg.lerp(plane.center, 0.35)
+                        anchorPos,
+                        helperLine,
+                        angleArc,
+                        rightAngleMarks
                     };
                 }
                 if (m.subType === 'plane-plane') {
@@ -4900,53 +5150,208 @@
             return null;
         }
 
-        function renderMeasurement3DHelpers() {
-            if (!scene || !geoState.measurements) return;
-            geoState.measurements.forEach(m => {
-                const res = evaluateMeasurement(m);
-                if (!res) return;
+        function addRightAngleSquare3D(mark, renderedKeys) {
+            if (!scene || !mark || !mark.vertex || !mark.dirU || !mark.dirV) return;
+            const u = mark.dirU.clone();
+            const vRaw = mark.dirV.clone();
+            if (u.lengthSq() < 1e-8 || vRaw.lengthSq() < 1e-8) return;
+            u.normalize();
+            // Trực giao hóa v theo u để ký hiệu góc vuông luôn tạo hình vuông chuẩn trong không gian 3D
+            const v = vRaw.normalize().addScaledVector(u, -vRaw.dot(u));
+            if (v.lengthSq() < 1e-6) return;
+            v.normalize();
 
-                if (res.helperLine && res.helperLine.length === 2 && (m.subType === 'point-line' || m.subType === 'point-plane')) {
-                    const lineGeo = new THREE.BufferGeometry().setFromPoints(res.helperLine);
-                    const lineMat = new THREE.LineDashedMaterial({
-                        color: 0xd97706,
-                        dashSize: 0.14,
-                        gapSize: 0.09,
-                        depthTest: false,
-                        transparent: true,
-                        opacity: 0.85
-                    });
-                    const line = new THREE.Line(lineGeo, lineMat);
-                    line.computeLineDistances();
-                    line.renderOrder = 14;
-                    scene.add(line);
-                    edgeMeshes.push(line);
+            const V = mark.vertex;
+            const fmtVec = (vec) => `${Math.round(vec.x * 20)},${Math.round(vec.y * 20)},${Math.round(vec.z * 20)}`;
+            const uStr = fmtVec(u);
+            const vStr = fmtVec(v);
+            const pairKey = uStr < vStr ? `${uStr}|${vStr}` : `${vStr}|${uStr}`;
+            const dedupKey = `${fmtVec(V)}::${pairKey}`;
+            if (renderedKeys && renderedKeys.has(dedupKey)) return;
+            if (renderedKeys) renderedKeys.add(dedupKey);
+
+            const s = mark.size || 0.42;
+            const color = mark.color !== undefined ? mark.color : 0x059669;
+            const P1 = V.clone().addScaledVector(u, s);
+            const P2 = V.clone().addScaledVector(v, s);
+            const P12 = P1.clone().addScaledVector(v, s);
+
+            // Vẽ viền ký hiệu góc vuông 3D (V -> P1 -> P12 -> P2 -> V)
+            const cornerPts = [V, P1, P12, P2, V];
+            const cornerGeo = new THREE.BufferGeometry().setFromPoints(cornerPts);
+            const cornerMat = new THREE.LineBasicMaterial({
+                color,
+                depthTest: false,
+                transparent: true,
+                opacity: 0.96
+            });
+            const cornerLine = new THREE.Line(cornerGeo, cornerMat);
+            cornerLine.renderOrder = 15;
+            scene.add(cornerLine);
+            edgeMeshes.push(cornerLine);
+
+            // Tô miền mờ bên trong góc vuông để nổi bật trong hình biểu diễn 3D
+            const quadGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array([
+                V.x, V.y, V.z,
+                P1.x, P1.y, P1.z,
+                P12.x, P12.y, P12.z,
+                V.x, V.y, V.z,
+                P12.x, P12.y, P12.z,
+                P2.x, P2.y, P2.z
+            ]);
+            quadGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const quadMat = new THREE.MeshBasicMaterial({
+                color,
+                side: THREE.DoubleSide,
+                depthTest: false,
+                transparent: true,
+                opacity: mark.isLinePlane ? 0.24 : 0.20
+            });
+            const quadMesh = new THREE.Mesh(quadGeo, quadMat);
+            quadMesh.renderOrder = 13;
+            scene.add(quadMesh);
+            edgeMeshes.push(quadMesh);
+
+            // Nếu là ký hiệu vuông góc giữa đường và mặt mà chưa có đường thẳng cơ sở trên mặt phẳng qua chân góc vuông:
+            // vẽ thêm đường cơ sở nằm trong mặt phẳng (P) đi qua chân đường vuông góc V
+            if (mark.drawVBaseTick) {
+                const tickStart = V.clone().addScaledVector(v, -s * 0.45);
+                const tickEnd = V.clone().addScaledVector(v, s * 2.05);
+                const tickGeo = new THREE.BufferGeometry().setFromPoints([tickStart, tickEnd]);
+                const tickMat = new THREE.LineBasicMaterial({
+                    color,
+                    depthTest: false,
+                    transparent: true,
+                    opacity: 0.90
+                });
+                const tickLine = new THREE.Line(tickGeo, tickMat);
+                tickLine.renderOrder = 14;
+                scene.add(tickLine);
+                edgeMeshes.push(tickLine);
+
+                if (mark.crossDirV && mark.crossDirV.lengthSq() > 1e-6) {
+                    const cv = mark.crossDirV.clone().normalize();
+                    const crossStart = V.clone().addScaledVector(cv, -s * 0.55);
+                    const crossEnd = V.clone().addScaledVector(cv, s * 0.55);
+                    const crossGeo = new THREE.BufferGeometry().setFromPoints([crossStart, crossEnd]);
+                    const crossLine = new THREE.Line(crossGeo, tickMat.clone());
+                    crossLine.renderOrder = 14;
+                    scene.add(crossLine);
+                    edgeMeshes.push(crossLine);
                 }
+            }
+        }
 
-                if (res.angleArc) {
-                    const { vertex, dirA, dirC, radius } = res.angleArc;
-                    const arcPts = [];
-                    const steps = 24;
-                    for (let i = 0; i <= steps; i++) {
-                        const t = i / steps;
-                        const dir = dirA.clone().lerp(dirC, t);
-                        if (dir.lengthSq() > 1e-6) {
-                            dir.normalize();
-                            arcPts.push(vertex.clone().addScaledVector(dir, radius));
-                        }
-                    }
-                    if (arcPts.length >= 2) {
-                        const arcGeo = new THREE.BufferGeometry().setFromPoints(arcPts);
-                        const arcMat = new THREE.LineBasicMaterial({
-                            color: 0x059669,
+        function renderMeasurement3DHelpers() {
+            if (!scene) return;
+            const renderedRightAngleKeys = new Set();
+
+            if (geoState.measurements && geoState.measurements.length > 0) {
+                geoState.measurements.forEach(m => {
+                    const res = evaluateMeasurement(m);
+                    if (!res) return;
+
+                    if (res.helperLine && res.helperLine.length === 2 && (m.subType === 'point-line' || m.subType === 'point-plane' || m.subType === 'line-plane')) {
+                        const lineGeo = new THREE.BufferGeometry().setFromPoints(res.helperLine);
+                        const lineMat = new THREE.LineDashedMaterial({
+                            color: m.category === 'angle' ? 0x059669 : 0xd97706,
+                            dashSize: 0.14,
+                            gapSize: 0.09,
                             depthTest: false,
                             transparent: true,
-                            opacity: 0.9
+                            opacity: 0.85
                         });
-                        const arcLine = new THREE.Line(arcGeo, arcMat);
-                        arcLine.renderOrder = 14;
-                        scene.add(arcLine);
-                        edgeMeshes.push(arcLine);
+                        const line = new THREE.Line(lineGeo, lineMat);
+                        line.computeLineDistances();
+                        line.renderOrder = 14;
+                        scene.add(line);
+                        edgeMeshes.push(line);
+                    }
+
+                    if (res.rightAngleMarks && res.rightAngleMarks.length > 0) {
+                        res.rightAngleMarks.forEach(mark => addRightAngleSquare3D(mark, renderedRightAngleKeys));
+                    }
+
+                    if (res.angleArc) {
+                        const { vertex, dirA, dirC, radius } = res.angleArc;
+                        const arcPts = [];
+                        const steps = 24;
+                        for (let i = 0; i <= steps; i++) {
+                            const t = i / steps;
+                            const dir = dirA.clone().lerp(dirC, t);
+                            if (dir.lengthSq() > 1e-6) {
+                                dir.normalize();
+                                arcPts.push(vertex.clone().addScaledVector(dir, radius));
+                            }
+                        }
+                        if (arcPts.length >= 2) {
+                            const arcGeo = new THREE.BufferGeometry().setFromPoints(arcPts);
+                            const arcMat = new THREE.LineBasicMaterial({
+                                color: 0x059669,
+                                depthTest: false,
+                                transparent: true,
+                                opacity: 0.9
+                            });
+                            const arcLine = new THREE.Line(arcGeo, arcMat);
+                            arcLine.renderOrder = 14;
+                            scene.add(arcLine);
+                            edgeMeshes.push(arcLine);
+                        }
+                    }
+                });
+            }
+
+            // Tự động hiển thị ký hiệu vuông góc cho các đường thẳng dựng bằng công cụ Đường vuông góc (perpLinePoint & perpFacePoint)
+            (geoState.points || []).forEach(pt => {
+                if (!pt.rule) return;
+                const r = pt.rule;
+                if (r.type === 'perpLinePoint') {
+                    const M = geoState.points.find(p => p.id === r.mId && !p.hidden);
+                    const A = geoState.points.find(p => p.id === r.aId && !p.hidden);
+                    const B = geoState.points.find(p => p.id === r.bId && !p.hidden);
+                    if (!M || !A || !B) return;
+                    const hasSeg = (geoState.segments || []).some(s =>
+                        !s.hidden && ((s.p1Id === M.id && s.p2Id === pt.id) || (s.p1Id === pt.id && s.p2Id === M.id))
+                    );
+                    if (!hasSeg) return;
+                    const vM = new THREE.Vector3(M.x, M.y, M.z);
+                    const vPt = new THREE.Vector3(pt.x, pt.y, pt.z);
+                    const vA = new THREE.Vector3(A.x, A.y, A.z);
+                    const vB = new THREE.Vector3(B.x, B.y, B.z);
+                    const vAB = new THREE.Vector3().subVectors(vB, vA);
+                    if (vAB.lengthSq() < 1e-6) return;
+                    const t = new THREE.Vector3().subVectors(vM, vA).dot(vAB) / vAB.lengthSq();
+                    const proj = vA.clone().addScaledVector(vAB, t);
+                    const vertex = proj.distanceTo(vM) > 1e-3 ? vPt : vM;
+                    const tip = proj.distanceTo(vM) > 1e-3 ? vM : vPt;
+                    const dirU = new THREE.Vector3().subVectors(tip, vertex);
+                    if (dirU.lengthSq() < 1e-6) return;
+                    const dirV = (vA.distanceToSquared(vertex) >= vB.distanceToSquared(vertex)
+                        ? new THREE.Vector3().subVectors(vA, vertex)
+                        : new THREE.Vector3().subVectors(vB, vertex));
+                    const rSize = Math.min(0.38, Math.max(0.22, 0.18 * Math.min(dirU.length(), vAB.length())));
+                    addRightAngleSquare3D({
+                        vertex,
+                        dirU: dirU.normalize(),
+                        dirV: dirV.normalize(),
+                        size: rSize,
+                        color: 0x059669
+                    }, renderedRightAngleKeys);
+                } else if (r.type === 'perpFacePoint') {
+                    const M = geoState.points.find(p => p.id === r.mId && !p.hidden);
+                    if (!M) return;
+                    const connSeg = (geoState.segments || []).find(s =>
+                        !s.hidden && ((s.p1Id === M.id && s.p2Id === pt.id) || (s.p1Id === pt.id && s.p2Id === M.id))
+                    );
+                    if (!connSeg) return;
+                    const plane = getPlaneDataFromId(r.faceId || '__base_plane__');
+                    if (!plane) return;
+                    const vM = new THREE.Vector3(M.x, M.y, M.z);
+                    const vPt = new THREE.Vector3(pt.x, pt.y, pt.z);
+                    const lpSpec = computeLinePlanePerpMarks(vM, vPt, plane, connSeg.id, 0x059669);
+                    if (lpSpec && lpSpec.marks) {
+                        lpSpec.marks.forEach(mark => addRightAngleSquare3D(mark, renderedRightAngleKeys));
                     }
                 }
             });
@@ -5207,7 +5612,8 @@
 
             const planeOpts = [
                 ...visibleFaces.map(f => `<option value="${f.id}">Mặt đa giác ${f.name}</option>`),
-                ...visibleCircles.map(c => `<option value="${c.id}">Mặt hình tròn ${c.name || '(C)'}</option>`)
+                ...visibleCircles.map(c => `<option value="${c.id}">Mặt hình tròn ${c.name || '(C)'}</option>`),
+                `<option value="__base_plane__">Mặt phẳng nền (P)</option>`
             ].join('');
 
             const solidOpts = visibleSolids.map(s => `<option value="${s.id}">${s.name || 'Khối tròn xoay'}</option>`).join('');
@@ -5457,7 +5863,8 @@
                 return;
             }
 
-            if (!target || target.type === 'plane') return;
+            if (!target) return;
+            if (target.type === 'plane' && measurePendingItems.length === 0) return;
 
             // Chuẩn hóa đối tượng được click
             let item = null;
@@ -5480,11 +5887,13 @@
                 const cir = (geoState.circles || []).find(c => c.id === target.circleId);
                 item = { kind: 'circle', id: target.circleId, label: cir ? (cir.name || '(C)') : '(C)' };
             } else if (target.type === 'circleDisk') {
-                const cir = (geoState.circles || []).find(c => c.id === target.circleId);
-                item = { kind: 'plane', id: target.circleId, label: cir ? (cir.name || '(C)') : '(C)' };
+                const cir = (geoState.circles || []).find(c => c.id === target.circleId || c.id === target.faceId);
+                item = { kind: 'plane', id: target.circleId || target.faceId, label: cir ? (cir.name || '(C)') : '(C)' };
             } else if (target.type === 'face') {
                 const face = geoState.faces.find(f => f.id === target.faceId);
                 item = { kind: 'plane', id: target.faceId, label: face ? face.name : '(P)' };
+            } else if (target.type === 'plane') {
+                item = { kind: 'plane', id: '__base_plane__', label: '(P)' };
             } else if (target.type === 'solid') {
                 const sol = (geoState.solids || []).find(s => s.id === target.solidId);
                 item = { kind: 'solid', id: target.solidId, label: sol ? sol.name : 'Khối tròn xoay' };
@@ -5602,14 +6011,15 @@
                     }
                 }
 
-                // Chọn cạnh hoặc mặt phẳng để đo góc (d1, d2), (d, (P)), ((P), (Q))
-                if (item.kind === 'seg' || item.kind === 'plane') {
+                // Chọn cạnh hoặc mặt phẳng (bao gồm cả hình tròn) để đo góc (d1, d2), (d, (P)), ((P), (Q))
+                const angleItem = item.kind === 'circle' ? { kind: 'plane', id: item.id, label: item.label } : item;
+                if (angleItem.kind === 'seg' || angleItem.kind === 'plane') {
                     const nonPtPending = measurePendingItems.filter(x => x.kind === 'seg' || x.kind === 'plane');
                     if (nonPtPending.length === 0) {
-                        measurePendingItems = [item];
+                        measurePendingItems = [angleItem];
                         selectedPointIds = [];
                         if (guideSpan) {
-                            guideSpan.innerHTML = `Đã chọn <b>$${item.label}$</b> $\\to$ Hãy chọn tiếp <b>Đoạn/Đường thẳng</b> hoặc <b>Mặt phẳng</b> thứ 2 để đo góc!`;
+                            guideSpan.innerHTML = `Đã chọn <b>$${angleItem.label}$</b> $\\to$ Hãy chọn tiếp <b>Đoạn/Đường thẳng</b> hoặc <b>Mặt phẳng</b> thứ 2 để đo góc!`;
                             renderMathInElementSafe(guideSpan);
                         }
                         updateSceneFromState();
@@ -5618,18 +6028,18 @@
                     const first = nonPtPending[0];
                     measurePendingItems = [];
                     selectedPointIds = [];
-                    if (first.kind === 'seg' && item.kind === 'seg' && first.id !== item.id) {
+                    if (first.kind === 'seg' && angleItem.kind === 'seg' && first.id !== angleItem.id) {
                         saveHistory();
-                        addMeasurementRecord({ category: 'angle', subType: 'line-line', seg1Id: first.id, seg2Id: item.id });
-                    } else if (first.kind === 'seg' && item.kind === 'plane') {
+                        addMeasurementRecord({ category: 'angle', subType: 'line-line', seg1Id: first.id, seg2Id: angleItem.id });
+                    } else if (first.kind === 'seg' && angleItem.kind === 'plane') {
                         saveHistory();
-                        addMeasurementRecord({ category: 'angle', subType: 'line-plane', segId: first.id, planeId: item.id });
-                    } else if (first.kind === 'plane' && item.kind === 'seg') {
+                        addMeasurementRecord({ category: 'angle', subType: 'line-plane', segId: first.id, planeId: angleItem.id });
+                    } else if (first.kind === 'plane' && angleItem.kind === 'seg') {
                         saveHistory();
-                        addMeasurementRecord({ category: 'angle', subType: 'line-plane', segId: item.id, planeId: first.id });
-                    } else if (first.kind === 'plane' && item.kind === 'plane' && first.id !== item.id) {
+                        addMeasurementRecord({ category: 'angle', subType: 'line-plane', segId: angleItem.id, planeId: first.id });
+                    } else if (first.kind === 'plane' && angleItem.kind === 'plane' && first.id !== angleItem.id) {
                         saveHistory();
-                        addMeasurementRecord({ category: 'angle', subType: 'plane-plane', plane1Id: first.id, plane2Id: item.id });
+                        addMeasurementRecord({ category: 'angle', subType: 'plane-plane', plane1Id: first.id, plane2Id: angleItem.id });
                     }
                     updateSceneFromState();
                     return;
@@ -6267,7 +6677,7 @@
                     const M = geoState.points.find(p => p.id === selectedPointIds[0]);
                     if (M) {
                         saveHistory();
-                        const faceId = (target.type === 'face' || target.type === 'circleDisk') ? target.faceId : null;
+                        const faceId = (target.type === 'face' || target.type === 'circleDisk') ? (target.faceId || target.circleId) : null;
                         const hId = createNewPoint(M.x, M.y, M.z, 'H', {
                             type: 'perpFacePoint', mId: M.id, faceId
                         });
