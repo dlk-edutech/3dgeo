@@ -42,18 +42,42 @@
         /* Header */
         header {
             background: linear-gradient(135deg, #1e293b, #0f172a);
-            color: #ffffff; padding: 7px 18px;
-            display: flex; justify-content: space-between; align-items: center;
+            color: #ffffff; padding: 7px 16px;
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.18); z-index: 40;
         }
-        .brand { font-size: 18px; font-weight: 800; letter-spacing: 1.2px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .brand { font-size: 17px; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
         .brand span { color: #ef4444; background: #fff; padding: 1px 7px; border-radius: 4px; }
         .status-bar {
-            background: rgba(255,255,255,0.12); padding: 5px 14px; border-radius: 20px;
-            font-size: 13px; color: #38bdf8; font-weight: 500;
-            display: flex; align-items: center; gap: 8px; max-width: 74%;
+            background: rgba(255,255,255,0.12); padding: 5px 13px; border-radius: 20px;
+            font-size: 12.5px; color: #38bdf8; font-weight: 500;
+            display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; overflow: hidden;
         }
+        #guide-span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .status-bar .katex, .status-bar .math-fallback { font-size: 1em; color: #fff; }
+        .header-right-actions {
+            display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+        }
+        .header-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22);
+            color: #f8fafc; border-radius: 8px; padding: 5px 10px;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 5px;
+            transition: all 0.15s; white-space: nowrap;
+        }
+        .header-btn .svg-ic { width: 15px; height: 15px; }
+        .header-btn:hover { background: #2563eb; border-color: #3b82f6; color: #ffffff; }
+        .lang-switch-btn {
+            background: #0f172a; border: 1px solid #475569;
+            color: #94a3b8; border-radius: 8px; padding: 4px 8px;
+            font-size: 11.5px; font-weight: 800; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 4px;
+            transition: all 0.15s; white-space: nowrap;
+        }
+        .lang-switch-btn:hover { border-color: #38bdf8; color: #e2e8f0; }
+        .lang-switch-btn .lang-opt { padding: 1px 4px; border-radius: 4px; transition: 0.15s; }
+        .lang-switch-btn .lang-opt.active { background: #2563eb; color: #ffffff; }
+        .lang-switch-btn .lang-sep { color: #475569; font-weight: 400; }
 
         /* Định dạng Toán học dự phòng khi chạy Offline không có KaTeX */
         .math-fallback {
@@ -353,24 +377,31 @@
             backdrop-filter: blur(8px);
             border: 1px solid #cbd5e1; border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            padding: 10px 12px; width: 300px; max-height: calc(100vh - 200px);
+            padding: 10px 12px; width: 342px; max-height: calc(100vh - 200px);
             display: none; flex-direction: column; gap: 8px;
         }
         .measure-panel-header {
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;
-            font-size: 12.5px; font-weight: 800; color: #0f172a;
+            font-size: 12px; font-weight: 800; color: #0f172a; gap: 4px;
         }
-        .measure-panel-header span { display: flex; align-items: center; gap: 6px; color: #0d9488; }
-        .measure-header-actions { display: flex; gap: 6px; align-items: center; }
+        .measure-panel-header > span { display: flex; align-items: center; gap: 5px; color: #0d9488; white-space: nowrap; }
+        .measure-header-actions { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
         .measure-mini-btn {
             background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;
-            border-radius: 6px; padding: 3px 7px; font-size: 11px; font-weight: 700;
-            cursor: pointer; transition: 0.15s;
+            border-radius: 6px; padding: 3px 6px; font-size: 11px; font-weight: 700;
+            cursor: pointer; transition: 0.15s; white-space: nowrap;
         }
         .measure-mini-btn:hover { background: #e2e8f0; color: #0f172a; }
         .measure-mini-btn.primary { background: #0d9488; color: #fff; border-color: #0f766e; }
         .measure-mini-btn.primary:hover { background: #0f766e; }
+        .measure-close-btn {
+            background: #f1f5f9; border: 1px solid #cbd5e1; color: #64748b;
+            width: 24px; height: 24px; border-radius: 6px; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all 0.15s; padding: 0; flex-shrink: 0;
+        }
+        .measure-close-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
         .measure-scale-box {
             display: flex; align-items: center; justify-content: space-between; gap: 6px;
             background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;
@@ -626,6 +657,22 @@
             <svg class="svg-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             <span id="guide-span">Chế độ: Xoay góc nhìn & Kéo điểm (Giữ chuột trái vào điểm để kéo, Double-click điểm để đổi tên)</span>
         </div>
+        <div class="header-right-actions">
+            <button class="header-btn" id="header-save-btn" onclick="saveProjectToFile()" title="Lưu dự án hiện tại thành file (.json)">
+                <svg class="svg-ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <span id="header-save-label">Lưu dự án</span>
+            </button>
+            <button class="header-btn" id="header-load-btn" onclick="triggerLoadProjectFile()" title="Tải lên dự án đã lưu (.json)">
+                <svg class="svg-ic" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><polyline points="9 14 12 11 15 14"/></svg>
+                <span id="header-load-label">Tải dự án</span>
+            </button>
+            <button class="lang-switch-btn" id="lang-toggle-btn" onclick="toggleLanguage()" title="Chuyển đổi ngôn ngữ Tiếng Việt / English">
+                <span class="lang-opt active" id="lang-opt-vi">VIE</span>
+                <span class="lang-sep">/</span>
+                <span class="lang-opt" id="lang-opt-en">ENG</span>
+            </button>
+        </div>
+        <input type="file" id="project-file-input" accept=".json,.3dgeo,application/json" style="display:none" onchange="handleProjectFileInputChange(event)">
     </header>
 
     <div id="workspace">
@@ -653,16 +700,16 @@
             <div class="anim-panel-header">
                 <span class="anim-panel-title">
                     <svg class="svg-ic" style="width:15px;height:15px;" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-                    ĐIỀU KHIỂN ĐIỂM DI ĐỘNG TRÊN ĐỐI TƯỢNG CHA
+                    <span id="anim-panel-title-text">ĐIỀU KHIỂN ĐIỂM DI ĐỘNG TRÊN ĐỐI TƯỢNG CHA</span>
                 </span>
                 <div class="anim-panel-header-actions">
-                    <button class="anim-header-btn" onclick="toggleAllActiveAnimations()" title="Chạy / Tạm dừng tất cả">
+                    <button class="anim-header-btn" id="anim-toggle-all-btn" onclick="toggleAllActiveAnimations()" title="Chạy / Tạm dừng tất cả">
                         <svg class="svg-ic" viewBox="0 0 24 24"><polygon points="5 4 13 12 5 20 5 4" fill="currentColor"/><line x1="17" y1="5" x2="17" y2="19"/><line x1="21" y1="5" x2="21" y2="19"/></svg>
-                        Chạy/Dừng tất cả
+                        <span id="anim-toggle-all-text">Chạy/Dừng tất cả</span>
                     </button>
-                    <button class="anim-header-btn" onclick="reverseAllActiveAnimations()" title="Đổi chiều tất cả">
+                    <button class="anim-header-btn" id="anim-reverse-all-btn" onclick="reverseAllActiveAnimations()" title="Đổi chiều tất cả">
                         <svg class="svg-ic" viewBox="0 0 24 24"><polyline points="17 2 21 6 17 10"/><line x1="3" y1="6" x2="21" y2="6"/><polyline points="7 14 3 18 7 22"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
-                        Đổi chiều tất cả
+                        <span id="anim-reverse-all-text">Đổi chiều tất cả</span>
                     </button>
                 </div>
             </div>
@@ -674,9 +721,9 @@
             <div class="hidden-panel-title">
                 <span>
                     <svg class="svg-ic" style="width:14px;height:14px;" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                    Đối tượng đang ẩn
+                    <span id="hidden-panel-title-text">Đối tượng đang ẩn</span>
                 </span>
-                <button onclick="unhideAllObjects()">Hiện tất cả</button>
+                <button id="unhide-all-btn" onclick="unhideAllObjects()">Hiện tất cả</button>
             </div>
             <div id="hidden-list"></div>
         </div>
@@ -686,33 +733,36 @@
             <div class="measure-panel-header">
                 <span>
                     <svg class="svg-ic" style="width:15px;height:15px;" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>
-                    ĐO ĐẠC THEO QUY CHUẨN
+                    <span id="measure-panel-title-text">ĐO ĐẠC THEO QUY CHUẨN</span>
                 </span>
                 <div class="measure-header-actions">
-                    <button class="measure-mini-btn primary" onclick="openQuickMeasureBuilderModal()" title="Mở hộp thoại chọn đối tượng đo nhanh">+ Đo theo DS</button>
-                    <button class="measure-mini-btn" onclick="clearAllMeasurements()" title="Xóa tất cả kết quả đo">Xóa số đo</button>
+                    <button class="measure-mini-btn primary" id="measure-add-list-btn" onclick="openQuickMeasureBuilderModal()" title="Mở hộp thoại chọn đối tượng đo nhanh">+ Đo theo DS</button>
+                    <button class="measure-mini-btn" id="measure-clear-all-btn" onclick="clearAllMeasurements()" title="Xóa tất cả kết quả đo">Xóa số đo</button>
+                    <button class="measure-close-btn" id="measure-close-btn" onclick="closeMeasurementPanel()" title="Đóng bảng đo đạc" aria-label="Đóng bảng đo đạc">
+                        <svg class="svg-ic" style="width:14px;height:14px;" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
                 </div>
             </div>
             <div id="measure-scale-status" class="measure-scale-box uncalibrated">
                 <span id="measure-scale-text">Quy chuẩn: Chưa quy định</span>
-                <button class="measure-mini-btn" onclick="openReferenceScaleModal()">Đặt quy chuẩn</button>
+                <button class="measure-mini-btn" id="measure-set-scale-btn" onclick="openReferenceScaleModal()">Đặt quy chuẩn</button>
             </div>
             <div class="measure-quick-tools">
-                <button class="measure-qtool-btn" data-mtool="measure-scale" onclick="selectTool('measure-scale')" title="Quy định 1 độ dài làm chuẩn (VD: AB = 5)">
+                <button class="measure-qtool-btn" id="mq-btn-scale" data-mtool="measure-scale" onclick="selectTool('measure-scale')" title="Quy định 1 độ dài làm chuẩn (VD: AB = 5)">
                     <svg class="svg-ic" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/></svg>
-                    Quy chuẩn
+                    <span id="mq-lbl-scale">Quy chuẩn</span>
                 </button>
-                <button class="measure-qtool-btn" data-mtool="measure-dist" onclick="selectTool('measure-dist')" title="Đo khoảng cách (2 điểm, điểm-đường, điểm-mặt)">
+                <button class="measure-qtool-btn" id="mq-btn-dist" data-mtool="measure-dist" onclick="selectTool('measure-dist')" title="Đo khoảng cách (2 điểm, điểm-đường, điểm-mặt)">
                     <svg class="svg-ic" viewBox="0 0 24 24"><line x1="4" y1="20" x2="20" y2="4"/><polyline points="14 4 20 4 20 10"/><polyline points="10 20 4 20 4 14"/></svg>
-                    Khoảng cách
+                    <span id="mq-lbl-dist">Khoảng cách</span>
                 </button>
-                <button class="measure-qtool-btn" data-mtool="measure-angle" onclick="selectTool('measure-angle')" title="Đo góc (3 điểm, 2 đường, đường-mặt, 2 mặt)">
+                <button class="measure-qtool-btn" id="mq-btn-angle" data-mtool="measure-angle" onclick="selectTool('measure-angle')" title="Đo góc (3 điểm, 2 đường, đường-mặt, 2 mặt)">
                     <svg class="svg-ic" viewBox="0 0 24 24"><polyline points="21 19 4 19 17 5"/><path d="M13 19a9 9 0 0 0-2.6-6.3"/></svg>
-                    Đo góc
+                    <span id="mq-lbl-angle">Đo góc</span>
                 </button>
-                <button class="measure-qtool-btn" data-mtool="measure-volume" onclick="selectTool('measure-volume')" title="Đo thể tích (Khối chóp, Tứ diện, Nón, Trụ, Cầu)">
+                <button class="measure-qtool-btn" id="mq-btn-volume" data-mtool="measure-volume" onclick="selectTool('measure-volume')" title="Đo thể tích (Khối chóp, Tứ diện, Nón, Trụ, Cầu)">
                     <svg class="svg-ic" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                    Thể tích
+                    <span id="mq-lbl-volume">Thể tích</span>
                 </button>
             </div>
             <div id="measure-rows-container"></div>
@@ -729,7 +779,7 @@
             <div class="modal-title" id="modal-title">Nhập tham số</div>
             <div id="modal-content"></div>
             <div class="modal-actions">
-                <button class="btn-secondary" onclick="closeModal()">Hủy</button>
+                <button class="btn-secondary" id="modal-cancel-btn" onclick="closeModal()">Hủy</button>
                 <button class="btn-primary" id="modal-confirm-btn">Xác nhận</button>
             </div>
         </div>
@@ -741,54 +791,54 @@
             <div class="settings-header">
                 <h3>
                     <svg class="svg-ic" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-                    Cài đặt Thanh công cụ & Công cụ thường trực
+                    <span id="settings-modal-title-text">Cài đặt Thanh công cụ & Công cụ thường trực</span>
                 </h3>
                 <button class="settings-close-btn" onclick="closeToolbarSettingsModal()">
                     <svg class="svg-ic" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
             <div class="settings-controls-bar">
-                <span style="font-size:12.5px; font-weight:700; color:#334155;">Sắp xếp thanh dọc:</span>
+                <span id="settings-sort-label" style="font-size:12.5px; font-weight:700; color:#334155;">Sắp xếp thanh dọc:</span>
                 <div class="sort-mode-group">
                     <button class="sort-mode-btn" id="sort-btn-group" onclick="setToolbarSortMode('group')">
                         <svg class="svg-ic" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                        Theo nhóm
+                        <span id="sort-lbl-group">Theo nhóm</span>
                     </button>
                     <button class="sort-mode-btn" id="sort-btn-frequency" onclick="setToolbarSortMode('frequency')">
                         <svg class="svg-ic" viewBox="0 0 24 24"><path d="M12 2c1.5 3.5 4 5.5 4 9a4 4 0 1 1-8 0c0-2 1-3.5 2-5 1 1.5 2 2 2-4z"/><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-                        Theo tần số
+                        <span id="sort-lbl-frequency">Theo tần số</span>
                     </button>
                     <button class="sort-mode-btn" id="sort-btn-custom" onclick="setToolbarSortMode('custom')">
                         <svg class="svg-ic" viewBox="0 0 24 24"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
-                        Kéo thả
+                        <span id="sort-lbl-custom">Kéo thả</span>
                     </button>
                 </div>
             </div>
             <div class="settings-hint">
-                <span>Bấm biểu tượng <b>Ghim</b> để đưa công cụ lên thanh <b>Thường trực</b> (góc trên bên phải).</span>
+                <span id="settings-hint-text">Bấm biểu tượng <b>Ghim</b> để đưa công cụ lên thanh <b>Thường trực</b> (góc trên bên phải).</span>
                 <div class="settings-hint-actions">
-                    <button onclick="showAllToolbarTools()">Hiện tất cả thanh dọc</button>
+                    <button id="settings-show-all-btn" onclick="showAllToolbarTools()">Hiện tất cả thanh dọc</button>
                 </div>
             </div>
             <div class="settings-column-headers">
-                <span>Tên công cụ (Kéo thả dòng để đổi vị trí)</span>
+                <span id="settings-col-name">Tên công cụ (Kéo thả dòng để đổi vị trí)</span>
                 <div class="col-right-labels">
-                    <span>Thường trực</span>
-                    <span>Thanh dọc</span>
+                    <span id="settings-col-pinned">Thường trực</span>
+                    <span id="settings-col-vertical">Thanh dọc</span>
                 </div>
             </div>
             <div id="settings-tool-list"></div>
             <div class="settings-footer">
-                <button class="btn-secondary" onclick="resetToolbarSettingsToDefault()">
+                <button class="btn-secondary" id="settings-reset-btn" onclick="resetToolbarSettingsToDefault()">
                     <svg class="svg-ic" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-                    Khôi phục mặc định
+                    <span id="settings-reset-text">Khôi phục mặc định</span>
                 </button>
-                <button class="btn-primary" onclick="closeToolbarSettingsModal()">Hoàn tất</button>
+                <button class="btn-primary" id="settings-done-btn" onclick="closeToolbarSettingsModal()">Hoàn tất</button>
             </div>
         </div>
     </div>
 
-    <footer>Dlk Edu Tech - Phát triển bởi tranhongdan@tranphudlk.edu.vn</footer>
+    <footer id="app-footer">Dlk Edu Tech - Phát triển bởi tranhongdan@tranphudlk.edu.vn</footer>
 
     <script>
         // =========================================================================
@@ -801,6 +851,7 @@
                 this.object = object;
                 this.domElement = domElement;
                 this.enabled = true;
+                this.wheelEnabled = true;
                 this.target = new THREE.Vector3();
                 this.enableDamping = true;
                 this.dampingFactor = 0.08;
@@ -822,6 +873,20 @@
                 const offset = new THREE.Vector3();
                 const quat = new THREE.Quaternion().setFromUnitVectors(object.up, new THREE.Vector3(0, 1, 0));
                 const quatInverse = quat.clone().invert();
+
+                this.cancelInteraction = function () {
+                    state = -1;
+                };
+
+                this.startOrbitFromEvent = function (e) {
+                    state = 0;
+                    rotateStart.set(e.clientX, e.clientY);
+                };
+
+                this.startPanFromEvent = function (e) {
+                    state = 2;
+                    panStart.set(e.clientX, e.clientY);
+                };
 
                 this.update = function () {
                     const position = scope.object.position;
@@ -888,20 +953,23 @@
                 }
 
                 function onPointerDown(e) {
+                    if (e.button === 2 || e.button === 1) {
+                        state = 2;
+                        panStart.set(e.clientX, e.clientY);
+                        return;
+                    }
                     if (!scope.enabled) return;
                     if (e.button === 0) {
                         state = 0;
                         rotateStart.set(e.clientX, e.clientY);
-                    } else if (e.button === 2 || e.button === 1) {
-                        state = 2;
-                        panStart.set(e.clientX, e.clientY);
                     }
                 }
 
                 function onPointerMove(e) {
-                    if (!scope.enabled || state === -1) return;
+                    if (state === -1) return;
                     const el = scope.domElement;
                     if (state === 0) {
+                        if (!scope.enabled) return;
                         rotateEnd.set(e.clientX, e.clientY);
                         rotateDelta.subVectors(rotateEnd, rotateStart).multiplyScalar(0.85);
                         sphericalDelta.theta -= 2 * Math.PI * rotateDelta.x / el.clientHeight;
@@ -918,10 +986,12 @@
                 function onPointerUp() { state = -1; }
 
                 function onWheel(e) {
-                    if (!scope.enabled) return;
+                    if (scope.wheelEnabled === false) return;
                     e.preventDefault();
-                    if (e.deltaY < 0) scale /= 0.92;
-                    else if (e.deltaY > 0) scale *= 0.92;
+                    // Quy ước chuẩn: Lăn chuột lên (deltaY < 0) = Phóng to (Zoom IN -> scale < 1 -> zoom tăng)
+                    // Lăn chuột xuống (deltaY > 0) = Thu nhỏ (Zoom OUT -> scale > 1 -> zoom giảm)
+                    if (e.deltaY < 0) scale *= 0.90;
+                    else if (e.deltaY > 0) scale /= 0.90;
                 }
 
                 domElement.addEventListener('contextmenu', e => e.preventDefault());
@@ -934,8 +1004,21 @@
         }
 
         // =========================================================================
-        // 2. BỘ ICON VECTOR NỘI TUYẾN (100% INLINE SVG - KHÔNG CẦN FONTAWESOME)
+        // 2. BỘ ICON VECTOR NỘI TUYẾN & HỆ THỐNG ĐA NGÔN NGỮ (VIE / ENG)
         // =========================================================================
+        const LANG_STORAGE_KEY = 'make_math_ez_3d_lang_v1';
+        let currentLang = (function () {
+            try {
+                const saved = localStorage.getItem(LANG_STORAGE_KEY);
+                if (saved === 'en' || saved === 'vi') return saved;
+            } catch (e) {}
+            return 'vi';
+        })();
+
+        function t(viText, enText) {
+            return currentLang === 'en' ? enText : viText;
+        }
+
         const SVG_ICONS = {
             rotateView: `<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><polyline points="16 16 21 16 21 21"/></svg>`,
             handMove: `<svg viewBox="0 0 24 24"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`,
@@ -963,6 +1046,8 @@
             cylinder: `<svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.5"/><ellipse cx="12" cy="18" rx="7" ry="2.5"/><line x1="5" y1="6" x2="5" y2="18"/><line x1="19" y1="6" x2="19" y2="18"/><line x1="12" y1="6" x2="12" y2="18" stroke-dasharray="2 2"/></svg>`,
             sphere: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="9" ry="3.2" stroke-dasharray="2 2"/><path d="M3 12a9 3.2 0 0 0 18 0"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/></svg>`,
             downloadPng: `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
+            saveProject: `<svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
+            loadProject: `<svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><polyline points="9 14 12 11 15 14"/></svg>`,
             play: `<svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4" fill="currentColor"/></svg>`,
             pause: `<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/></svg>`,
             sparkles: `<svg viewBox="0 0 24 24"><path d="m12 3 1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3Z"/><path d="M5 3v4"/><path d="M3 5h4"/></svg>`,
@@ -985,6 +1070,447 @@
             measureVolume: `<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`
         };
 
+        const GROUP_NAMES_I18N = {
+            1: { vi: 'Nhóm 1: Góc nhìn & Nền', en: 'Group 1: View & Base Plane' },
+            2: { vi: 'Nhóm 2: Tạo Điểm', en: 'Group 2: Points' },
+            3: { vi: 'Nhóm 3: Phép biến hình', en: 'Group 3: Transformations' },
+            4: { vi: 'Nhóm 4: Đường & Quan hệ', en: 'Group 4: Lines & Relations' },
+            5: { vi: 'Nhóm 5: Đa giác & Tròn xoay', en: 'Group 5: Polygons & Solids' },
+            6: { vi: 'Nhóm 6: Đo đạc & Tính toán', en: 'Group 6: Measurements' },
+            7: { vi: 'Nhóm 7: Quỹ tích & Hệ thống', en: 'Group 7: Locus & System' }
+        };
+
+        const TOOL_I18N = {
+            'view': {
+                vi: {
+                    name: 'Góc nhìn & Kéo điểm (Tự động theo chuột)',
+                    tip: '<b>Góc nhìn & Kéo điểm (Tự động theo chuột):</b> Kéo điểm để di chuyển điểm, kéo khoảng trống để xoay 3D, chuột phải để trượt, lăn chuột lên/xuống để phóng to/thu nhỏ',
+                    guide: 'Chế độ: Xoay góc nhìn & Kéo điểm tự động (Kéo Điểm để di chuyển, kéo khoảng trống để xoay 3D, lăn chuột để Zoom, Double-click Điểm để đổi tên)'
+                },
+                en: {
+                    name: 'View & Drag Point (Auto by Mouse)',
+                    tip: '<b>View & Drag Point (Auto by Mouse):</b> Drag a point to move it, drag empty space to rotate 3D view, right-drag to pan, scroll up/down to zoom in/out',
+                    guide: 'Mode: Auto View & Drag Point (Drag any Point to move, drag empty space to rotate 3D, scroll wheel to Zoom, Double-click Point to rename)'
+                }
+            },
+            'move': {
+                vi: {
+                    name: 'Kéo Điểm & Xoay Góc nhìn',
+                    tip: '<b>Kéo Điểm & Xoay Góc nhìn:</b> Kéo thả điểm thay đổi vị trí (Giữ Shift để nâng/hạ điểm 3D), kéo khoảng trống để xoay góc nhìn',
+                    guide: 'Kéo Điểm & Góc nhìn: Nhấn giữ chuột trái vào Điểm để kéo (Giữ phím Shift khi kéo điểm 3D để thay đổi riêng độ cao $h$), kéo khoảng trống để xoay 3D'
+                },
+                en: {
+                    name: 'Drag Point & Rotate View',
+                    tip: '<b>Drag Point & Rotate View:</b> Drag points while preserving geometric constraints (Hold Shift to change 3D height), drag empty space to rotate view',
+                    guide: 'Drag Point & View: Left-drag a Point to move it (Hold Shift while dragging a 3D point to adjust height $h$), drag empty space to rotate 3D'
+                }
+            },
+            'toggle-plane': {
+                vi: { name: 'Ẩn / Hiện mặt phẳng nền (P)', tip: '<b>Ẩn / Hiện mặt phẳng nền $(P)$</b>' },
+                en: { name: 'Show / Hide Base Plane (P)', tip: '<b>Show / Hide Base Plane $(P)$</b>' }
+            },
+            'reset-camera': {
+                vi: { name: 'Đặt lại góc nhìn chuẩn', tip: '<b>Đặt lại góc nhìn chuẩn</b>' },
+                en: { name: 'Reset Standard Camera View', tip: '<b>Reset Standard Camera View</b>' }
+            },
+            'toggle-face-tint': {
+                vi: { name: 'Bật / Tắt tô màu nhẹ bề mặt', tip: '<b>Bật / Tắt tô màu nhẹ bề mặt đa giác & khối tròn xoay</b>' },
+                en: { name: 'Toggle Surface Color Tint', tip: '<b>Toggle light color tint on polygon faces & solids of revolution</b>' }
+            },
+            'point2d': {
+                vi: {
+                    name: 'Tạo Điểm (Bắt dính thông minh)',
+                    tip: '<b>Tạo Điểm:</b> Bắt dính Giao điểm, thuộc Cạnh, thuộc Đường tròn, thuộc Mặt cầu, thuộc Mặt trên cùng hoặc Mặt nền $(P)$',
+                    guide: 'Tạo điểm: Tự động <b>bắt dính Giao điểm 2 đường/đoạn</b>, thuộc cạnh, thuộc đường tròn, thuộc mặt cầu, thuộc mặt trên cùng hoặc mặt nền $(P)$'
+                },
+                en: {
+                    name: 'Create Point (Smart Snap)',
+                    tip: '<b>Create Point:</b> Auto-snap to Intersections, Edges, Circles, Spheres, Top Faces, or Base Plane $(P)$',
+                    guide: 'Create Point: Auto-snaps to <b>Line/Segment Intersections</b>, edges, circles, spheres, polygon faces, or base plane $(P)$'
+                }
+            },
+            'point3d': {
+                vi: {
+                    name: 'Tạo Điểm 3D ngoài mặt nền',
+                    tip: '<b>Tạo Điểm 3D ngoài mặt nền:</b> Click chọn chân hình chiếu rồi kéo chuột lên/xuống',
+                    guide: 'Tạo điểm 3D: Click chọn chân hình chiếu và <b>giữ kéo chuột lên/xuống</b> để chọn độ cao'
+                },
+                en: {
+                    name: 'Create 3D Point Above/Below Plane',
+                    tip: '<b>Create 3D Point:</b> Click projection foot on plane and drag mouse up/down to set height',
+                    guide: 'Create 3D Point: Click projection foot and <b>hold & drag mouse up/down</b> to set altitude $h$'
+                }
+            },
+            'translate': {
+                vi: {
+                    name: 'Phép tịnh tiến',
+                    tip: '<b>Phép tịnh tiến:</b> Chọn $M$, rồi chọn $A, B \\Rightarrow$ tạo $M\'$ sao cho $\\overrightarrow{MM\'} = \\overrightarrow{AB}$',
+                    guide: 'Phép tịnh tiến: Chọn lần lượt Điểm gốc $M \\to$ Điểm $A \\to$ Điểm $B$ (Tạo $M\'$ phụ thuộc động thỏa $\\overrightarrow{MM\'} = \\overrightarrow{AB}$)'
+                },
+                en: {
+                    name: 'Translation',
+                    tip: '<b>Translation:</b> Select $M$, then $A, B \\Rightarrow$ creates $M\'$ such that $\\overrightarrow{MM\'} = \\overrightarrow{AB}$',
+                    guide: 'Translation: Select source point $M \\to$ point $A \\to$ point $B$ (Creates dynamic $M\'$ satisfying $\\overrightarrow{MM\'} = \\overrightarrow{AB}$)'
+                }
+            },
+            'homothety': {
+                vi: {
+                    name: 'Phép vị tự',
+                    tip: '<b>Phép vị tự:</b> Chọn $A, B$ và nhập tỉ số $k \\Rightarrow$ tạo $M$ sao cho $\\overrightarrow{AM} = k\\overrightarrow{AB}$',
+                    guide: 'Phép vị tự: Chọn tâm $A \\to$ Chọn điểm $B \\to$ Nhập tỉ số $k$ (Tạo $M$ phụ thuộc động thỏa $\\overrightarrow{AM} = k \\cdot \\overrightarrow{AB}$)'
+                },
+                en: {
+                    name: 'Homothety (Dilation)',
+                    tip: '<b>Homothety:</b> Select center $A$, point $B$ and ratio $k \\Rightarrow$ creates $M$ with $\\overrightarrow{AM} = k\\overrightarrow{AB}$',
+                    guide: 'Homothety: Select center $A \\to$ point $B \\to$ Enter ratio $k$ (Creates dynamic $M$ satisfying $\\overrightarrow{AM} = k \\cdot \\overrightarrow{AB}$)'
+                }
+            },
+            'rotate': {
+                vi: {
+                    name: 'Phép quay',
+                    tip: '<b>Phép quay:</b> Chọn tâm $I$, điểm $A$, góc $\\alpha$, mặt quay $(P) \\Rightarrow \\widehat{AIM} = \\alpha$',
+                    guide: 'Phép quay: Chọn tâm quay $I \\to$ Chọn điểm $A \\to$ Nhập góc quay $\\alpha$ và mặt phẳng quay $(P)$ ($\\widehat{AIM} = \\alpha$)'
+                },
+                en: {
+                    name: 'Rotation',
+                    tip: '<b>Rotation:</b> Select center $I$, point $A$, angle $\\alpha$, rotation plane $(P) \\Rightarrow \\widehat{AIM} = \\alpha$',
+                    guide: 'Rotation: Select center $I \\to$ point $A \\to$ Enter angle $\\alpha$ and rotation plane $(P)$ ($\\widehat{AIM} = \\alpha$)'
+                }
+            },
+            'segment': {
+                vi: {
+                    name: 'Đoạn thẳng',
+                    tip: '<b>Đoạn thẳng:</b> Chọn 2 điểm (Khép kín tự động tạo bề mặt đa giác)',
+                    guide: 'Đoạn thẳng: Chọn 2 điểm (Khi các đoạn thẳng khép kín sẽ tự động tạo bề mặt đa giác)'
+                },
+                en: {
+                    name: 'Segment',
+                    tip: '<b>Segment:</b> Select 2 points (Closed coplanar loops automatically form polygon faces)',
+                    guide: 'Segment: Select 2 points (Closed coplanar loops automatically create polygon faces)'
+                }
+            },
+            'line': {
+                vi: {
+                    name: 'Đường thẳng',
+                    tip: '<b>Đường thẳng:</b> Chọn 2 điểm để vẽ đường thẳng đi qua 2 điểm',
+                    guide: 'Đường thẳng: Chọn 2 điểm để vẽ đường thẳng đi qua 2 điểm đó'
+                },
+                en: {
+                    name: 'Infinite Line',
+                    tip: '<b>Line:</b> Select 2 points to draw an infinite line passing through them',
+                    guide: 'Line: Select 2 points to construct the line passing through them'
+                }
+            },
+            'parallel': {
+                vi: {
+                    name: 'Đường thẳng song song',
+                    tip: '<b>Đường thẳng song song ($d\' \\parallel d$):</b> Chọn 1 điểm $M$ rồi click vào 1 đoạn/đường thẳng (hoặc chọn 2 điểm $A, B$)',
+                    guide: 'Đường thẳng song song ($d\' \\parallel d$): Chọn điểm $M \\to$ Click vào <b>Đoạn/Đường thẳng mẫu</b> (hoặc chọn tiếp 2 điểm $A, B$)'
+                },
+                en: {
+                    name: 'Parallel Line',
+                    tip: '<b>Parallel Line ($d\' \\parallel d$):</b> Select point $M$ then click a Segment/Line (or select 2 points $A, B$)',
+                    guide: 'Parallel Line ($d\' \\parallel d$): Select point $M \\to$ Click a <b>reference Segment/Line</b> (or select 2 points $A, B$)'
+                }
+            },
+            'perp': {
+                vi: {
+                    name: 'Đường thẳng vuông góc',
+                    tip: '<b>Đường thẳng vuông góc ($d\' \\perp d$ hoặc $d\' \\perp (P)$):</b> Chọn điểm $M$ rồi click vào Đoạn/Đường thẳng hoặc Bề mặt đa giác',
+                    guide: 'Đường thẳng vuông góc ($d\' \\perp d$ hoặc $d\' \\perp (P)$): Chọn điểm $M \\to$ Click vào <b>Đoạn/Đường thẳng</b> hoặc <b>Bề mặt đa giác</b> (tự dựng chân đường cao $H$)'
+                },
+                en: {
+                    name: 'Perpendicular Line',
+                    tip: '<b>Perpendicular Line ($d\' \\perp d$ or $d\' \\perp (P)$):</b> Select point $M$ then click a Segment/Line or Polygon Face',
+                    guide: 'Perpendicular Line ($d\' \\perp d$ or $d\' \\perp (P)$): Select point $M \\to$ Click a <b>Segment/Line</b> or <b>Polygon Face</b> (auto-constructs foot $H$)'
+                }
+            },
+            'poly-tri-special': {
+                vi: {
+                    name: 'Vẽ Tam giác đặc biệt',
+                    tip: '<b>Vẽ Tam giác đặc biệt:</b> Chọn 2 đỉnh cạnh đáy $A, B \\Rightarrow$ Chọn Tam giác Đều, Vuông cân, Cân hoặc Vuông',
+                    guide: 'Tam giác đặc biệt: Chọn 2 đỉnh cạnh đáy $A, B \\to$ Chọn <b>Tam giác đều, Vuông cân, Cân hoặc Vuông</b> (Mặc định tạo bề mặt)'
+                },
+                en: {
+                    name: 'Special Triangle',
+                    tip: '<b>Special Triangle:</b> Select 2 base vertices $A, B \\Rightarrow$ Choose Equilateral, Right Isosceles, Isosceles, or Right Triangle',
+                    guide: 'Special Triangle: Select 2 base vertices $A, B \\to$ Choose <b>Equilateral, Right Isosceles, Isosceles, or Right Triangle</b>'
+                }
+            },
+            'poly-square': {
+                vi: {
+                    name: 'Hình vuông',
+                    tip: '<b>Hình vuông:</b> Chọn 2 điểm cạnh đáy trên nền ($C, D$ tự động phụ thuộc vào $A, B$)',
+                    guide: 'Hình vuông: Chọn 2 điểm cạnh đáy $A, B \\Rightarrow$ Tự dựng $C, D$ luôn bảo toàn tính chất Hình vuông khi kéo $A, B$'
+                },
+                en: {
+                    name: 'Square',
+                    tip: '<b>Square:</b> Select 2 base vertices $A, B$ ($C, D$ dynamically depend on $A, B$)',
+                    guide: 'Square: Select 2 base vertices $A, B \\Rightarrow$ Auto-constructs $C, D$ preserving Square properties when dragging $A, B$'
+                }
+            },
+            'poly-rect': {
+                vi: {
+                    name: 'Hình chữ nhật',
+                    tip: '<b>Hình chữ nhật:</b> Chọn 2 điểm cạnh đáy $A, B$ và 1 điểm định chiều rộng',
+                    guide: 'Hình chữ nhật: Chọn 2 điểm cạnh đáy $A, B$ và 1 điểm định độ rộng $\\Rightarrow$ Luôn bảo toàn tính chất Hình chữ nhật'
+                },
+                en: {
+                    name: 'Rectangle',
+                    tip: '<b>Rectangle:</b> Select 2 base vertices $A, B$ and 1 point defining width',
+                    guide: 'Rectangle: Select 2 base vertices $A, B$ and 1 width point $\\Rightarrow$ Preserves Rectangle properties dynamically'
+                }
+            },
+            'poly-para': {
+                vi: {
+                    name: 'Hình bình hành',
+                    tip: '<b>Hình bình hành:</b> Chọn 3 đỉnh $A, B, C \\Rightarrow$ tự dựng $D$ phụ thuộc vào $A, B, C$',
+                    guide: 'Hình bình hành: Chọn 3 đỉnh $A, B, C \\Rightarrow$ Tự dựng $D$ luôn bảo toàn tính chất Hình bình hành khi kéo $A, B, C$'
+                },
+                en: {
+                    name: 'Parallelogram',
+                    tip: '<b>Parallelogram:</b> Select 3 vertices $A, B, C \\Rightarrow$ auto-constructs $D$ dependent on $A, B, C$',
+                    guide: 'Parallelogram: Select 3 vertices $A, B, C \\Rightarrow$ Auto-constructs $D$ preserving Parallelogram properties'
+                }
+            },
+            'poly-trap': {
+                vi: {
+                    name: 'Hình thang',
+                    tip: '<b>Hình thang:</b> Chọn 3 đỉnh $A, B, C$ và tỉ số đáy $\\Rightarrow$ tự dựng $D$ song song $AB$',
+                    guide: 'Hình thang: Chọn 3 đỉnh $A, B, C \\Rightarrow$ Nhập tỉ số đáy để dựng đỉnh $D$ luôn song song $AB$'
+                },
+                en: {
+                    name: 'Trapezoid',
+                    tip: '<b>Trapezoid:</b> Select 3 vertices $A, B, C$ and base ratio $\\Rightarrow$ auto-constructs $D$ parallel to $AB$',
+                    guide: 'Trapezoid: Select 3 vertices $A, B, C \\Rightarrow$ Enter base ratio to construct $D$ parallel to $AB$'
+                }
+            },
+            'poly-free': {
+                vi: {
+                    name: 'Đa giác N đỉnh (Tam giác thường)',
+                    tip: '<b>Đa giác $N$ đỉnh (hoặc Tam giác thường):</b> Chọn các đỉnh liên tiếp, click lại đỉnh đầu để đóng kín',
+                    guide: 'Đa giác $N$ đỉnh (hoặc Tam giác thường): Chọn liên tiếp các đỉnh, sau đó <b>click lại đỉnh đầu tiên</b> để khép kín'
+                },
+                en: {
+                    name: 'N-gon (General Polygon / Triangle)',
+                    tip: '<b>N-gon / Triangle:</b> Select vertices in order, then click the first vertex again to close the polygon',
+                    guide: 'N-gon / Triangle: Select consecutive vertices, then <b>click the first vertex again</b> to close the face'
+                }
+            },
+            'circle-center': {
+                vi: {
+                    name: 'Đường tròn (Tâm & Điểm / Bán kính)',
+                    tip: '<b>Đường tròn (Tâm & Điểm / Bán kính):</b> Chọn tâm $O$ rồi chọn điểm $A$ đi qua (hoặc chọn mặt phẳng & bán kính)',
+                    guide: 'Đường tròn (Tâm & Điểm / Bán kính): Chọn tâm $O \\to$ Chọn <b>điểm $A$ trên đường tròn</b> (hoặc click vào mặt phẳng để nhập bán kính $R$)'
+                },
+                en: {
+                    name: 'Circle (Center & Point / Radius)',
+                    tip: '<b>Circle (Center & Point / Radius):</b> Select center $O$ then point $A$ on circle (or click a plane to enter radius $R$)',
+                    guide: 'Circle (Center & Point / Radius): Select center $O \\to$ Select <b>point $A$ on circle</b> (or click a plane to enter radius $R$)'
+                }
+            },
+            'circle-3pts': {
+                vi: {
+                    name: 'Đường tròn ngoại tiếp qua 3 điểm',
+                    tip: '<b>Đường tròn đi qua 3 điểm:</b> Chọn 3 điểm không thẳng hàng $A, B, C$ để dựng đường tròn ngoại tiếp',
+                    guide: 'Đường tròn ngoại tiếp: Chọn lần lượt <b>3 điểm không thẳng hàng $A, B, C$</b> $\\Rightarrow$ Tự dựng đường tròn $(ABC)$ và tâm $O$'
+                },
+                en: {
+                    name: 'Circumcircle Through 3 Points',
+                    tip: '<b>Circumcircle (3 Points):</b> Select 3 non-collinear points $A, B, C$ to construct circumcircle and center $O$',
+                    guide: 'Circumcircle: Select <b>3 non-collinear points $A, B, C$</b> $\\Rightarrow$ Auto-constructs circle $(ABC)$ and center $O$'
+                }
+            },
+            'solid-cone': {
+                vi: {
+                    name: 'Hình nón tròn xoay (Đường tròn & Điểm)',
+                    tip: '<b>Hình nón tròn xoay:</b> Chọn <b>1 Đường tròn đáy $(C)$</b> và <b>1 Điểm đỉnh $S$</b> (hoặc ngược lại) để tạo Hình nón có đường sinh biên & khuất nét tự động',
+                    guide: 'Hình nón tròn xoay: Chọn <b>1 Đường tròn đáy $(C)$</b> và <b>1 Điểm đỉnh $S$</b> (hoặc chọn 3 điểm $O, A, S$) $\\Rightarrow$ Tự dựng Hình nón có đường sinh biên & khuất nét'
+                },
+                en: {
+                    name: 'Cone of Revolution (Circle & Apex)',
+                    tip: '<b>Cone:</b> Select <b>base Circle $(C)$</b> and <b>Apex point $S$</b> (or 3 points $O, A, S$) to construct a Cone with dynamic silhouette generators',
+                    guide: 'Cone of Revolution: Select <b>1 base Circle $(C)$</b> and <b>1 Apex point $S$</b> (or 3 points $O, A, S$) $\\Rightarrow$ Auto-renders silhouette & hidden lines'
+                }
+            },
+            'solid-cylinder': {
+                vi: {
+                    name: 'Hình trụ / Nón cụt (Chọn 2 Đường tròn)',
+                    tip: '<b>Hình trụ / Hình nón cụt:</b> Chọn <b>2 Đường tròn đáy $(C_1), (C_2)$</b> (hoặc chọn 1 Đường tròn & 1 Điểm tâm đáy thứ 2 $O\'$) để tạo Hình trụ / Nón cụt',
+                    guide: 'Hình trụ / Hình nón cụt: Chọn <b>2 Đường tròn đáy $(C_1), (C_2)$</b> (hoặc chọn 1 Đường tròn & 1 Điểm tâm đáy thứ hai $O\'$) $\\Rightarrow$ Tự dựng Hình trụ / Nón cụt'
+                },
+                en: {
+                    name: 'Cylinder / Frustum (2 Circles)',
+                    tip: '<b>Cylinder / Frustum:</b> Select <b>2 base Circles $(C_1), (C_2)$</b> (or 1 Circle & second center $O\'$) to construct Cylinder or Frustum',
+                    guide: 'Cylinder / Frustum: Select <b>2 base Circles $(C_1), (C_2)$</b> (or 1 Circle & second center point $O\'$) $\\Rightarrow$ Auto-constructs Cylinder / Frustum'
+                }
+            },
+            'solid-sphere': {
+                vi: {
+                    name: 'Mặt cầu (Chọn Tâm & Bán kính / Điểm)',
+                    tip: '<b>Mặt cầu $S(I; R)$:</b> Chọn <b>Tâm $I$</b> rồi chọn <b>Điểm $A$ trên mặt cầu</b> (hoặc click vào mặt nền / khoảng trống để nhập bán kính $R$, hoặc click vào Đường tròn lớn)',
+                    guide: 'Mặt cầu $S(I; R)$: Chọn <b>Tâm $I$</b> rồi chọn <b>Điểm $A$ trên mặt cầu</b> (hoặc click vào mặt nền để nhập bán kính $R$, hoặc click vào Đường tròn lớn)'
+                },
+                en: {
+                    name: 'Sphere (Center & Radius / Point)',
+                    tip: '<b>Sphere $S(I; R)$:</b> Select <b>Center $I$</b> then <b>Point $A$ on sphere</b> (or click plane to enter radius $R$, or click a Great Circle)',
+                    guide: 'Sphere $S(I; R)$: Select <b>Center $I$</b> then <b>Point $A$ on sphere</b> (or click base plane to enter radius $R$, or click a Great Circle)'
+                }
+            },
+            'measure-scale': {
+                vi: {
+                    name: 'Quy định độ dài chuẩn (VD: AB = 5)',
+                    tip: '<b>Quy định độ dài chuẩn (VD: $AB = 5$):</b> Chọn <b>1 Đoạn thẳng</b> (hoặc <b>2 Điểm $A, B$</b>) để gán độ dài làm quy chuẩn cho mọi phép đo',
+                    guide: 'Quy chuẩn độ dài (VD: $AB = 5$): Click vào <b>1 Đoạn thẳng</b> (hoặc chọn <b>2 Điểm $A, B$</b>) để đặt độ dài quy chuẩn cho toàn bộ phép đo'
+                },
+                en: {
+                    name: 'Set Reference Length Scale (e.g. AB = 5)',
+                    tip: '<b>Set Reference Scale (e.g. $AB = 5$):</b> Click <b>1 Segment</b> (or <b>2 Points $A, B$</b>) to calibrate the reference length for all measurements',
+                    guide: 'Reference Scale (e.g. $AB = 5$): Click <b>1 Segment</b> (or select <b>2 Points $A, B$</b>) to set the reference length for all measurements'
+                }
+            },
+            'measure-dist': {
+                vi: {
+                    name: 'Đo khoảng cách (Điểm, Đường, Mặt)',
+                    tip: '<b>Đo khoảng cách theo quy chuẩn:</b> Click <b>1 Đoạn thẳng</b>, <b>2 Điểm</b>, <b>Điểm & Đường thẳng</b> $d(M, \\Delta)$, hoặc <b>Điểm & Mặt phẳng</b> $d(M, (P))$',
+                    guide: 'Đo khoảng cách (theo quy chuẩn): Chọn <b>2 Điểm</b>, hoặc <b>Điểm & Đường thẳng</b> $d(M, \\Delta)$, hoặc <b>Điểm & Mặt phẳng</b> $d(M, (P))$, hoặc <b>2 Đường thẳng</b> $d(\\Delta_1, \\Delta_2)$'
+                },
+                en: {
+                    name: 'Measure Distance (Point, Line, Plane)',
+                    tip: '<b>Measure Calibrated Distance:</b> Select <b>2 Points</b>, <b>Point & Line</b> $d(M, \\Delta)$, <b>Point & Plane</b> $d(M, (P))$, or <b>2 Lines</b>',
+                    guide: 'Measure Distance (calibrated): Select <b>2 Points</b>, or <b>Point & Line</b> $d(M, \\Delta)$, or <b>Point & Plane</b> $d(M, (P))$, or <b>2 Lines</b> $d(\\Delta_1, \\Delta_2)$'
+                }
+            },
+            'measure-angle': {
+                vi: {
+                    name: 'Đo góc (3 Điểm, Đường, Mặt)',
+                    tip: '<b>Đo góc ($0^\\circ \\to 180^\\circ$):</b> Chọn <b>3 Điểm $A, B, C$</b> ($\\widehat{ABC}$), hoặc <b>2 Đường thẳng</b>, hoặc <b>Đường thẳng & Mặt phẳng</b>, hoặc <b>2 Mặt phẳng</b>',
+                    guide: 'Đo góc (Độ °): Chọn <b>3 Điểm $A, B, C$</b> ($\\widehat{ABC}$), hoặc <b>2 Đường thẳng</b> $(d_1, d_2)$, hoặc <b>Đường thẳng & Mặt phẳng</b> $(d, (P))$, hoặc <b>2 Mặt phẳng</b> $((P), (Q))$'
+                },
+                en: {
+                    name: 'Measure Angle (3 Points, Line, Plane)',
+                    tip: '<b>Measure Angle ($0^\\circ \\to 180^\\circ$):</b> Select <b>3 Points $A, B, C$</b> ($\\widehat{ABC}$), <b>2 Lines</b>, <b>Line & Plane</b>, or <b>2 Planes</b>',
+                    guide: 'Measure Angle (°): Select <b>3 Points $A, B, C$</b> ($\\widehat{ABC}$), or <b>2 Lines</b> $(d_1, d_2)$, or <b>Line & Plane</b> $(d, (P))$, or <b>2 Planes</b> $((P), (Q))$'
+                }
+            },
+            'measure-volume': {
+                vi: {
+                    name: 'Đo thể tích (Khối chóp, Tứ diện, Tròn xoay)',
+                    tip: '<b>Đo thể tích theo quy chuẩn:</b> Click <b>Khối tròn xoay</b> (Nón, Trụ, Cầu), hoặc chọn <b>Mặt đáy & Đỉnh $S$</b> (Khối chóp), hoặc <b>4 Điểm</b> (Tứ diện)',
+                    guide: 'Đo thể tích (theo quy chuẩn): Click vào <b>Khối tròn xoay</b> (Nón, Trụ, Cầu), hoặc chọn <b>Mặt đáy & Đỉnh $S$</b> (Khối chóp), hoặc chọn <b>4 đỉnh $A, B, C, D$</b> (Tứ diện)'
+                },
+                en: {
+                    name: 'Measure Volume (Pyramid, Tetrahedron, Solid)',
+                    tip: '<b>Measure Calibrated Volume:</b> Click a <b>Solid of Revolution</b> (Cone, Cylinder, Sphere), or select <b>Base Face & Apex $S$</b> (Pyramid), or <b>4 Points</b> (Tetrahedron)',
+                    guide: 'Measure Volume (calibrated): Click a <b>Solid of Revolution</b>, or select <b>Base Face & Apex $S$</b> (Pyramid), or select <b>4 vertices $A, B, C, D$</b> (Tetrahedron)'
+                }
+            },
+            'animate': {
+                vi: {
+                    name: 'Chuyển động tự động trên đối tượng cha',
+                    tip: '<b>Chuyển động trên đối tượng cha:</b> Click vào điểm thuộc cạnh / đường thẳng / đường tròn / đa giác / mặt cầu để mở bảng điều khiển chuyển động',
+                    guide: 'Chuyển động tự động: Click vào <b>Điểm thuộc cạnh / đường thẳng / đường tròn / mặt cầu / bề mặt</b> để mở thanh điều khiển Tốc độ, Chạy/Dừng'
+                },
+                en: {
+                    name: 'Animate Point on Parent Object',
+                    tip: '<b>Animate on Parent Object:</b> Click a point constrained to an edge / line / circle / face / sphere to open the animation controller',
+                    guide: 'Auto Animation: Click a <b>Point on an edge / line / circle / sphere / face</b> to open the Speed & Play/Pause control bar'
+                }
+            },
+            'trace': {
+                vi: {
+                    name: 'Bật / Tắt Tạo vết (Trace)',
+                    tip: '<b>Bật / Tắt Tạo vết (Trace):</b> Click vào điểm hoặc đoạn thẳng để để lại vết quỹ tích khi di chuyển',
+                    guide: 'Bật / Tắt Tạo vết (Trace): Click vào <b>Điểm</b> hoặc <b>Đoạn thẳng</b> để để lại vết quỹ tích khi đối tượng di chuyển'
+                },
+                en: {
+                    name: 'Toggle Locus Trace',
+                    tip: '<b>Toggle Trace:</b> Click a point or segment to leave a locus trail when it moves',
+                    guide: 'Toggle Trace: Click a <b>Point</b> or <b>Segment</b> to leave a locus trail as it moves'
+                }
+            },
+            'clear-traces': {
+                vi: { name: 'Xóa vết quỹ tích', tip: '<b>Xóa toàn bộ vết quỹ tích đã vẽ</b>' },
+                en: { name: 'Clear All Traces', tip: '<b>Clear all drawn locus traces</b>' }
+            },
+            'hide': {
+                vi: {
+                    name: 'Ẩn đối tượng',
+                    tip: '<b>Ẩn đối tượng:</b> Click vào Điểm, Đoạn thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay để ẩn (Có danh sách góc phải để hiện lại)',
+                    guide: 'Ẩn đối tượng: Click vào <b>Điểm, Đoạn thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay</b> để ẩn đi (Click danh sách góc dưới phải để hiện lại)'
+                },
+                en: {
+                    name: 'Hide Object',
+                    tip: '<b>Hide Object:</b> Click any Point, Segment, Circle, Face, or Solid to hide it (Restore from bottom-right panel)',
+                    guide: 'Hide Object: Click a <b>Point, Segment, Circle, Face, or Solid</b> to hide it (Restore from the bottom-right Hidden Objects list)'
+                }
+            },
+            'delete-obj': {
+                vi: {
+                    name: 'Xóa đối tượng (& các đối tượng con)',
+                    tip: '<b>Xóa 1 đối tượng & đối tượng con:</b> Click vào Điểm, Đoạn/Đường thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay để xóa cùng toàn bộ đối tượng con phụ thuộc',
+                    guide: 'Xóa đối tượng & đối tượng con: Click vào <b>Điểm, Đoạn/Đường thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay</b> để xóa cùng đối tượng con (Ctrl+Z để hoàn tác)'
+                },
+                en: {
+                    name: 'Delete Object (& Dependents)',
+                    tip: '<b>Delete Object & Dependents:</b> Click any Point, Segment/Line, Circle, Face, or Solid to delete it along with dependent child objects',
+                    guide: 'Delete Object & Dependents: Click a <b>Point, Segment/Line, Circle, Face, or Solid</b> to delete it and its dependents (Ctrl+Z to Undo)'
+                }
+            },
+            'undo-action': {
+                vi: { name: 'Hoàn tác (Undo)', tip: '<b>Hoàn tác (Undo - Ctrl+Z)</b>' },
+                en: { name: 'Undo Action (Ctrl+Z)', tip: '<b>Undo (Ctrl+Z)</b>' }
+            },
+            'save-project': {
+                vi: { name: 'Lưu dự án (.json)', tip: '<b>Lưu dự án (.json):</b> Tải xuống toàn bộ hình vẽ 3D, quy chuẩn & phép đo để mở lại sau' },
+                en: { name: 'Save Project (.json)', tip: '<b>Save Project (.json):</b> Download the entire 3D construction, scale & measurements to reopen later' }
+            },
+            'load-project': {
+                vi: { name: 'Tải lên dự án đã lưu (.json)', tip: '<b>Tải dự án (.json):</b> Mở lại file dự án 3D đã lưu từ máy tính' },
+                en: { name: 'Load Saved Project (.json)', tip: '<b>Load Project (.json):</b> Open a previously saved 3D project file from your device' }
+            },
+            'demo-pyramid': {
+                vi: { name: 'Tạo nhanh Hình chóp mẫu S.ABCDE', tip: '<b>Tạo nhanh Hình chóp mẫu $S.ABCDE$</b>' },
+                en: { name: 'Load Sample Pyramid S.ABCDE', tip: '<b>Quickly generate sample Pyramid $S.ABCDE$</b>' }
+            },
+            'export-png': {
+                vi: { name: 'Tải ảnh hình vẽ (.PNG)', tip: '<b>Tải ảnh PNG (.png):</b> Lưu hình vẽ 3D hiện tại (bao gồm cả tên các điểm & số đo) thành file ảnh PNG sắc nét' },
+                en: { name: 'Export Image (.PNG)', tip: '<b>Export PNG (.png):</b> Download a high-resolution PNG image of the current 3D scene with labels & measurements' }
+            },
+            'clear-all': {
+                vi: { name: 'Xóa toàn bộ hình vẽ', tip: '<b>Xóa toàn bộ hình vẽ</b>' },
+                en: { name: 'Clear Entire Scene', tip: '<b>Clear the entire 3D drawing</b>' }
+            }
+        };
+
+        function getToolName(toolId) {
+            const entry = TOOL_I18N[toolId];
+            if (entry) return currentLang === 'en' ? entry.en.name : entry.vi.name;
+            const found = MASTER_TOOLS.find(m => m.id === toolId);
+            return found ? found.name : toolId;
+        }
+
+        function getToolTip(toolId) {
+            const entry = TOOL_I18N[toolId];
+            if (entry) return currentLang === 'en' ? entry.en.tip : entry.vi.tip;
+            const found = MASTER_TOOLS.find(m => m.id === toolId);
+            return found ? found.tip : '';
+        }
+
+        function getToolGuide(toolId) {
+            const entry = TOOL_I18N[toolId];
+            if (entry && (entry.vi.guide || entry.en.guide)) {
+                return currentLang === 'en' ? (entry.en.guide || entry.vi.guide) : entry.vi.guide;
+            }
+            return '';
+        }
+
+        function getGroupName(groupNum) {
+            const g = GROUP_NAMES_I18N[groupNum];
+            if (!g) return '';
+            return currentLang === 'en' ? g.en : g.vi;
+        }
+
         // =========================================================================
         // 3. DANH MỤC CÔNG CỤ & QUẢN LÝ CẤU HÌNH
         // =========================================================================
@@ -992,36 +1518,36 @@
             // NHÓM 1: Góc nhìn, Kéo điểm & Mặt nền
             {
                 id: 'view', group: 1, groupName: 'Nhóm 1: Góc nhìn & Nền',
-                name: 'Góc nhìn & Kéo điểm', type: 'mode',
+                name: 'Góc nhìn & Kéo điểm (Tự động theo chuột)', type: 'mode',
                 iconHtml: SVG_ICONS.rotateView,
-                tip: '<b>Góc nhìn & Kéo điểm:</b> Kéo khoảng trống để xoay 3D, kéo trực tiếp Điểm để di chuyển, Double-click Điểm để đổi tên'
+                tip: TOOL_I18N['view'].vi.tip
             },
             {
                 id: 'move', group: 1, groupName: 'Nhóm 1: Góc nhìn & Nền',
-                name: 'Chuyên Kéo Điểm', type: 'mode',
+                name: 'Kéo Điểm & Xoay Góc nhìn', type: 'mode',
                 iconHtml: SVG_ICONS.handMove,
-                tip: '<b>Chuyên Kéo Điểm:</b> Kéo thả điểm thay đổi vị trí (Bảo toàn tính chất dựng hình, giữ Shift để nâng/hạ điểm 3D)'
+                tip: TOOL_I18N['move'].vi.tip
             },
             {
                 id: 'toggle-plane', group: 1, groupName: 'Nhóm 1: Góc nhìn & Nền',
                 name: 'Ẩn / Hiện mặt phẳng nền (P)', type: 'action',
                 actionFn: () => toggleBasePlane(),
                 iconHtml: SVG_ICONS.gridPlane,
-                tip: '<b>Ẩn / Hiện mặt phẳng nền $(P)$</b>'
+                tip: TOOL_I18N['toggle-plane'].vi.tip
             },
             {
                 id: 'reset-camera', group: 1, groupName: 'Nhóm 1: Góc nhìn & Nền',
                 name: 'Đặt lại góc nhìn chuẩn', type: 'action',
                 actionFn: () => resetCamera(),
                 iconHtml: SVG_ICONS.cameraReset,
-                tip: '<b>Đặt lại góc nhìn chuẩn</b>'
+                tip: TOOL_I18N['reset-camera'].vi.tip
             },
             {
                 id: 'toggle-face-tint', group: 1, groupName: 'Nhóm 1: Góc nhìn & Nền',
                 name: 'Bật / Tắt tô màu nhẹ bề mặt', type: 'action',
                 actionFn: () => toggleFaceStyle(),
                 iconHtml: SVG_ICONS.fillDrip,
-                tip: '<b>Bật / Tắt tô màu nhẹ bề mặt đa giác & khối tròn xoay</b>'
+                tip: TOOL_I18N['toggle-face-tint'].vi.tip
             },
 
             // NHÓM 2: Tạo Điểm
@@ -1029,13 +1555,13 @@
                 id: 'point2d', group: 2, groupName: 'Nhóm 2: Tạo Điểm',
                 name: 'Tạo Điểm (Bắt dính thông minh)', type: 'mode',
                 iconHtml: SVG_ICONS.point2d,
-                tip: '<b>Tạo Điểm:</b> Bắt dính Giao điểm, thuộc Cạnh, thuộc Đường tròn, thuộc Mặt cầu, thuộc Mặt trên cùng hoặc Mặt nền $(P)$'
+                tip: TOOL_I18N['point2d'].vi.tip
             },
             {
                 id: 'point3d', group: 2, groupName: 'Nhóm 2: Tạo Điểm',
                 name: 'Tạo Điểm 3D ngoài mặt nền', type: 'mode',
                 iconHtml: SVG_ICONS.point3d,
-                tip: '<b>Tạo Điểm 3D ngoài mặt nền:</b> Click chọn chân hình chiếu rồi kéo chuột lên/xuống'
+                tip: TOOL_I18N['point3d'].vi.tip
             },
 
             // NHÓM 3: Phép biến hình
@@ -1043,19 +1569,19 @@
                 id: 'translate', group: 3, groupName: 'Nhóm 3: Phép biến hình',
                 name: 'Phép tịnh tiến', type: 'mode',
                 iconHtml: SVG_ICONS.translate,
-                tip: '<b>Phép tịnh tiến:</b> Chọn $M$, rồi chọn $A, B \\Rightarrow$ tạo $M\'$ sao cho $\\overrightarrow{MM\'} = \\overrightarrow{AB}$'
+                tip: TOOL_I18N['translate'].vi.tip
             },
             {
                 id: 'homothety', group: 3, groupName: 'Nhóm 3: Phép biến hình',
                 name: 'Phép vị tự', type: 'mode',
                 iconHtml: SVG_ICONS.homothety,
-                tip: '<b>Phép vị tự:</b> Chọn $A, B$ và nhập tỉ số $k \\Rightarrow$ tạo $M$ sao cho $\\overrightarrow{AM} = k\\overrightarrow{AB}$'
+                tip: TOOL_I18N['homothety'].vi.tip
             },
             {
                 id: 'rotate', group: 3, groupName: 'Nhóm 3: Phép biến hình',
                 name: 'Phép quay', type: 'mode',
                 iconHtml: SVG_ICONS.rotateAngle,
-                tip: '<b>Phép quay:</b> Chọn tâm $I$, điểm $A$, góc $\\alpha$, mặt quay $(P) \\Rightarrow \\widehat{AIM} = \\alpha$'
+                tip: TOOL_I18N['rotate'].vi.tip
             },
 
             // NHÓM 4: Đoạn thẳng, Đường thẳng, Song song & Vuông góc
@@ -1063,25 +1589,25 @@
                 id: 'segment', group: 4, groupName: 'Nhóm 4: Đường & Quan hệ',
                 name: 'Đoạn thẳng', type: 'mode',
                 iconHtml: SVG_ICONS.segment,
-                tip: '<b>Đoạn thẳng:</b> Chọn 2 điểm (Khép kín tự động tạo bề mặt đa giác)'
+                tip: TOOL_I18N['segment'].vi.tip
             },
             {
                 id: 'line', group: 4, groupName: 'Nhóm 4: Đường & Quan hệ',
                 name: 'Đường thẳng', type: 'mode',
                 iconHtml: SVG_ICONS.line,
-                tip: '<b>Đường thẳng:</b> Chọn 2 điểm để vẽ đường thẳng đi qua 2 điểm'
+                tip: TOOL_I18N['line'].vi.tip
             },
             {
                 id: 'parallel', group: 4, groupName: 'Nhóm 4: Đường & Quan hệ',
                 name: 'Đường thẳng song song', type: 'mode',
                 iconHtml: SVG_ICONS.parallel,
-                tip: '<b>Đường thẳng song song ($d\' \\parallel d$):</b> Chọn 1 điểm $M$ rồi click vào 1 đoạn/đường thẳng (hoặc chọn 2 điểm $A, B$)'
+                tip: TOOL_I18N['parallel'].vi.tip
             },
             {
                 id: 'perp', group: 4, groupName: 'Nhóm 4: Đường & Quan hệ',
                 name: 'Đường thẳng vuông góc', type: 'mode',
                 iconHtml: SVG_ICONS.perp,
-                tip: '<b>Đường thẳng vuông góc ($d\' \\perp d$ hoặc $d\' \\perp (P)$):</b> Chọn điểm $M$ rồi click vào Đoạn/Đường thẳng hoặc Bề mặt đa giác'
+                tip: TOOL_I18N['perp'].vi.tip
             },
 
             // NHÓM 5: Tam giác đặc biệt, Đa giác, Đường tròn 3D & Hình tròn xoay
@@ -1089,67 +1615,67 @@
                 id: 'poly-tri-special', group: 5, groupName: 'Nhóm 5: Đa giác & Tròn xoay',
                 name: 'Vẽ Tam giác đặc biệt', type: 'mode',
                 iconHtml: SVG_ICONS.triSpecial,
-                tip: '<b>Vẽ Tam giác đặc biệt:</b> Chọn 2 đỉnh cạnh đáy $A, B \\Rightarrow$ Chọn Tam giác Đều, Vuông cân, Cân hoặc Vuông'
+                tip: TOOL_I18N['poly-tri-special'].vi.tip
             },
             {
                 id: 'poly-square', group: 5, groupName: 'Nhóm 5: Đa giác & Tròn xoay',
                 name: 'Hình vuông', type: 'mode',
                 iconHtml: SVG_ICONS.square,
-                tip: '<b>Hình vuông:</b> Chọn 2 điểm cạnh đáy trên nền ($C, D$ tự động phụ thuộc vào $A, B$)'
+                tip: TOOL_I18N['poly-square'].vi.tip
             },
             {
                 id: 'poly-rect', group: 5, groupName: 'Nhóm 5: Đa giác & Tròn xoay',
                 name: 'Hình chữ nhật', type: 'mode',
                 iconHtml: SVG_ICONS.rect,
-                tip: '<b>Hình chữ nhật:</b> Chọn 2 điểm cạnh đáy $A, B$ và 1 điểm định chiều rộng'
+                tip: TOOL_I18N['poly-rect'].vi.tip
             },
             {
                 id: 'poly-para', group: 5, groupName: 'Nhóm 5: Đa giác & Tròn xoay',
                 name: 'Hình bình hành', type: 'mode',
                 iconHtml: SVG_ICONS.para,
-                tip: '<b>Hình bình hành:</b> Chọn 3 đỉnh $A, B, C \\Rightarrow$ tự dựng $D$ phụ thuộc vào $A, B, C$'
+                tip: TOOL_I18N['poly-para'].vi.tip
             },
             {
                 id: 'poly-trap', group: 5, groupName: 'Nhóm 5: Đa giác & Tròn xoay',
                 name: 'Hình thang', type: 'mode',
                 iconHtml: SVG_ICONS.trap,
-                tip: '<b>Hình thang:</b> Chọn 3 đỉnh $A, B, C$ và tỉ số đáy $\\Rightarrow$ tự dựng $D$ song song $AB$'
+                tip: TOOL_I18N['poly-trap'].vi.tip
             },
             {
                 id: 'poly-free', group: 5, groupName: 'Nhóm 5: Đa giác & Tròn xoay',
                 name: 'Đa giác N đỉnh (Tam giác thường)', type: 'mode',
                 iconHtml: SVG_ICONS.polyFree,
-                tip: '<b>Đa giác $N$ đỉnh (hoặc Tam giác thường):</b> Chọn các đỉnh liên tiếp, click lại đỉnh đầu để đóng kín'
+                tip: TOOL_I18N['poly-free'].vi.tip
             },
             {
                 id: 'circle-center', group: 5, groupName: 'Nhóm 5: Đa giác & Tròn xoay',
                 name: 'Đường tròn (Tâm & Điểm / Bán kính)', type: 'mode',
                 iconHtml: SVG_ICONS.circleCenter,
-                tip: '<b>Đường tròn (Tâm & Điểm / Bán kính):</b> Chọn tâm $O$ rồi chọn điểm $A$ đi qua (hoặc chọn mặt phẳng & bán kính)'
+                tip: TOOL_I18N['circle-center'].vi.tip
             },
             {
                 id: 'circle-3pts', group: 5, groupName: 'Nhóm 5: Đa giác & Tròn xoay',
                 name: 'Đường tròn ngoại tiếp qua 3 điểm', type: 'mode',
                 iconHtml: SVG_ICONS.circle3Pts,
-                tip: '<b>Đường tròn đi qua 3 điểm:</b> Chọn 3 điểm không thẳng hàng $A, B, C$ để dựng đường tròn ngoại tiếp'
+                tip: TOOL_I18N['circle-3pts'].vi.tip
             },
             {
                 id: 'solid-cone', group: 5, groupName: 'Nhóm 5: Đa giác & Tròn xoay',
                 name: 'Hình nón tròn xoay (Đường tròn & Điểm)', type: 'mode',
                 iconHtml: SVG_ICONS.cone,
-                tip: '<b>Hình nón tròn xoay:</b> Chọn <b>1 Đường tròn đáy $(C)$</b> và <b>1 Điểm đỉnh $S$</b> (hoặc ngược lại) để tạo Hình nón có đường sinh biên & khuất nét tự động'
+                tip: TOOL_I18N['solid-cone'].vi.tip
             },
             {
                 id: 'solid-cylinder', group: 5, groupName: 'Nhóm 5: Đa giác & Tròn xoay',
                 name: 'Hình trụ / Nón cụt (Chọn 2 Đường tròn)', type: 'mode',
                 iconHtml: SVG_ICONS.cylinder,
-                tip: '<b>Hình trụ / Hình nón cụt:</b> Chọn <b>2 Đường tròn đáy $(C_1), (C_2)$</b> (hoặc chọn 1 Đường tròn & 1 Điểm tâm đáy thứ 2 $O\'$) để tạo Hình trụ / Nón cụt'
+                tip: TOOL_I18N['solid-cylinder'].vi.tip
             },
             {
                 id: 'solid-sphere', group: 5, groupName: 'Nhóm 5: Đa giác & Tròn xoay',
                 name: 'Mặt cầu (Chọn Tâm & Bán kính / Điểm)', type: 'mode',
                 iconHtml: SVG_ICONS.sphere,
-                tip: '<b>Mặt cầu $S(I; R)$:</b> Chọn <b>Tâm $I$</b> rồi chọn <b>Điểm $A$ trên mặt cầu</b> (hoặc click vào mặt nền / khoảng trống để nhập bán kính $R$, hoặc click vào Đường tròn lớn)'
+                tip: TOOL_I18N['solid-sphere'].vi.tip
             },
 
             // NHÓM 6: Đo đạc theo quy chuẩn (Quy chuẩn độ dài, Khoảng cách, Góc, Thể tích)
@@ -1157,59 +1683,59 @@
                 id: 'measure-scale', group: 6, groupName: 'Nhóm 6: Đo đạc & Tính toán',
                 name: 'Quy định độ dài chuẩn (VD: AB = 5)', type: 'mode',
                 iconHtml: SVG_ICONS.measureScale,
-                tip: '<b>Quy định độ dài chuẩn (VD: $AB = 5$):</b> Chọn <b>1 Đoạn thẳng</b> (hoặc <b>2 Điểm $A, B$</b>) để gán độ dài làm quy chuẩn cho mọi phép đo'
+                tip: TOOL_I18N['measure-scale'].vi.tip
             },
             {
                 id: 'measure-dist', group: 6, groupName: 'Nhóm 6: Đo đạc & Tính toán',
                 name: 'Đo khoảng cách (Điểm, Đường, Mặt)', type: 'mode',
                 iconHtml: SVG_ICONS.measureDist,
-                tip: '<b>Đo khoảng cách theo quy chuẩn:</b> Click <b>1 Đoạn thẳng</b>, <b>2 Điểm</b>, <b>Điểm & Đường thẳng</b> $d(M, \\Delta)$, hoặc <b>Điểm & Mặt phẳng</b> $d(M, (P))$'
+                tip: TOOL_I18N['measure-dist'].vi.tip
             },
             {
                 id: 'measure-angle', group: 6, groupName: 'Nhóm 6: Đo đạc & Tính toán',
                 name: 'Đo góc (3 Điểm, Đường, Mặt)', type: 'mode',
                 iconHtml: SVG_ICONS.measureAngle,
-                tip: '<b>Đo góc ($0^\\circ \\to 180^\\circ$):</b> Chọn <b>3 Điểm $A, B, C$</b> ($\\widehat{ABC}$), hoặc <b>2 Đường thẳng</b>, hoặc <b>Đường thẳng & Mặt phẳng</b>, hoặc <b>2 Mặt phẳng</b>'
+                tip: TOOL_I18N['measure-angle'].vi.tip
             },
             {
                 id: 'measure-volume', group: 6, groupName: 'Nhóm 6: Đo đạc & Tính toán',
                 name: 'Đo thể tích (Khối chóp, Tứ diện, Tròn xoay)', type: 'mode',
                 iconHtml: SVG_ICONS.measureVolume,
-                tip: '<b>Đo thể tích theo quy chuẩn:</b> Click <b>Khối tròn xoay</b> (Nón, Trụ, Cầu), hoặc chọn <b>Mặt đáy & Đỉnh $S$</b> (Khối chóp), hoặc <b>4 Điểm</b> (Tứ diện)'
+                tip: TOOL_I18N['measure-volume'].vi.tip
             },
 
-            // NHÓM 7: Chuyển động, Tạo vết, Ẩn/Hiện, Xóa đối tượng & Hệ thống
+            // NHÓM 7: Chuyển động, Tạo vết, Ẩn/Hiện, Xóa đối tượng, Lưu/Tải dự án & Hệ thống
             {
                 id: 'animate', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Chuyển động tự động trên đối tượng cha', type: 'mode',
                 iconHtml: SVG_ICONS.play,
-                tip: '<b>Chuyển động trên đối tượng cha:</b> Click vào điểm thuộc cạnh / đường thẳng / đường tròn / đa giác / mặt cầu để mở bảng điều khiển chuyển động'
+                tip: TOOL_I18N['animate'].vi.tip
             },
             {
                 id: 'trace', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Bật / Tắt Tạo vết (Trace)', type: 'mode',
                 iconHtml: SVG_ICONS.sparkles,
-                tip: '<b>Bật / Tắt Tạo vết (Trace):</b> Click vào điểm hoặc đoạn thẳng để để lại vết quỹ tích khi di chuyển'
+                tip: TOOL_I18N['trace'].vi.tip
             },
             {
                 id: 'clear-traces', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Xóa vết quỹ tích', type: 'action',
                 actionFn: () => clearAllTraces(),
                 iconHtml: SVG_ICONS.eraser,
-                tip: '<b>Xóa toàn bộ vết quỹ tích đã vẽ</b>'
+                tip: TOOL_I18N['clear-traces'].vi.tip
             },
             {
                 id: 'hide', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Ẩn đối tượng', type: 'mode',
                 iconHtml: SVG_ICONS.eyeSlash,
-                tip: '<b>Ẩn đối tượng:</b> Click vào Điểm, Đoạn thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay để ẩn (Có danh sách góc phải để hiện lại)'
+                tip: TOOL_I18N['hide'].vi.tip
             },
             {
                 id: 'delete-obj', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Xóa đối tượng (& các đối tượng con)', type: 'mode',
                 extraClass: 'danger',
                 iconHtml: SVG_ICONS.deleteObj,
-                tip: '<b>Xóa 1 đối tượng & đối tượng con:</b> Click vào Điểm, Đoạn/Đường thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay để xóa cùng toàn bộ đối tượng con phụ thuộc'
+                tip: TOOL_I18N['delete-obj'].vi.tip
             },
             {
                 id: 'undo-action', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
@@ -1217,21 +1743,35 @@
                 extraClass: 'warning',
                 actionFn: () => undo(),
                 iconHtml: SVG_ICONS.undo,
-                tip: '<b>Hoàn tác (Undo - Ctrl+Z)</b>'
+                tip: TOOL_I18N['undo-action'].vi.tip
+            },
+            {
+                id: 'save-project', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
+                name: 'Lưu dự án (.json)', type: 'action',
+                actionFn: () => saveProjectToFile(),
+                iconHtml: SVG_ICONS.saveProject,
+                tip: TOOL_I18N['save-project'].vi.tip
+            },
+            {
+                id: 'load-project', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
+                name: 'Tải lên dự án đã lưu (.json)', type: 'action',
+                actionFn: () => triggerLoadProjectFile(),
+                iconHtml: SVG_ICONS.loadProject,
+                tip: TOOL_I18N['load-project'].vi.tip
             },
             {
                 id: 'demo-pyramid', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Tạo nhanh Hình chóp mẫu S.ABCDE', type: 'action',
                 actionFn: () => createDemoPyramid(),
                 iconHtml: SVG_ICONS.pyramid,
-                tip: '<b>Tạo nhanh Hình chóp mẫu $S.ABCDE$</b>'
+                tip: TOOL_I18N['demo-pyramid'].vi.tip
             },
             {
                 id: 'export-png', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
                 name: 'Tải ảnh hình vẽ (.PNG)', type: 'action',
                 actionFn: () => exportCanvasPng(),
                 iconHtml: SVG_ICONS.downloadPng,
-                tip: '<b>Tải ảnh PNG (.png):</b> Lưu hình vẽ 3D hiện tại (bao gồm cả tên các điểm & số đo) thành file ảnh PNG sắc nét'
+                tip: TOOL_I18N['export-png'].vi.tip
             },
             {
                 id: 'clear-all', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
@@ -1239,14 +1779,14 @@
                 extraClass: 'danger',
                 actionFn: () => clearAll(),
                 iconHtml: SVG_ICONS.trash,
-                tip: '<b>Xóa toàn bộ hình vẽ</b>'
+                tip: TOOL_I18N['clear-all'].vi.tip
             }
         ];
 
-        const DEFAULT_PINNED_IDS = ['measure-scale', 'measure-dist', 'measure-angle', 'measure-volume', 'delete-obj', 'undo-action', 'reset-camera', 'toggle-face-tint', 'export-png'];
-        const DEFAULT_HIDDEN_VERTICAL_IDS = ['reset-camera', 'toggle-face-tint'];
+        const DEFAULT_PINNED_IDS = ['measure-scale', 'measure-dist', 'measure-angle', 'measure-volume', 'save-project', 'load-project', 'delete-obj', 'undo-action', 'reset-camera', 'toggle-face-tint', 'export-png'];
+        const DEFAULT_HIDDEN_VERTICAL_IDS = ['move', 'reset-camera', 'toggle-face-tint'];
 
-        const TOOLBAR_STORAGE_KEY = 'make_math_ez_3d_toolbar_v10';
+        const TOOLBAR_STORAGE_KEY = 'make_math_ez_3d_toolbar_v11';
         let toolbarConfig = {
             sortMode: 'group',
             customOrder: MASTER_TOOLS.map(t => t.id),
@@ -1314,6 +1854,9 @@
             if (!tool) return;
             incrementToolUsage(tool.id);
             if (tool.type === 'mode') {
+                if (['measure-scale', 'measure-dist', 'measure-angle', 'measure-volume'].includes(tool.id)) {
+                    isMeasurePanelDismissed = false;
+                }
                 selectTool(tool.id);
             } else if (tool.type === 'action' && tool.actionFn) {
                 tool.actionFn();
@@ -1371,7 +1914,7 @@
 
             const settingsBtn = document.createElement('button');
             settingsBtn.className = 'q-btn settings-trigger';
-            settingsBtn.setAttribute('data-tip', '<b>Cài đặt công cụ thường trực & Thanh công cụ</b>');
+            settingsBtn.setAttribute('data-tip', t('<b>Cài đặt công cụ thường trực & Thanh công cụ</b>', '<b>Toolbar & Quick Tools Settings</b>'));
             settingsBtn.innerHTML = SVG_ICONS.sliders;
             settingsBtn.onclick = () => openToolbarSettingsModal();
             settingsBtn.addEventListener('mouseenter', () => positionTooltipSmart(settingsBtn));
@@ -1385,10 +1928,10 @@
                 const btn = document.createElement('button');
                 btn.className = 'q-btn' + (tool.extraClass ? ' ' + tool.extraClass : '');
                 btn.setAttribute('data-tool-id', tool.id);
-                btn.setAttribute('data-tip', tool.tip + ' <i>(Kéo thả để đổi vị trí)</i>');
+                btn.setAttribute('data-tip', getToolTip(tool.id) + t(' <i>(Kéo thả để đổi vị trí)</i>', ' <i>(Drag to reorder)</i>'));
                 btn.draggable = true;
 
-                if (tool.type === 'mode' && currentTool === tool.id) btn.classList.add('active');
+                if (tool.type === 'mode' && (currentTool === tool.id || (tool.id === 'view' && currentTool === 'move'))) btn.classList.add('active');
                 if (tool.id === 'toggle-plane' && !isBasePlaneVisible) btn.classList.add('active');
                 if (tool.id === 'toggle-face-tint' && showFaceTint) btn.classList.add('active');
 
@@ -1445,10 +1988,10 @@
                 btn.className = 'tool-btn' + (tool.extraClass ? ' ' + tool.extraClass : '');
                 btn.id = `tool-${tool.id}`;
                 btn.setAttribute('data-tool-id', tool.id);
-                btn.setAttribute('data-tip', tool.tip);
+                btn.setAttribute('data-tip', getToolTip(tool.id));
                 btn.draggable = true;
 
-                if (tool.type === 'mode' && currentTool === tool.id) btn.classList.add('active');
+                if (tool.type === 'mode' && (currentTool === tool.id || (tool.id === 'view' && currentTool === 'move'))) btn.classList.add('active');
                 if (tool.id === 'toggle-plane' && !isBasePlaneVisible) btn.classList.add('active');
                 if (tool.id === 'toggle-face-tint' && showFaceTint) btn.classList.add('active');
 
@@ -1571,7 +2114,10 @@
                 toolbarConfig.hiddenIds = toolbarConfig.hiddenIds.filter(id => id !== toolId);
             } else {
                 if (toolbarConfig.hiddenIds.length >= MASTER_TOOLS.length - 1) {
-                    alert('Cần giữ lại ít nhất 1 công cụ hiển thị trên thanh công cụ dọc!');
+                    const guideSpan = document.getElementById('guide-span');
+                    if (guideSpan) {
+                        guideSpan.innerHTML = `<span style="color:#fbbf24;">${t('Cần giữ lại ít nhất 1 công cụ hiển thị trên thanh công cụ dọc!', 'Please keep at least 1 tool visible on the vertical toolbar!')}</span>`;
+                    }
                     renderToolbarSettingsList();
                     return;
                 }
@@ -1626,22 +2172,22 @@
 
                 row.innerHTML = `
                     <div class="settings-row-left">
-                        <span class="drag-grip" title="Kéo để đổi vị trí">${SVG_ICONS.grip}</span>
+                        <span class="drag-grip" title="${t('Kéo để đổi vị trí', 'Drag to reorder')}">${SVG_ICONS.grip}</span>
                         <div class="settings-tool-icon">${tool.iconHtml}</div>
                         <div class="settings-tool-info">
-                            <span class="settings-tool-name">${tool.name}</span>
+                            <span class="settings-tool-name">${getToolName(tool.id)}</span>
                             <div class="settings-tool-meta">
-                                <span class="group-tag">${tool.groupName}</span>
-                                <span class="freq-tag">Dùng: ${count}</span>
-                                ${isPinned ? '<span class="pinned-tag">★ Thường trực</span>' : ''}
+                                <span class="group-tag">${getGroupName(tool.group)}</span>
+                                <span class="freq-tag">${t('Dùng:', 'Used:')} ${count}</span>
+                                ${isPinned ? `<span class="pinned-tag">${t('★ Thường trực', '★ Pinned')}</span>` : ''}
                             </div>
                         </div>
                     </div>
                     <div class="settings-row-right">
-                        <button class="pin-toggle-btn ${isPinned ? 'pinned' : ''}" title="Ghim / Bỏ ghim khỏi thanh Công cụ thường trực (góc trên phải)">
+                        <button class="pin-toggle-btn ${isPinned ? 'pinned' : ''}" title="${t('Ghim / Bỏ ghim khỏi thanh Công cụ thường trực (góc trên phải)', 'Pin / Unpin from Quick Controls (top-right)')}">
                             ${SVG_ICONS.pin}
                         </button>
-                        <label class="toggle-switch" title="Hiện / Ẩn trên thanh công cụ dọc bên trái">
+                        <label class="toggle-switch" title="${t('Hiện / Ẩn trên thanh công cụ dọc bên trái', 'Show / Hide on left vertical toolbar')}">
                             <input type="checkbox" ${isVisible ? 'checked' : ''}>
                             <span class="toggle-slider"></span>
                         </label>
@@ -1843,7 +2389,10 @@
             const totalDeleted = delPoints.size + delSegs.size + delCircles.size + delFaces.size + delSolids.size;
             const guideSpan = document.getElementById('guide-span');
             if (guideSpan) {
-                guideSpan.innerHTML = `Đã xóa đối tượng cùng các thành phần con phụ thuộc (Tổng cộng: <b>${totalDeleted}</b> đối tượng: ${delPoints.size} điểm, ${delSegs.size} đoạn/đường, ${delFaces.size} mặt, ${delCircles.size} đường tròn, ${delSolids.size} khối tròn xoay). Bấm <b>Ctrl+Z</b> nếu muốn hoàn tác.`;
+                guideSpan.innerHTML = t(
+                    `Đã xóa đối tượng cùng các thành phần con phụ thuộc (Tổng cộng: <b>${totalDeleted}</b> đối tượng: ${delPoints.size} điểm, ${delSegs.size} đoạn/đường, ${delFaces.size} mặt, ${delCircles.size} đường tròn, ${delSolids.size} khối tròn xoay). Bấm <b>Ctrl+Z</b> nếu muốn hoàn tác.`,
+                    `Deleted object and its dependent children (Total: <b>${totalDeleted}</b> objects: ${delPoints.size} points, ${delSegs.size} segments/lines, ${delFaces.size} faces, ${delCircles.size} circles, ${delSolids.size} solids). Press <b>Ctrl+Z</b> to undo.`
+                );
             }
 
             updateSceneFromState();
@@ -1861,29 +2410,29 @@
                 if (seg) {
                     const p1 = geoState.points.find(p => p.id === seg.p1Id);
                     const p2 = geoState.points.find(p => p.id === seg.p2Id);
-                    if (p1 && p2) return seg.isLine ? `đ.thẳng ${p1.name}${p2.name}` : `cạnh ${p1.name}${p2.name}`;
+                    if (p1 && p2) return seg.isLine ? `${t('đ.thẳng', 'line')} ${p1.name}${p2.name}` : `${t('cạnh', 'edge')} ${p1.name}${p2.name}`;
                 }
-                return 'cạnh';
+                return t('cạnh', 'edge');
             }
             if (pt.rule.type === 'onCircle') {
                 const cir = (geoState.circles || []).find(c => c.id === pt.rule.circleId);
-                return cir ? `đ.tròn ${cir.name || '(C)'}` : 'đường tròn';
+                return cir ? `${t('đ.tròn', 'circle')} ${cir.name || '(C)'}` : t('đường tròn', 'circle');
             }
             if (pt.rule.type === 'onCircleDisk') {
                 const cir = (geoState.circles || []).find(c => c.id === pt.rule.circleId);
-                return cir ? `hình tròn ${cir.name || '(C)'}` : 'bề mặt hình tròn';
+                return cir ? `${t('hình tròn', 'disk')} ${cir.name || '(C)'}` : t('bề mặt hình tròn', 'circular disk');
             }
             if (pt.rule.type === 'onFace') {
                 const face = geoState.faces.find(f => f.id === pt.rule.faceId);
-                return face ? `mặt ${face.name}` : 'bề mặt';
+                return face ? `${t('mặt', 'face')} ${face.name}` : t('bề mặt', 'face');
             }
             if (pt.rule.type === 'onSphere') {
                 const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId);
-                return sol ? `mặt cầu ${sol.name || '(S)'}` : 'mặt cầu';
+                return sol ? `${t('mặt cầu', 'sphere')} ${sol.name || '(S)'}` : t('mặt cầu', 'sphere');
             }
             if (pt.rule.type === 'onCone' || pt.rule.type === 'onFrustum') {
                 const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId);
-                return sol ? `${sol.name || 'mặt tròn xoay'}` : 'mặt tròn xoay';
+                return sol ? `${sol.name || t('mặt tròn xoay', 'solid surface')}` : t('mặt tròn xoay', 'solid surface');
             }
             return '';
         }
@@ -1913,35 +2462,35 @@
                 row.className = 'anim-point-row';
 
                 const parentDesc = getParentObjectDescription(pt);
-                const dirSymbol = pt.animDir >= 0 ? 'Thuận (+)' : 'Ngược (-)';
+                const dirSymbol = pt.animDir >= 0 ? t('Thuận (+)', 'Forward (+)') : t('Ngược (-)', 'Reverse (-)');
 
                 row.innerHTML = `
                     <div class="anim-pt-badge">
                         <div class="anim-pt-name">${formatPointNameHTML(pt.name)}</div>
-                        <span class="anim-pt-parent">thuộc ${parentDesc}</span>
+                        <span class="anim-pt-parent">${t('thuộc', 'on')} ${parentDesc}</span>
                     </div>
                     <div class="anim-controls-group">
-                        <button class="anim-ctrl-btn ${pt.animating ? 'playing' : 'paused'}" data-act="play-pause" title="${pt.animating ? 'Tạm dừng' : 'Chạy tiếp'}">
+                        <button class="anim-ctrl-btn ${pt.animating ? 'playing' : 'paused'}" data-act="play-pause" title="${pt.animating ? t('Tạm dừng', 'Pause') : t('Chạy tiếp', 'Play')}">
                             ${pt.animating ? SVG_ICONS.pause : SVG_ICONS.play}
                         </button>
-                        <button class="anim-ctrl-btn" data-act="reverse" title="Đổi chiều chuyển động">
+                        <button class="anim-ctrl-btn" data-act="reverse" title="${t('Đổi chiều chuyển động', 'Reverse direction')}">
                             ${SVG_ICONS.reverseDir}
                         </button>
-                        <span class="anim-dir-tag" title="Chiều hiện tại">${dirSymbol}</span>
+                        <span class="anim-dir-tag" title="${t('Chiều hiện tại', 'Current direction')}">${dirSymbol}</span>
                         <div class="anim-speed-box">
-                            <button class="anim-ctrl-btn" style="width:24px;height:24px;" data-act="slower" title="Giảm tốc độ">
+                            <button class="anim-ctrl-btn" style="width:24px;height:24px;" data-act="slower" title="${t('Giảm tốc độ', 'Slower')}">
                                 ${SVG_ICONS.minus}
                             </button>
-                            <input type="range" class="anim-speed-slider" min="0.2" max="4.0" step="0.2" value="${pt.animSpeedMult}" title="Kéo để chỉnh tốc độ">
-                            <button class="anim-ctrl-btn" style="width:24px;height:24px;" data-act="faster" title="Tăng tốc độ">
+                            <input type="range" class="anim-speed-slider" min="0.2" max="4.0" step="0.2" value="${pt.animSpeedMult}" title="${t('Kéo để chỉnh tốc độ', 'Drag to adjust speed')}">
+                            <button class="anim-ctrl-btn" style="width:24px;height:24px;" data-act="faster" title="${t('Tăng tốc độ', 'Faster')}">
                                 ${SVG_ICONS.plus}
                             </button>
                             <span class="anim-speed-val">${pt.animSpeedMult.toFixed(1)}x</span>
                         </div>
-                        <button class="anim-ctrl-btn ${pt.trace ? 'trace-on' : ''}" data-act="trace" title="Bật / Tắt để lại vết quỹ tích cho điểm ${pt.name}">
+                        <button class="anim-ctrl-btn ${pt.trace ? 'trace-on' : ''}" data-act="trace" title="${t('Bật / Tắt để lại vết quỹ tích cho điểm', 'Toggle locus trace for point')} ${pt.name}">
                             ${SVG_ICONS.sparkles}
                         </button>
-                        <button class="anim-ctrl-btn close-row" data-act="remove" title="Dừng hẳn & Đóng điều khiển điểm ${pt.name}">
+                        <button class="anim-ctrl-btn close-row" data-act="remove" title="${t('Dừng hẳn & Đóng điều khiển điểm', 'Stop & close control for point')} ${pt.name}">
                             ${SVG_ICONS.closeX}
                         </button>
                     </div>
@@ -2112,6 +2661,7 @@
         let selectedCircleIds = [];
         let measureSelection = { segIds: [], faceIds: [] };
         let pendingMeasureToolAfterScale = null;
+        let isMeasurePanelDismissed = false;
         let hoveredPointId = null;
         let hoveredCircleId = null;
 
@@ -2125,6 +2675,7 @@
         let dragPlane = null;
         let dragStartMouseY = 0;
         let dragStartPointY = 0;
+        let pendingPointerGesture = null;
 
         let raycaster, mouse;
         const container = document.getElementById('canvas-container');
@@ -2211,6 +2762,250 @@
             } catch (e) {
                 return false;
             }
+        }
+
+        // =========================================================================
+        // CHUYỂN ĐỔI NGÔN NGỮ (VIE / ENG) & LƯU / MỞ DỰ ÁN (.JSON)
+        // =========================================================================
+        function applyLanguage(lang) {
+            currentLang = (lang === 'en') ? 'en' : 'vi';
+            try {
+                localStorage.setItem(LANG_STORAGE_KEY, currentLang);
+            } catch (e) {}
+
+            const viOpt = document.getElementById('lang-opt-vi');
+            const enOpt = document.getElementById('lang-opt-en');
+            if (viOpt) viOpt.classList.toggle('active', currentLang === 'vi');
+            if (enOpt) enOpt.classList.toggle('active', currentLang === 'en');
+
+            const setTxt = (id, vi, en) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = t(vi, en);
+            };
+            const setHtml = (id, vi, en) => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = t(vi, en);
+            };
+            const setTitle = (id, vi, en) => {
+                const el = document.getElementById(id);
+                if (el) el.title = t(vi, en);
+            };
+
+            setTxt('header-save-label', 'Lưu dự án', 'Save');
+            setTxt('header-load-label', 'Tải dự án', 'Load');
+            setTitle('header-save-btn', 'Lưu dự án hình học 3D về máy (.json)', 'Save 3D Geometry project to file (.json)');
+            setTitle('header-load-btn', 'Mở / Tải lên dự án hình học 3D đã lưu (.json)', 'Open / Load saved 3D Geometry project (.json)');
+            setTitle('lang-toggle-btn', 'Chuyển đổi ngôn ngữ Tiếng Việt / Tiếng Anh (Switch Language)', 'Switch Language (Vietnamese / English)');
+
+            setTxt('measure-panel-title-text', 'ĐO ĐẠC 3D', '3D MEASUREMENTS');
+            setTxt('measure-set-scale-btn', 'Đặt quy chuẩn', 'Set Scale');
+            setTxt('measure-add-list-btn', '+ Đo theo DS', '+ Add');
+            setTxt('measure-clear-all-btn', 'Xóa số đo', 'Clear');
+            setTitle('measure-set-scale-btn', 'Đặt hoặc đổi quy chuẩn độ dài (VD: AB = 5)', 'Set or change reference length scale (e.g., AB = 5)');
+            setTitle('measure-add-list-btn', 'Mở hộp thoại chọn đối tượng đo nhanh', 'Open quick measurement builder dialog');
+            setTitle('measure-clear-all-btn', 'Xóa tất cả kết quả đo', 'Clear all measurements');
+            setTitle('measure-close-btn', 'Đóng bảng đo đạc', 'Close measurement panel');
+
+            setTxt('mq-lbl-scale', 'Quy chuẩn', 'Scale');
+            setTxt('mq-lbl-dist', 'Khoảng cách', 'Distance');
+            setTxt('mq-lbl-angle', 'Đo góc', 'Angle');
+            setTxt('mq-lbl-volume', 'Thể tích', 'Volume');
+            setTitle('mq-btn-scale', 'Quy định 1 độ dài làm chuẩn (VD: AB = 5)', 'Set a reference length scale (e.g., AB = 5)');
+            setTitle('mq-btn-dist', 'Đo khoảng cách (2 điểm, điểm-đường, điểm-mặt)', 'Measure distance (2 points, point-line, point-plane)');
+            setTitle('mq-btn-angle', 'Đo góc (3 điểm, 2 đường, đường-mặt, 2 mặt)', 'Measure angle (3 points, 2 lines, line-plane, 2 planes)');
+            setTitle('mq-btn-volume', 'Đo thể tích (Khối chóp, Tứ diện, Nón, Trụ, Cầu)', 'Measure volume (Pyramid, Tetrahedron, Cone, Cylinder, Sphere)');
+
+            setTxt('anim-panel-title-text', 'ĐIỀU KHIỂN ĐIỂM DI ĐỘNG TRÊN ĐỐI TƯỢNG CHA', 'POINT ANIMATION CONTROLS');
+            setTxt('anim-toggle-all-text', 'Chạy/Dừng tất cả', 'Play/Pause All');
+            setTxt('anim-reverse-all-text', 'Đổi chiều tất cả', 'Reverse All');
+            setTitle('anim-toggle-all-btn', 'Chạy / Tạm dừng tất cả', 'Play / Pause All');
+            setTitle('anim-reverse-all-btn', 'Đổi chiều tất cả', 'Reverse All');
+            setTxt('hidden-panel-title-text', 'Đối tượng đang ẩn', 'Hidden Objects');
+            setTxt('unhide-all-btn', 'Hiện tất cả', 'Show All');
+
+            setTxt('modal-cancel-btn', 'Hủy', 'Cancel');
+            setTxt('modal-confirm-btn', 'Xác nhận', 'Confirm');
+            setTxt('settings-modal-title-text', 'Cài đặt Thanh công cụ & Công cụ thường trực', 'Toolbar & Quick Tools Settings');
+            setTxt('settings-sort-label', 'Sắp xếp thanh dọc:', 'Sort vertical toolbar:');
+            setTxt('sort-lbl-group', 'Theo nhóm', 'By Group');
+            setTxt('sort-lbl-frequency', 'Theo tần số', 'By Frequency');
+            setTxt('sort-lbl-custom', 'Kéo thả', 'Custom Drag');
+            setHtml('settings-hint-text', 'Bấm biểu tượng <b>Ghim</b> để đưa công cụ lên thanh <b>Thường trực</b> (góc trên bên phải).', 'Click the <b>Pin</b> icon to add a tool to the <b>Quick Controls</b> bar (top-right).');
+            setTxt('settings-show-all-btn', 'Hiện tất cả thanh dọc', 'Show All on Toolbar');
+            setTxt('settings-col-name', 'Tên công cụ (Kéo thả dòng để đổi vị trí)', 'Tool Name (Drag row to reorder)');
+            setTxt('settings-col-pinned', 'Thường trực', 'Pinned');
+            setTxt('settings-col-vertical', 'Thanh dọc', 'Toolbar');
+            setTxt('settings-reset-text', 'Khôi phục mặc định', 'Reset to Default');
+            setTxt('settings-done-btn', 'Hoàn tất', 'Done');
+            setTxt('app-footer', 'Dlk Edu Tech - Phát triển bởi tranhongdan@tranphudlk.edu.vn', 'Dlk Edu Tech - Developed by tranhongdan@tranphudlk.edu.vn');
+
+            const collapseBtn = document.getElementById('toggle-toolbar-btn');
+            if (collapseBtn) collapseBtn.setAttribute('data-tip', t('<b>Ẩn / Hiện thanh công cụ dọc</b>', '<b>Collapse / Expand vertical toolbar</b>'));
+            const settingsBtn = document.getElementById('open-toolbar-settings-btn');
+            if (settingsBtn) settingsBtn.setAttribute('data-tip', t('<b>Cài đặt công cụ:</b> Chọn công cụ thường trực, Ẩn/Hiện & Sắp xếp thanh công cụ', '<b>Toolbar Settings:</b> Customize pinned quick tools, visibility & order'));
+
+            renderToolbar();
+            if (document.getElementById('toolbar-settings-overlay')?.style.display === 'flex') {
+                renderToolbarSettingsList();
+            }
+
+            const guideSpan = document.getElementById('guide-span');
+            if (guideSpan && typeof getToolGuide === 'function') {
+                guideSpan.innerHTML = getToolGuide(currentTool);
+                renderMathInElementSafe(guideSpan);
+            }
+
+            if (scene) {
+                updateSceneFromState();
+                updateAnimationControlPanel();
+            }
+        }
+
+        function toggleLanguage() {
+            applyLanguage(currentLang === 'vi' ? 'en' : 'vi');
+        }
+
+        function saveProjectToFile() {
+            try {
+                const payload = {
+                    app: 'MakeMathEZ-3DGeo',
+                    version: '4.0',
+                    savedAt: new Date().toISOString(),
+                    camera: (camera && controls) ? {
+                        position: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
+                        target: { x: controls.target.x, y: controls.target.y, z: controls.target.z },
+                        zoom: camera.zoom || 1
+                    } : null,
+                    options: {
+                        isBasePlaneVisible,
+                        showFaceTint
+                    },
+                    geoState: JSON.parse(JSON.stringify(geoState))
+                };
+
+                const jsonStr = JSON.stringify(payload, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const dateTag = new Date().toISOString().slice(0, 10);
+                a.href = url;
+                a.download = `3DGeo_Project_${dateTag}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+                const guideSpan = document.getElementById('guide-span');
+                if (guideSpan) {
+                    guideSpan.innerHTML = t(
+                        `Đã lưu dự án thành công xuống file <b>3DGeo_Project_${dateTag}.json</b>!`,
+                        `Project saved successfully to <b>3DGeo_Project_${dateTag}.json</b>!`
+                    );
+                }
+            } catch (err) {
+                const guideSpan = document.getElementById('guide-span');
+                if (guideSpan) {
+                    guideSpan.innerHTML = `<span style="color:#fbbf24;">${t('Không thể lưu dự án:', 'Could not save project:')} ${err.message || err}</span>`;
+                }
+            }
+        }
+
+        function triggerLoadProjectFile() {
+            const fileInput = document.getElementById('project-file-input');
+            if (!fileInput) return;
+            fileInput.value = '';
+            fileInput.click();
+        }
+
+        function handleProjectFileInputChange(event) {
+            const file = event?.target?.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const rawText = e.target?.result;
+                    if (typeof rawText !== 'string') throw new Error('Empty file');
+                    const parsed = JSON.parse(rawText);
+                    const stateCandidate = (parsed && parsed.geoState && Array.isArray(parsed.geoState.points))
+                        ? parsed.geoState
+                        : parsed;
+
+                    if (!stateCandidate || !Array.isArray(stateCandidate.points)) {
+                        throw new Error(t('Cấu trúc file dự án không hợp lệ', 'Invalid project file structure'));
+                    }
+
+                    const validPoints = stateCandidate.points.filter(pt =>
+                        pt && typeof pt.id === 'string' &&
+                        typeof pt.x === 'number' && Number.isFinite(pt.x) &&
+                        typeof pt.y === 'number' && Number.isFinite(pt.y) &&
+                        typeof pt.z === 'number' && Number.isFinite(pt.z)
+                    );
+                    if (validPoints.length === 0 && stateCandidate.points.length > 0) {
+                        throw new Error(t('Dữ liệu tọa độ điểm bị lỗi', 'Invalid point coordinates in file'));
+                    }
+
+                    saveHistory();
+                    geoState = {
+                        points: validPoints,
+                        segments: Array.isArray(stateCandidate.segments) ? stateCandidate.segments : [],
+                        faces: Array.isArray(stateCandidate.faces) ? stateCandidate.faces : [],
+                        circles: Array.isArray(stateCandidate.circles) ? stateCandidate.circles : [],
+                        solids: Array.isArray(stateCandidate.solids) ? stateCandidate.solids : [],
+                        measureScale: stateCandidate.measureScale || null,
+                        measurements: Array.isArray(stateCandidate.measurements) ? stateCandidate.measurements : []
+                    };
+
+                    if (parsed.options) {
+                        if (typeof parsed.options.isBasePlaneVisible === 'boolean') {
+                            isBasePlaneVisible = parsed.options.isBasePlaneVisible;
+                            if (basePlaneMesh) basePlaneMesh.visible = isBasePlaneVisible;
+                            if (gridHelper) gridHelper.visible = isBasePlaneVisible;
+                        }
+                        if (typeof parsed.options.showFaceTint === 'boolean') {
+                            showFaceTint = parsed.options.showFaceTint;
+                        }
+                    }
+
+                    if (parsed.camera && camera && controls) {
+                        const pos = parsed.camera.position;
+                        const tgt = parsed.camera.target;
+                        if (pos && Number.isFinite(pos.x) && Number.isFinite(pos.y) && Number.isFinite(pos.z)) {
+                            camera.position.set(pos.x, pos.y, pos.z);
+                        }
+                        if (tgt && Number.isFinite(tgt.x) && Number.isFinite(tgt.y) && Number.isFinite(tgt.z)) {
+                            controls.target.set(tgt.x, tgt.y, tgt.z);
+                        }
+                        if (typeof parsed.camera.zoom === 'number' && Number.isFinite(parsed.camera.zoom) && parsed.camera.zoom > 0) {
+                            camera.zoom = parsed.camera.zoom;
+                            camera.updateProjectionMatrix();
+                        }
+                        controls.update();
+                    }
+
+                    selectedPointIds = [];
+                    selectedCircleIds = [];
+                    measurePendingItems = [];
+                    isMeasurePanelDismissed = false;
+                    clearAllTraces();
+                    renderToolbar();
+                    updateSceneFromState();
+                    updateAnimationControlPanel();
+
+                    const guideSpan = document.getElementById('guide-span');
+                    if (guideSpan) {
+                        guideSpan.innerHTML = t(
+                            `Đã tải thành công dự án <b>${file.name}</b> (${geoState.points.length} điểm, ${geoState.segments.length} đoạn/đường, ${geoState.faces.length} mặt)!`,
+                            `Successfully loaded project <b>${file.name}</b> (${geoState.points.length} points, ${geoState.segments.length} segments/lines, ${geoState.faces.length} faces)!`
+                        );
+                    }
+                } catch (err) {
+                    const guideSpan = document.getElementById('guide-span');
+                    if (guideSpan) {
+                        guideSpan.innerHTML = `<span style="color:#fbbf24;">${t('Lỗi khi đọc file dự án:', 'Error loading project file:')} ${err.message || err}</span>`;
+                    }
+                }
+            };
+            reader.readAsText(file);
         }
 
         function init() {
@@ -2332,6 +3127,7 @@
             });
 
             setupStaticTooltips();
+            applyLanguage(currentLang);
             if (restoreAutoSavedState()) {
                 selectTool('view');
                 resetCamera();
@@ -4704,6 +5500,11 @@
             const k = scaleInfo ? scaleInfo.scale : 1;
             if (!m) return null;
 
+            const catDist = t('K.CÁCH', 'DIST');
+            const catCircle = t('Đ.TRÒN', 'CIRCLE');
+            const catAngle = t('GÓC', 'ANGLE');
+            const catVol = t('THỂ TÍCH', 'VOL');
+
             if (m.category === 'dist') {
                 if (m.subType === 'point-point') {
                     const A = geoState.points.find(p => p.id === m.p1Id && !p.hidden);
@@ -4714,7 +5515,7 @@
                     const val = vA.distanceTo(vB) * k;
                     const anchor = vA.clone().lerp(vB, 0.5);
                     return {
-                        categoryLabel: 'K.CÁCH',
+                        categoryLabel: catDist,
                         titleHtml: `$${A.name}${B.name}$`,
                         valueStr: formatMeasureNumber(val),
                         badgeHtml: `$${A.name}${B.name} = ${formatMeasureNumber(val)}$`,
@@ -4731,8 +5532,8 @@
                     const C = 2 * Math.PI * R;
                     const rimPt = geom.center.clone().addScaledVector(geom.uAxis, geom.radius);
                     return {
-                        categoryLabel: 'Đ.TRÒN',
-                        titleHtml: `Bán kính $${cir.name || '(C)'}$`,
+                        categoryLabel: catCircle,
+                        titleHtml: `${t('Bán kính', 'Radius')} $${cir.name || '(C)'}$`,
                         valueStr: `R = ${formatMeasureNumber(R)} (C ≈ ${formatMeasureNumber(C)})`,
                         badgeHtml: `$R_{${cir.name || '(C)'}} = ${formatMeasureNumber(R)}$`,
                         plainBadgeText: `R = ${formatMeasureNumber(R)}`,
@@ -4752,8 +5553,8 @@
                     const vB = new THREE.Vector3(B.x, B.y, B.z);
                     const ab = new THREE.Vector3().subVectors(vB, vA);
                     if (ab.lengthSq() < 1e-8) return null;
-                    const t = new THREE.Vector3().subVectors(vP, vA).dot(ab) / ab.lengthSq();
-                    const vH = vA.clone().addScaledVector(ab, t);
+                    const tParam = new THREE.Vector3().subVectors(vP, vA).dot(ab) / ab.lengthSq();
+                    const vH = vA.clone().addScaledVector(ab, tParam);
                     const rawDist = vP.distanceTo(vH);
                     const val = rawDist * k;
                     const rightAngleMarks = [];
@@ -4766,7 +5567,7 @@
                         rightAngleMarks.push({ vertex: vH, dirU, dirV, size: rSize, color: 0xd97706 });
                     }
                     return {
-                        categoryLabel: 'K.CÁCH',
+                        categoryLabel: catDist,
                         titleHtml: `$d(${P.name}, ${A.name}${B.name})$`,
                         valueStr: formatMeasureNumber(val),
                         badgeHtml: `$d(${P.name}, ${A.name}${B.name}) = ${formatMeasureNumber(val)}$`,
@@ -4789,7 +5590,7 @@
                         ? computeLinePlanePerpMarks(vP, vH, plane, null, 0xd97706)
                         : null;
                     return {
-                        categoryLabel: 'K.CÁCH',
+                        categoryLabel: catDist,
                         titleHtml: `$d(${P.name}, ${plane.name})$`,
                         valueStr: formatMeasureNumber(val),
                         badgeHtml: `$d(${P.name}, ${plane.name}) = ${formatMeasureNumber(val)}$`,
@@ -4829,7 +5630,7 @@
                     const name1 = `${A1.name}${B1.name}`;
                     const name2 = `${A2.name}${B2.name}`;
                     return {
-                        categoryLabel: 'K.CÁCH',
+                        categoryLabel: catDist,
                         titleHtml: `$d(${name1}, ${name2})$`,
                         valueStr: formatMeasureNumber(val),
                         badgeHtml: `$d(${name1}, ${name2}) = ${formatMeasureNumber(val)}$`,
@@ -4863,7 +5664,7 @@
                     const rightSize = Math.min(0.54, Math.max(0.32, 0.22 * Math.min(u.length(), v.length())));
                     const arcRadius = Math.min(0.85, 0.28 * Math.min(u.length(), v.length()));
                     return {
-                        categoryLabel: 'GÓC',
+                        categoryLabel: catAngle,
                         titleHtml: `$\\widehat{${A.name}${B.name}${C.name}}$`,
                         valueStr: `${formatMeasureNumber(deg, 1)}°`,
                         badgeHtml: `$\\widehat{${A.name}${B.name}${C.name}} = ${formatMeasureNumber(deg, 1)}^\\circ$`,
@@ -4905,7 +5706,7 @@
                     const name1 = `${A1.name}${B1.name}`;
                     const name2 = `${A2.name}${B2.name}`;
                     return {
-                        categoryLabel: 'GÓC',
+                        categoryLabel: catAngle,
                         titleHtml: `$(${name1}, ${name2})$`,
                         valueStr: `${formatMeasureNumber(deg, 1)}°`,
                         badgeHtml: `$(${name1}, ${name2}) = ${formatMeasureNumber(deg, 1)}^\\circ$`,
@@ -4943,7 +5744,7 @@
                                 .addScaledVector(lpSpec.dirV1, lpSpec.size * 2.65)
                             : midSeg.clone().lerp(plane.center, 0.35);
                         return {
-                            categoryLabel: 'GÓC',
+                            categoryLabel: catAngle,
                             titleHtml: `$(${segName}, ${plane.name})$`,
                             valueStr: `${formatMeasureNumber(deg, 1)}°`,
                             badgeHtml: `$(${segName}, ${plane.name}) = ${formatMeasureNumber(deg, 1)}^\\circ$`,
@@ -4988,7 +5789,7 @@
                         }
                     }
                     return {
-                        categoryLabel: 'GÓC',
+                        categoryLabel: catAngle,
                         titleHtml: `$(${segName}, ${plane.name})$`,
                         valueStr: `${formatMeasureNumber(deg, 1)}°`,
                         badgeHtml: `$(${segName}, ${plane.name}) = ${formatMeasureNumber(deg, 1)}^\\circ$`,
@@ -5006,7 +5807,7 @@
                     const absCos = Math.min(1, Math.abs(p1.normal.dot(p2.normal)));
                     const deg = (Math.acos(absCos) * 180) / Math.PI;
                     return {
-                        categoryLabel: 'GÓC',
+                        categoryLabel: catAngle,
                         titleHtml: `$(${p1.name}, ${p2.name})$`,
                         valueStr: `${formatMeasureNumber(deg, 1)}°`,
                         badgeHtml: `$(${p1.name}, ${p2.name}) = ${formatMeasureNumber(deg, 1)}^\\circ$`,
@@ -5026,10 +5827,10 @@
                         if (!sGeom) return null;
                         const vol = (4 / 3) * Math.PI * Math.pow(sGeom.radius, 3) * k3;
                         return {
-                            categoryLabel: 'THỂ TÍCH',
-                            titleHtml: `$V_{${sol.name || 'Cầu'}}$`,
+                            categoryLabel: catVol,
+                            titleHtml: `$V_{${sol.name || t('Cầu', 'Sphere')}}$`,
                             valueStr: formatMeasureNumber(vol),
-                            badgeHtml: `$V_{${sol.name || 'Cầu'}} = ${formatMeasureNumber(vol)}$`,
+                            badgeHtml: `$V_{${sol.name || t('Cầu', 'Sphere')}} = ${formatMeasureNumber(vol)}$`,
                             plainBadgeText: `V = ${formatMeasureNumber(vol)}`,
                             anchorPos: sGeom.center.clone().add(new THREE.Vector3(0, sGeom.radius * 0.45, 0))
                         };
@@ -5043,12 +5844,13 @@
                         const hRaw = Math.abs(new THREE.Vector3().subVectors(vS, geom.center).dot(geom.normal));
                         const baseAreaRaw = Math.PI * geom.radius * geom.radius;
                         const vol = (1 / 3) * baseAreaRaw * hRaw * k3;
+                        const coneTag = t('Nón', 'Cone');
                         return {
-                            categoryLabel: 'THỂ TÍCH',
-                            titleHtml: `$V_{\\text{Nón }(${S.name}, ${cir.name || 'C'})}$`,
+                            categoryLabel: catVol,
+                            titleHtml: `$V_{\\text{${coneTag} }(${S.name}, ${cir.name || 'C'})}$`,
                             valueStr: formatMeasureNumber(vol),
-                            badgeHtml: `$V_{\\text{Nón}} = ${formatMeasureNumber(vol)}$`,
-                            plainBadgeText: `V(Nón) = ${formatMeasureNumber(vol)}`,
+                            badgeHtml: `$V_{\\text{${coneTag}}} = ${formatMeasureNumber(vol)}$`,
+                            plainBadgeText: `V(${coneTag}) = ${formatMeasureNumber(vol)}`,
                             anchorPos: geom.center.clone().lerp(vS, 0.38)
                         };
                     }
@@ -5063,9 +5865,9 @@
                         const r2 = g2.radius;
                         const vol = (Math.PI * hRaw / 3) * (r1 * r1 + r1 * r2 + r2 * r2) * k3;
                         const isCyl = Math.abs(r1 - r2) < 1e-3;
-                        const labelTag = isCyl ? 'Trụ' : 'Nón cụt';
+                        const labelTag = isCyl ? t('Trụ', 'Cyl') : t('Nón cụt', 'Frustum');
                         return {
-                            categoryLabel: 'THỂ TÍCH',
+                            categoryLabel: catVol,
                             titleHtml: `$V_{\\text{${labelTag}}}$`,
                             valueStr: formatMeasureNumber(vol),
                             badgeHtml: `$V_{\\text{${labelTag}}} = ${formatMeasureNumber(vol)}$`,
@@ -5089,7 +5891,7 @@
                     }
                     const vol = (1 / 3) * baseAreaRaw * hRaw * k3;
                     return {
-                        categoryLabel: 'THỂ TÍCH',
+                        categoryLabel: catVol,
                         titleHtml: `$V_{${S.name}.${baseShortName}}$`,
                         valueStr: formatMeasureNumber(vol),
                         badgeHtml: `$V_{${S.name}.${baseShortName}} = ${formatMeasureNumber(vol)}$`,
@@ -5111,12 +5913,13 @@
                         baseAreaRaw = Math.PI * plane.radius * plane.radius;
                     }
                     const vol = baseAreaRaw * hRaw * k3;
+                    const prismTag = t('Lăng trụ', 'Prism');
                     return {
-                        categoryLabel: 'THỂ TÍCH',
-                        titleHtml: `$V_{\\text{Lăng trụ }(${baseShortName})}$`,
+                        categoryLabel: catVol,
+                        titleHtml: `$V_{\\text{${prismTag} }(${baseShortName})}$`,
                         valueStr: formatMeasureNumber(vol),
-                        badgeHtml: `$V_{\\text{L.Trụ}} = ${formatMeasureNumber(vol)}$`,
-                        plainBadgeText: `V(L.Trụ) = ${formatMeasureNumber(vol)}`,
+                        badgeHtml: `$V_{\\text{${prismTag}}} = ${formatMeasureNumber(vol)}$`,
+                        plainBadgeText: `V(${prismTag}) = ${formatMeasureNumber(vol)}`,
                         anchorPos: plane.center.clone().lerp(vTop, 0.5)
                     };
                 }
@@ -5138,7 +5941,7 @@
                     const center = new THREE.Vector3().add(vA).add(vB).add(vC).add(vD).multiplyScalar(0.25);
                     const name = `${A.name}${B.name}${C.name}${D.name}`;
                     return {
-                        categoryLabel: 'THỂ TÍCH',
+                        categoryLabel: catVol,
                         titleHtml: `$V_{${name}}$`,
                         valueStr: formatMeasureNumber(vol),
                         badgeHtml: `$V_{${name}} = ${formatMeasureNumber(vol)}$`,
@@ -5357,6 +6160,15 @@
             });
         }
 
+        function closeMeasurementPanel() {
+            isMeasurePanelDismissed = true;
+            const panel = document.getElementById('measurement-panel');
+            if (panel) panel.style.display = 'none';
+            if (['measure-scale', 'measure-dist', 'measure-angle', 'measure-volume'].includes(currentTool)) {
+                selectTool('view');
+            }
+        }
+
         function updateMeasurementPanel() {
             const panel = document.getElementById('measurement-panel');
             const scaleBox = document.getElementById('measure-scale-status');
@@ -5368,11 +6180,15 @@
             const hasMeasurements = geoState.measurements && geoState.measurements.length > 0;
             const isMeasureToolActive = ['measure-scale', 'measure-dist', 'measure-angle', 'measure-volume'].includes(currentTool);
 
+            if (isMeasureToolActive) {
+                isMeasurePanelDismissed = false;
+            }
+
             panel.querySelectorAll('.measure-qtool-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('data-mtool') === currentTool);
             });
 
-            if (!scaleInfo && !hasMeasurements && !isMeasureToolActive) {
+            if ((isMeasurePanelDismissed && !isMeasureToolActive) || (!scaleInfo && !hasMeasurements && !isMeasureToolActive)) {
                 panel.style.display = 'none';
                 return;
             }
@@ -5380,11 +6196,14 @@
             panel.style.display = 'flex';
             if (scaleInfo) {
                 scaleBox.classList.remove('uncalibrated');
-                scaleText.innerHTML = `Quy chuẩn: $${scaleInfo.name} = ${formatMeasureNumber(scaleInfo.value)}$`;
+                scaleText.innerHTML = `${t('Quy chuẩn:', 'Scale:')} $${scaleInfo.name} = ${formatMeasureNumber(scaleInfo.value)}$`;
                 renderMathInElementSafe(scaleText);
             } else {
                 scaleBox.classList.add('uncalibrated');
-                scaleText.innerHTML = `Quy chuẩn: Chưa quy định (VD: $AB = 5$)`;
+                scaleText.innerHTML = t(
+                    `Quy chuẩn: Chưa quy định (VD: $AB = 5$)`,
+                    `Scale: Not set (e.g., $AB = 5$)`
+                );
                 renderMathInElementSafe(scaleText);
             }
 
@@ -5393,8 +6212,14 @@
                 const emptyDiv = document.createElement('div');
                 emptyDiv.style.cssText = 'font-size:11.5px; color:#64748b; line-height:1.45; padding:4px 2px;';
                 emptyDiv.innerHTML = scaleInfo
-                    ? `Đã đặt quy chuẩn <b>${scaleInfo.name} = ${formatMeasureNumber(scaleInfo.value)}</b>. Chọn <b>Khoảng cách / Đo góc / Thể tích</b> rồi click đối tượng trên hình (hoặc nhấn <b>"+ Đo theo DS"</b>).`
-                    : `Trước khi đo, hãy quy định 1 độ dài chuẩn (ví dụ: <b>AB = 5</b>) bằng nút <b>"Đặt quy chuẩn"</b> phía trên.`;
+                    ? t(
+                        `Đã đặt quy chuẩn <b>${scaleInfo.name} = ${formatMeasureNumber(scaleInfo.value)}</b>. Chọn <b>Khoảng cách / Đo góc / Thể tích</b> rồi click đối tượng trên hình (hoặc nhấn <b>"+ Đo theo DS"</b>).`,
+                        `Scale set to <b>${scaleInfo.name} = ${formatMeasureNumber(scaleInfo.value)}</b>. Select <b>Distance / Angle / Volume</b> and click objects in 3D (or click <b>"+ Add Measure"</b>).`
+                    )
+                    : t(
+                        `Trước khi đo, hãy quy định 1 độ dài chuẩn (ví dụ: <b>AB = 5</b>) bằng nút <b>"Đặt quy chuẩn"</b> phía trên.`,
+                        `Before measuring, set a reference length scale (e.g., <b>AB = 5</b>) using the <b>"Set Scale"</b> button above.`
+                    );
                 listEl.appendChild(emptyDiv);
             } else {
                 geoState.measurements.forEach((m, idx) => {
@@ -5413,8 +6238,8 @@
                         </div>
                         <div class="measure-row-actions">
                             <span class="measure-row-val ${catClass}">${res.valueStr}</span>
-                            <button class="measure-icon-btn" title="${m.hiddenLabel ? 'Hiện nhãn trên 3D' : 'Ẩn nhãn trên 3D'}" onclick="toggleMeasurementLabel(${idx})">${eyeSvg}</button>
-                            <button class="measure-icon-btn del" title="Xóa phép đo này" onclick="removeMeasurementByIndex(${idx})">&times;</button>
+                            <button class="measure-icon-btn" title="${m.hiddenLabel ? t('Hiện nhãn trên 3D', 'Show 3D label') : t('Ẩn nhãn trên 3D', 'Hide 3D label')}" onclick="toggleMeasurementLabel(${idx})">${eyeSvg}</button>
+                            <button class="measure-icon-btn del" title="${t('Xóa phép đo này', 'Delete this measurement')}" onclick="removeMeasurementByIndex(${idx})">&times;</button>
                         </div>
                     `;
                     listEl.appendChild(item);
@@ -5447,6 +6272,7 @@
         }
 
         function openSetScaleForPairModal(p1Id, p2Id, nextToolAfterSave = null) {
+            isMeasurePanelDismissed = false;
             const p1 = geoState.points.find(p => p.id === p1Id);
             const p2 = geoState.points.find(p => p.id === p2Id);
             if (!p1 || !p2 || p1.id === p2.id) return;
@@ -5455,9 +6281,15 @@
                 : 5;
 
             openModal(
-                `Quy định độ dài chuẩn cho đoạn <b>$${p1.name}${p2.name}$</b>`,
+                t(
+                    `Quy định độ dài chuẩn cho đoạn <b>$${p1.name}${p2.name}$</b>`,
+                    `Set reference length for segment <b>$${p1.name}${p2.name}$</b>`
+                ),
                 `<div class="modal-field">
-                    <label>Nhập độ dài quy chuẩn cho đoạn <b>$${p1.name}${p2.name}$</b> (Tất cả khoảng cách & thể tích sẽ được tính theo quy chuẩn này):</label>
+                    <label>${t(
+                        `Nhập độ dài quy chuẩn cho đoạn <b>$${p1.name}${p2.name}$</b> (Tất cả khoảng cách & thể tích sẽ được tính theo quy chuẩn này):`,
+                        `Enter reference length for segment <b>$${p1.name}${p2.name}$</b> (All distances & volumes will be scaled accordingly):`
+                    )}</label>
                     <input type="text" id="scale-len-input" value="${currentVal}">
                     <div class="preset-chips">
                         <span class="chip" onclick="setInputValue('scale-len-input', '1')">1 (a = 1)</span>
@@ -5477,6 +6309,7 @@
                         geoState.measureScale = { p1Id: p1.id, p2Id: p2.id, value: val };
                         measurePendingItems = [];
                         selectedPointIds = [];
+                        isMeasurePanelDismissed = false;
                         if (nextToolAfterSave) {
                             selectTool(nextToolAfterSave);
                         } else {
@@ -5484,7 +6317,10 @@
                         }
                         const guideSpan = document.getElementById('guide-span');
                         if (guideSpan) {
-                            guideSpan.innerHTML = `Đã thiết lập quy chuẩn độ dài <b>$${p1.name}${p2.name} = ${formatMeasureNumber(val)}$</b>! Mọi phép đo khoảng cách và thể tích đều tính theo chuẩn này.`;
+                            guideSpan.innerHTML = t(
+                                `Đã thiết lập quy chuẩn độ dài <b>$${p1.name}${p2.name} = ${formatMeasureNumber(val)}$</b>! Mọi phép đo khoảng cách và thể tích đều tính theo chuẩn này.`,
+                                `Reference length scale set to <b>$${p1.name}${p2.name} = ${formatMeasureNumber(val)}$</b>! All distance and volume measurements use this scale.`
+                            );
                             renderMathInElementSafe(guideSpan);
                         }
                     }
@@ -5493,11 +6329,12 @@
         }
 
         function openReferenceScaleModal(nextToolAfterSave = null) {
+            isMeasurePanelDismissed = false;
             const visiblePts = geoState.points.filter(p => !p.hidden);
             if (visiblePts.length < 2) {
                 const guideSpan = document.getElementById('guide-span');
                 if (guideSpan) {
-                    guideSpan.innerHTML = `<span style="color:#fbbf24;">Cần ít nhất 2 điểm trên hình để quy định độ dài chuẩn!</span>`;
+                    guideSpan.innerHTML = `<span style="color:#fbbf24;">${t('Cần ít nhất 2 điểm trên hình để quy định độ dài chuẩn!', 'At least 2 points are required to set a reference length scale!')}</span>`;
                 }
                 return;
             }
@@ -5520,7 +6357,7 @@
             }
 
             const buildPtOptions = (selectedId) => visiblePts.map(p =>
-                `<option value="${p.id}" ${p.id === selectedId ? 'selected' : ''}>Điểm ${p.name}</option>`
+                `<option value="${p.id}" ${p.id === selectedId ? 'selected' : ''}>${t('Điểm', 'Point')} ${p.name}</option>`
             ).join('');
 
             const segChipsHtml = geoState.segments
@@ -5530,13 +6367,13 @@
                     const p1 = geoState.points.find(p => p.id === s.p1Id);
                     const p2 = geoState.points.find(p => p.id === s.p2Id);
                     if (!p1 || !p2) return '';
-                    return `<span class="chip" onclick="document.getElementById('scale-p1-select').value='${p1.id}'; document.getElementById('scale-p2-select').value='${p2.id}';">Đoạn ${p1.name}${p2.name}</span>`;
+                    return `<span class="chip" onclick="document.getElementById('scale-p1-select').value='${p1.id}'; document.getElementById('scale-p2-select').value='${p2.id}';">${t('Đoạn', 'Seg')} ${p1.name}${p2.name}</span>`;
                 }).join('');
 
             openModal(
-                `Quy định độ dài chuẩn trước khi đo (VD: $AB = 5$)`,
+                t(`Quy định độ dài chuẩn trước khi đo (VD: $AB = 5$)`, `Set Reference Length Scale (e.g., $AB = 5$)`),
                 `<div class="modal-field">
-                    <label>1. Chọn 2 điểm đầu mút của đoạn thẳng làm quy chuẩn:</label>
+                    <label>${t('1. Chọn 2 điểm đầu mút của đoạn thẳng làm quy chuẩn:', '1. Select 2 endpoints of the reference segment:')}</label>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                         <select id="scale-p1-select">${buildPtOptions(defaultP1Id)}</select>
                         <select id="scale-p2-select">${buildPtOptions(defaultP2Id)}</select>
@@ -5544,10 +6381,10 @@
                     ${segChipsHtml ? `<div class="preset-chips" style="margin-top:6px;">${segChipsHtml}</div>` : ''}
                 </div>
                 <div class="modal-field">
-                    <label>2. Nhập độ dài quy chuẩn (VD: $5$, $a=1$, $\\sqrt{3}$):</label>
+                    <label>${t('2. Nhập độ dài quy chuẩn (VD: $5$, $a=1$, $\\sqrt{3}$):', '2. Enter reference length value (e.g., $5$, $a=1$, $\\sqrt{3}$):')}</label>
                     <input type="text" id="scale-modal-val-input" value="${defaultVal}">
                     <div class="preset-chips">
-                        <span class="chip" onclick="setInputValue('scale-modal-val-input', '1')">1 (Đơn vị a)</span>
+                        <span class="chip" onclick="setInputValue('scale-modal-val-input', '1')">1 (${t('Đơn vị a', 'Unit a')})</span>
                         <span class="chip" onclick="setInputValue('scale-modal-val-input', '2')">2</span>
                         <span class="chip" onclick="setInputValue('scale-modal-val-input', '3')">3</span>
                         <span class="chip" onclick="setInputValue('scale-modal-val-input', '4')">4</span>
@@ -5564,6 +6401,7 @@
                     if (p1Id && p2Id && p1Id !== p2Id && !isNaN(val) && val > 0) {
                         saveHistory();
                         geoState.measureScale = { p1Id, p2Id, value: val };
+                        isMeasurePanelDismissed = false;
                         const p1 = geoState.points.find(p => p.id === p1Id);
                         const p2 = geoState.points.find(p => p.id === p2Id);
                         if (nextToolAfterSave) {
@@ -5573,7 +6411,10 @@
                         }
                         const guideSpan = document.getElementById('guide-span');
                         if (guideSpan && p1 && p2) {
-                            guideSpan.innerHTML = `Đã đặt chuẩn <b>$${p1.name}${p2.name} = ${formatMeasureNumber(val)}$</b>. Hãy click chọn đối tượng trên hình để đo!`;
+                            guideSpan.innerHTML = t(
+                                `Đã đặt chuẩn <b>$${p1.name}${p2.name} = ${formatMeasureNumber(val)}$</b>. Hãy click chọn đối tượng trên hình để đo!`,
+                                `Scale set to <b>$${p1.name}${p2.name} = ${formatMeasureNumber(val)}$</b>. Click objects in 3D to measure!`
+                            );
                             renderMathInElementSafe(guideSpan);
                         }
                     }
@@ -5583,6 +6424,7 @@
 
         function addMeasurementRecord(record) {
             if (!geoState.measurements) geoState.measurements = [];
+            isMeasurePanelDismissed = false;
             geoState.measurements.push({
                 id: 'meas_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
                 ...record
@@ -5591,6 +6433,8 @@
         }
 
         function openQuickMeasureBuilderModal() {
+            isMeasurePanelDismissed = false;
+            updateMeasurementPanel();
             if (!hasValidMeasureScale()) {
                 openReferenceScaleModal(currentTool.startsWith('measure-') ? currentTool : 'measure-dist');
                 return;
@@ -6387,7 +7231,10 @@
 
             const guideSpan = document.getElementById('guide-span');
             if (guideSpan) {
-                guideSpan.innerHTML = `Đã tải xuống file ảnh <b>3DGeo_HinhVe.png</b> sắc nét!`;
+                guideSpan.innerHTML = t(
+                    `Đã tải xuống file ảnh <b>3DGeo_HinhVe.png</b> sắc nét!`,
+                    `Downloaded high-resolution image <b>3DGeo_HinhVe.png</b>!`
+                );
             }
         }
 
@@ -6395,22 +7242,68 @@
             if (event.button !== 0) return;
 
             const target = computeSmartTarget(event);
+            const hitPt = (target && target.type === 'point')
+                ? geoState.points.find(p => p.id === target.pointId)
+                : null;
+            const draggablePt = (hitPt && canPointBeDragged(hitPt)) ? hitPt : null;
 
             if (currentTool === 'view' || currentTool === 'move') {
-                if (target && target.type === 'point') {
-                    const pt = geoState.points.find(p => p.id === target.pointId);
-                    if (pt && canPointBeDragged(pt)) {
-                        saveHistory();
-                        isDraggingExistingPoint = true;
-                        draggedPointId = pt.id;
-                        dragStartMouseY = event.clientY;
-                        dragStartPointY = pt.y;
+                if (draggablePt) {
+                    saveHistory();
+                    isDraggingExistingPoint = true;
+                    draggedPointId = draggablePt.id;
+                    dragStartMouseY = event.clientY;
+                    dragStartPointY = draggablePt.y;
+                    if (controls) {
                         controls.enabled = false;
-                        return;
+                        if (typeof controls.cancelInteraction === 'function') controls.cancelInteraction();
                     }
+                    return;
+                }
+                if (controls) {
+                    controls.enabled = true;
+                    if (typeof controls.startOrbitFromEvent === 'function') controls.startOrbitFromEvent(event);
                 }
                 return;
             }
+
+            if (currentTool === 'point3d' && target) {
+                isCreating3DPoint = true;
+                drag3DBasePos = target.pos.clone();
+                drag3DCurrentPos = target.pos.clone().add(new THREE.Vector3(0, 3, 0));
+                dragStartY = event.clientY;
+                if (controls) {
+                    controls.enabled = false;
+                    if (typeof controls.cancelInteraction === 'function') controls.cancelInteraction();
+                }
+                snapIndicator.visible = false;
+                snapBadge.style.display = 'none';
+                draw3DDragPreview();
+                return;
+            }
+
+            // Cho phép tự động Kéo điểm (khi nhấn giữ kéo điểm) hoặc Xoay góc nhìn 3D (khi nhấn giữ kéo khoảng trống)
+            // ngay cả khi đang chọn công cụ dựng hình / đo đạc; nếu chỉ Click nhẹ (<= 5px) thì thực thi công cụ hiện tại.
+            pendingPointerGesture = {
+                startX: event.clientX,
+                startY: event.clientY,
+                downEvent: {
+                    clientX: event.clientX,
+                    clientY: event.clientY,
+                    button: 0,
+                    shiftKey: event.shiftKey
+                },
+                target,
+                draggablePt
+            };
+            if (controls) {
+                controls.enabled = false;
+                if (typeof controls.cancelInteraction === 'function') controls.cancelInteraction();
+            }
+        }
+
+        function executeToolClickAction(event, precomputedTarget) {
+            const target = precomputedTarget !== undefined ? precomputedTarget : computeSmartTarget(event);
 
             // XỬ LÝ NHÓM CÔNG CỤ ĐO ĐẠC (QUY CHUẨN ĐỘ DÀI, ĐO KHOẢNG CÁCH, ĐO GÓC, ĐO THỂ TÍCH)
             if (['measure-scale', 'measure-dist', 'measure-angle', 'measure-volume'].includes(currentTool)) {
@@ -6431,7 +7324,10 @@
                     } else {
                         const guideSpan = document.getElementById('guide-span');
                         if (guideSpan) {
-                            guideSpan.innerHTML = `<span style="color:#fbbf24;">Lưu ý: Chỉ các điểm thuộc Đoạn thẳng, Đường thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay mới di chuyển tự động trên đối tượng cha!</span>`;
+                            guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
+                                'Lưu ý: Chỉ các điểm thuộc Đoạn thẳng, Đường thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay mới di chuyển tự động trên đối tượng cha!',
+                                'Note: Only points constrained to a Segment, Line, Circle, Face, or Solid of Revolution can animate along their parent object!'
+                            )}</span>`;
                         }
                     }
                 }
@@ -7338,6 +8234,42 @@
                 return;
             }
 
+            if (pendingPointerGesture) {
+                const moveDist = Math.hypot(
+                    event.clientX - pendingPointerGesture.startX,
+                    event.clientY - pendingPointerGesture.startY
+                );
+                if (moveDist > 5) {
+                    const gesture = pendingPointerGesture;
+                    pendingPointerGesture = null;
+                    if (gesture.draggablePt) {
+                        saveHistory();
+                        isDraggingExistingPoint = true;
+                        draggedPointId = gesture.draggablePt.id;
+                        dragStartMouseY = gesture.startY;
+                        dragStartPointY = gesture.draggablePt.y;
+                        if (controls) {
+                            controls.enabled = false;
+                            if (typeof controls.cancelInteraction === 'function') controls.cancelInteraction();
+                        }
+                        if (snapIndicator) snapIndicator.visible = false;
+                        snapBadge.style.display = 'none';
+                        handleDragExistingPoint(event);
+                        return;
+                    } else {
+                        if (controls) {
+                            controls.enabled = true;
+                            if (typeof controls.startOrbitFromEvent === 'function') {
+                                controls.startOrbitFromEvent(gesture.downEvent);
+                            }
+                        }
+                        if (snapIndicator) snapIndicator.visible = false;
+                        snapBadge.style.display = 'none';
+                        return;
+                    }
+                }
+            }
+
             const target = computeSmartTarget(event);
             const newHoverId = (target && target.type === 'point') ? target.pointId : null;
             const newHoverCirId = (target && target.type === 'circle') ? target.circleId : null;
@@ -7361,7 +8293,10 @@
                     snapBadge.classList.remove('intersection');
                     snapBadge.classList.add('delete-target');
                     const rect = renderer.domElement.getBoundingClientRect();
-                    snapBadge.textContent = `Xóa: ${target.label} (+ đối tượng con)`;
+                    snapBadge.textContent = t(
+                        `Xóa: ${target.label} (+ đối tượng con)`,
+                        `Delete: ${target.label} (+ dependents)`
+                    );
                     snapBadge.style.left = `${event.clientX - rect.left}px`;
                     snapBadge.style.top = `${event.clientY - rect.top}px`;
                     snapBadge.style.display = 'block';
@@ -7385,7 +8320,7 @@
                 return;
             }
 
-            container.style.cursor = 'crosshair';
+            container.style.cursor = (target && target.type === 'point') ? 'pointer' : 'crosshair';
             snapBadge.classList.remove('delete-target');
 
             if (target && target.type !== 'point') {
@@ -7424,11 +8359,11 @@
             }
         }
 
-        function onPointerUp() {
+        function onPointerUp(event) {
             if (isDraggingExistingPoint) {
                 isDraggingExistingPoint = false;
                 draggedPointId = null;
-                controls.enabled = (currentTool === 'view');
+                if (controls) controls.enabled = (currentTool === 'view' || currentTool === 'move');
                 return;
             }
 
@@ -7440,6 +8375,14 @@
                 drag3DCurrentPos = null;
                 clearHelpers();
                 updateSceneFromState();
+                return;
+            }
+
+            if (pendingPointerGesture) {
+                const gesture = pendingPointerGesture;
+                pendingPointerGesture = null;
+                executeToolClickAction(gesture.downEvent, gesture.target);
+                return;
             }
         }
 
@@ -7473,48 +8416,22 @@
             helperMeshes.push(line);
 
             const guideSpan = document.getElementById('guide-span');
-            guideSpan.innerHTML = `Đang kéo điểm 3D: Độ cao $h = ${drag3DCurrentPos.y.toFixed(2)}$ (Thả chuột để đặt điểm)`;
+            guideSpan.innerHTML = t(
+                `Đang kéo điểm 3D: Độ cao $h = ${drag3DCurrentPos.y.toFixed(2)}$ (Thả chuột để đặt điểm)`,
+                `Dragging 3D point: Height $h = ${drag3DCurrentPos.y.toFixed(2)}$ (Release mouse to place point)`
+            );
             renderMathInElementSafe(guideSpan);
         }
-
-        const toolGuides = {
-            'view': 'Chế độ: Xoay góc nhìn & Kéo điểm (Kéo trực tiếp Điểm để di chuyển mà vẫn bảo toàn tính chất, Double-click Điểm để đổi tên)',
-            'move': 'Kéo Điểm: Nhấn giữ chuột trái vào Điểm để kéo (Giữ phím Shift khi kéo điểm 3D để thay đổi riêng độ cao $h$)',
-            'point2d': 'Tạo điểm: Tự động <b>bắt dính Giao điểm 2 đường/đoạn</b>, thuộc cạnh, thuộc đường tròn, thuộc mặt cầu, thuộc mặt trên cùng hoặc mặt nền $(P)$',
-            'point3d': 'Tạo điểm 3D: Click chọn chân hình chiếu và <b>giữ kéo chuột lên/xuống</b> để chọn độ cao',
-            'translate': 'Phép tịnh tiến: Chọn lần lượt Điểm gốc $M \\to$ Điểm $A \\to$ Điểm $B$ (Tạo $M\'$ phụ thuộc động thỏa $\\overrightarrow{MM\'} = \\overrightarrow{AB}$)',
-            'homothety': 'Phép vị tự: Chọn tâm $A \\to$ Chọn điểm $B \\to$ Nhập tỉ số $k$ (Tạo $M$ phụ thuộc động thỏa $\\overrightarrow{AM} = k \\cdot \\overrightarrow{AB}$)',
-            'rotate': 'Phép quay: Chọn tâm quay $I \\to$ Chọn điểm $A \\to$ Nhập góc quay $\\alpha$ và mặt phẳng quay $(P)$ ($\\widehat{AIM} = \\alpha$)',
-            'segment': 'Đoạn thẳng: Chọn 2 điểm (Khi các đoạn thẳng khép kín sẽ tự động tạo bề mặt đa giác)',
-            'line': 'Đường thẳng: Chọn 2 điểm để vẽ đường thẳng đi qua 2 điểm đó',
-            'parallel': 'Đường thẳng song song ($d\' \\parallel d$): Chọn điểm $M \\to$ Click vào <b>Đoạn/Đường thẳng mẫu</b> (hoặc chọn tiếp 2 điểm $A, B$)',
-            'perp': 'Đường thẳng vuông góc ($d\' \\perp d$ hoặc $d\' \\perp (P)$): Chọn điểm $M \\to$ Click vào <b>Đoạn/Đường thẳng</b> hoặc <b>Bề mặt đa giác</b> (tự dựng chân đường cao $H$)',
-            'poly-tri-special': 'Tam giác đặc biệt: Chọn 2 đỉnh cạnh đáy $A, B \\to$ Chọn <b>Tam giác đều, Vuông cân, Cân hoặc Vuông</b> (Mặc định tạo bề mặt)',
-            'poly-square': 'Hình vuông: Chọn 2 điểm cạnh đáy $A, B \\Rightarrow$ Tự dựng $C, D$ luôn bảo toàn tính chất Hình vuông khi kéo $A, B$',
-            'poly-rect': 'Hình chữ nhật: Chọn 2 điểm cạnh đáy $A, B$ và 1 điểm định độ rộng $\\Rightarrow$ Luôn bảo toàn tính chất Hình chữ nhật',
-            'poly-para': 'Hình bình hành: Chọn 3 đỉnh $A, B, C \\Rightarrow$ Tự dựng $D$ luôn bảo toàn tính chất Hình bình hành khi kéo $A, B, C$',
-            'poly-trap': 'Hình thang: Chọn 3 đỉnh $A, B, C \\Rightarrow$ Nhập tỉ số đáy để dựng đỉnh $D$ luôn song song $AB$',
-            'poly-free': 'Đa giác $N$ đỉnh (hoặc Tam giác thường): Chọn liên tiếp các đỉnh, sau đó <b>click lại đỉnh đầu tiên</b> để khép kín',
-            'circle-center': 'Đường tròn (Tâm & Điểm / Bán kính): Chọn tâm $O \\to$ Chọn <b>điểm $A$ trên đường tròn</b> (hoặc click vào mặt phẳng để nhập bán kính $R$)',
-            'circle-3pts': 'Đường tròn ngoại tiếp: Chọn lần lượt <b>3 điểm không thẳng hàng $A, B, C$</b> $\\Rightarrow$ Tự dựng đường tròn $(ABC)$ và tâm $O$',
-            'solid-cone': 'Hình nón tròn xoay: Chọn <b>1 Đường tròn đáy $(C)$</b> và <b>1 Điểm đỉnh $S$</b> (hoặc chọn 3 điểm $O, A, S$) $\\Rightarrow$ Tự dựng Hình nón có đường sinh biên & khuất nét',
-            'solid-cylinder': 'Hình trụ / Hình nón cụt: Chọn <b>2 Đường tròn đáy $(C_1), (C_2)$</b> (hoặc chọn 1 Đường tròn & 1 Điểm tâm đáy thứ hai $O\'$) $\\Rightarrow$ Tự dựng Hình trụ / Nón cụt',
-            'solid-sphere': 'Mặt cầu $S(I; R)$: Chọn <b>Tâm $I$</b> rồi chọn <b>Điểm $A$ trên mặt cầu</b> (hoặc click vào mặt nền để nhập bán kính $R$, hoặc click vào Đường tròn lớn)',
-            'measure-scale': 'Quy chuẩn độ dài (VD: $AB = 5$): Click vào <b>1 Đoạn thẳng</b> (hoặc chọn <b>2 Điểm $A, B$</b>) để đặt độ dài quy chuẩn cho toàn bộ phép đo',
-            'measure-dist': 'Đo khoảng cách (theo quy chuẩn): Chọn <b>2 Điểm</b>, hoặc <b>Điểm & Đường thẳng</b> $d(M, \\Delta)$, hoặc <b>Điểm & Mặt phẳng</b> $d(M, (P))$, hoặc <b>2 Đường thẳng</b> $d(\\Delta_1, \\Delta_2)$',
-            'measure-angle': 'Đo góc (Độ °): Chọn <b>3 Điểm $A, B, C$</b> ($\\widehat{ABC}$), hoặc <b>2 Đường thẳng</b> $(d_1, d_2)$, hoặc <b>Đường thẳng & Mặt phẳng</b> $(d, (P))$, hoặc <b>2 Mặt phẳng</b> $((P), (Q))$',
-            'measure-volume': 'Đo thể tích (theo quy chuẩn): Click vào <b>Khối tròn xoay</b> (Nón, Trụ, Cầu), hoặc chọn <b>Mặt đáy & Đỉnh $S$</b> (Khối chóp), hoặc chọn <b>4 đỉnh $A, B, C, D$</b> (Tứ diện)',
-            'animate': 'Chuyển động tự động: Click vào <b>Điểm thuộc cạnh / đường thẳng / đường tròn / mặt cầu / bề mặt</b> để mở thanh điều khiển Tốc độ, Chạy/Dừng',
-            'trace': 'Bật / Tắt Tạo vết (Trace): Click vào <b>Điểm</b> hoặc <b>Đoạn thẳng</b> để để lại vết quỹ tích khi đối tượng di chuyển',
-            'hide': 'Ẩn đối tượng: Click vào <b>Điểm, Đoạn thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay</b> để ẩn đi (Click danh sách góc dưới phải để hiện lại)',
-            'delete-obj': 'Xóa đối tượng & đối tượng con: Click vào <b>Điểm, Đoạn/Đường thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay</b> để xóa cùng đối tượng con (Ctrl+Z để hoàn tác)'
-        };
 
         function selectTool(tool) {
             currentTool = tool;
             selectedPointIds = [];
             selectedCircleIds = [];
             measurePendingItems = [];
+            pendingPointerGesture = null;
+            if (['measure-scale', 'measure-dist', 'measure-angle', 'measure-volume'].includes(tool)) {
+                isMeasurePanelDismissed = false;
+            }
             clearHelpers();
             if (snapIndicator) snapIndicator.visible = false;
             snapBadge.style.display = 'none';
@@ -7531,9 +8448,9 @@
                 }
             });
 
-            if (controls) controls.enabled = (tool === 'view');
+            if (controls) controls.enabled = (tool === 'view' || tool === 'move');
             const guideSpan = document.getElementById('guide-span');
-            guideSpan.innerHTML = toolGuides[tool] || '';
+            guideSpan.innerHTML = getToolGuide(tool);
             renderMathInElementSafe(guideSpan);
             updateSceneFromState();
 
@@ -7699,7 +8616,7 @@
                 updateAnimationControlPanel();
             }
 
-            if (controls && controls.enabled) controls.update();
+            if (controls) controls.update();
 
             let camChanged = false;
             if (camera && controls) {
