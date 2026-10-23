@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EZ3D - GEOMETRY</title>
-    <meta name="description" content="Phần mềm vẽ và mô phỏng Hình học không gian 3D động (Đa diện, Hình nón, Hình trụ, Hình nón cụt, Mặt cầu) chuẩn SGK Toán THPT, hoạt động Offline.">
-    <meta property="og:title" content="EZ3D - GEOMETRY">
-    <meta property="og:description" content="Phần mềm vẽ và mô phỏng Hình học không gian 3D động (Đa diện, Hình nón, Hình trụ, Hình nón cụt, Mặt cầu) chuẩn SGK Toán THPT, hoạt động Offline.">
+    <title>EZ3D - GEOMETRY | Chạm không gian - Xoay góc nhìn - Mở tri thức</title>
+    <meta name="description" id="meta-description" content="EZ3D - GEOMETRY | Chạm không gian - Xoay góc nhìn - Mở tri thức. Phần mềm vẽ và mô phỏng Hình học không gian 3D động (Đa diện, Hình nón, Hình trụ, Hình nón cụt, Mặt cầu) chuẩn SGK Toán THPT, hoạt động Offline.">
+    <meta name="slogan" id="meta-slogan" content="Chạm không gian - Xoay góc nhìn - Mở tri thức">
+    <meta property="og:title" id="meta-og-title" content="EZ3D - GEOMETRY | Chạm không gian - Xoay góc nhìn - Mở tri thức">
+    <meta property="og:description" id="meta-og-description" content="EZ3D - GEOMETRY | Chạm không gian - Xoay góc nhìn - Mở tri thức. Phần mềm vẽ và mô phỏng Hình học không gian 3D động (Đa diện, Hình nón, Hình trụ, Hình nón cụt, Mặt cầu) chuẩn SGK Toán THPT, hoạt động Offline.">
     <meta property="og:type" content="website">
 
     <!-- KaTeX (Tùy chọn khi có mạng - Khi Offline đã có bộ đọc công thức Toán dự phòng tích hợp sẵn) -->
@@ -659,8 +660,8 @@
 <body>
 
     <header>
-        <div class="brand" style="display: flex; align-items: center; cursor: pointer;" title="EZ3D - GEOMETRY">
-            <!-- LOGO EZ3D 100% SVG NỘI TUYẾN -->
+        <div class="brand" id="header-brand" style="display: flex; align-items: center; cursor: pointer;" title="EZ3D - GEOMETRY | Chạm không gian - Xoay góc nhìn - Mở tri thức">
+            <!-- LOGO EZ3D 100% SVG NỘI TUYẾN KÈM SLOGAN GỌN TRONG KHUNG -->
             <svg viewBox="0 0 280 50" style="height: 36px; width: auto; overflow: visible;">
               <defs>
                 <linearGradient id="nbTop" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -697,11 +698,14 @@
                 <circle cx="25" cy="25.5" r="1.5" fill="#ef4444"/>
               </g>
               
-              <!-- Tên ứng dụng -->
-              <text x="54" y="32" font-family="system-ui, -apple-system, sans-serif" font-size="21" font-weight="900" fill="#ffffff" letter-spacing="1">EZ</text>
-              <rect x="88" y="14" width="34" height="21" rx="5" fill="#ef4444"/>
-              <text x="105" y="29" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="900" fill="#ffffff" text-anchor="middle">3D</text>
-              <text x="130" y="29" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" fill="#94a3b8" letter-spacing="1.5">GEOMETRY</text>
+              <!-- Tên ứng dụng & Slogan -->
+              <g transform="translate(0, -6)">
+                <text x="54" y="32" font-family="system-ui, -apple-system, sans-serif" font-size="21" font-weight="900" fill="#ffffff" letter-spacing="1">EZ</text>
+                <rect x="88" y="14" width="34" height="21" rx="5" fill="#ef4444"/>
+                <text x="105" y="29" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="900" fill="#ffffff" text-anchor="middle">3D</text>
+                <text x="130" y="29" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" fill="#94a3b8" letter-spacing="1.5">GEOMETRY</text>
+              </g>
+              <text id="header-slogan-text" x="54" y="42.5" font-family="'Segoe UI', Roboto, system-ui, -apple-system, sans-serif" font-size="9.2" font-weight="600" fill="#38bdf8" textLength="222" lengthAdjust="spacingAndGlyphs">Chạm không gian - Xoay góc nhìn - Mở tri thức</text>
             </svg>
         </div>
         <div class="status-bar" id="guide-text">
@@ -893,7 +897,7 @@
         </div>
     </div>
 
-    <footer id="app-footer">Dlk Edu Tech - Phát triển bởi tranhongdan@tranphudlk.edu.vn</footer>
+    <footer id="app-footer">EZ3D - GEOMETRY: "Chạm không gian - Xoay góc nhìn - Mở tri thức" | Dlk Edu Tech - Phát triển bởi tranhongdan@tranphudlk.edu.vn</footer>
 
     <script>
         // =========================================================================
@@ -2918,7 +2922,33 @@
             setTxt('settings-col-vertical', 'Thanh dọc', 'Toolbar');
             setTxt('settings-reset-text', 'Khôi phục mặc định', 'Reset to Default');
             setTxt('settings-done-btn', 'Hoàn tất', 'Done');
-            setTxt('app-footer', 'Dlk Edu Tech - Phát triển bởi tranhongdan@tranphudlk.edu.vn', 'Dlk Edu Tech - Developed by tranhongdan@tranphudlk.edu.vn');
+            const sloganVi = 'Chạm không gian - Xoay góc nhìn - Mở tri thức';
+            const sloganEn = 'Touch Space - Rotate Perspective - Unlock Knowledge';
+            const activeSlogan = t(sloganVi, sloganEn);
+
+            setTxt('header-slogan-text', sloganVi, sloganEn);
+            setTitle('header-brand', `EZ3D - GEOMETRY | ${sloganVi}`, `EZ3D - GEOMETRY | ${sloganEn}`);
+
+            document.documentElement.lang = currentLang === 'en' ? 'en' : 'vi';
+            document.title = `EZ3D - GEOMETRY | ${activeSlogan}`;
+            const metaDescText = t(
+                `EZ3D - GEOMETRY | ${sloganVi}. Phần mềm vẽ và mô phỏng Hình học không gian 3D động (Đa diện, Hình nón, Hình trụ, Hình nón cụt, Mặt cầu) chuẩn SGK Toán THPT, hoạt động Offline.`,
+                `EZ3D - GEOMETRY | ${sloganEn}. Interactive 3D Geometry construction and visualization software (Polyhedra, Cones, Cylinders, Frustums, Spheres), offline-ready.`
+            );
+            const setMeta = (id, contentVal) => {
+                const m = document.getElementById(id);
+                if (m) m.setAttribute('content', contentVal);
+            };
+            setMeta('meta-description', metaDescText);
+            setMeta('meta-slogan', activeSlogan);
+            setMeta('meta-og-title', `EZ3D - GEOMETRY | ${activeSlogan}`);
+            setMeta('meta-og-description', metaDescText);
+
+            setTxt(
+                'app-footer',
+                `EZ3D - GEOMETRY: "${sloganVi}" | Dlk Edu Tech - Phát triển bởi tranhongdan@tranphudlk.edu.vn`,
+                `EZ3D - GEOMETRY: "${sloganEn}" | Dlk Edu Tech - Developed by tranhongdan@tranphudlk.edu.vn`
+            );
 
             const collapseBtn = document.getElementById('toggle-toolbar-btn');
             if (collapseBtn) collapseBtn.setAttribute('data-tip', t('<b>Ẩn / Hiện thanh công cụ dọc</b>', '<b>Collapse / Expand vertical toolbar</b>'));
