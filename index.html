@@ -1180,25 +1180,25 @@
             'point2d': {
                 vi: {
                     name: 'Tạo Điểm (Bắt dính thông minh)',
-                    tip: '<b>Tạo Điểm:</b> Bắt dính Giao điểm, thuộc Cạnh, thuộc Đường tròn, thuộc Mặt cầu, thuộc Mặt trên cùng hoặc Mặt nền $(P)$',
-                    guide: 'Tạo điểm: Tự động <b>bắt dính Giao điểm 2 đường/đoạn</b>, thuộc cạnh, thuộc đường tròn, thuộc mặt cầu, thuộc mặt trên cùng hoặc mặt nền $(P)$'
+                    tip: '<b>Tạo Điểm:</b> Bắt dính Giao điểm, thuộc Cạnh, Đường tròn, Bề mặt tròn xoay (Nón, Trụ, Cầu), Mặt đa giác hoặc Mặt nền $(P)$',
+                    guide: 'Tạo điểm: Tự động <b>bắt dính Giao điểm</b>, thuộc cạnh, đường tròn, <b>bề mặt tròn xoay (Nón, Trụ, Nón cụt, Mặt cầu)</b>, mặt đa giác hoặc mặt nền $(P)$'
                 },
                 en: {
                     name: 'Create Point (Smart Snap)',
-                    tip: '<b>Create Point:</b> Auto-snap to Intersections, Edges, Circles, Spheres, Top Faces, or Base Plane $(P)$',
-                    guide: 'Create Point: Auto-snaps to <b>Line/Segment Intersections</b>, edges, circles, spheres, polygon faces, or base plane $(P)$'
+                    tip: '<b>Create Point:</b> Auto-snap to Intersections, Edges, Circles, Surfaces of Revolution (Cone, Cylinder, Sphere), Faces, or Base Plane $(P)$',
+                    guide: 'Create Point: Auto-snaps to <b>Intersections</b>, edges, circles, <b>surfaces of revolution (Cone, Cylinder, Frustum, Sphere)</b>, polygon faces, or base plane $(P)$'
                 }
             },
             'point3d': {
                 vi: {
                     name: 'Tạo Điểm 3D ngoài mặt nền',
-                    tip: '<b>Tạo Điểm 3D ngoài mặt nền:</b> Click chọn chân hình chiếu rồi kéo chuột lên/xuống',
-                    guide: 'Tạo điểm 3D: Click chọn chân hình chiếu và <b>giữ kéo chuột lên/xuống</b> để chọn độ cao'
+                    tip: '<b>Tạo Điểm 3D:</b> Click chọn chân hình chiếu rồi kéo chuột lên/xuống để chọn độ cao (hoặc click trực tiếp lên Mặt nón, Mặt trụ, Mặt cầu)',
+                    guide: 'Tạo điểm 3D: Click chọn chân hình chiếu và <b>giữ kéo chuột lên/xuống</b> để chọn độ cao (hoặc click trực tiếp lên <b>bề mặt Nón, Trụ, Cầu</b>)'
                 },
                 en: {
                     name: 'Create 3D Point Above/Below Plane',
-                    tip: '<b>Create 3D Point:</b> Click projection foot on plane and drag mouse up/down to set height',
-                    guide: 'Create 3D Point: Click projection foot and <b>hold & drag mouse up/down</b> to set altitude $h$'
+                    tip: '<b>Create 3D Point:</b> Click projection foot on plane and drag up/down to set height (or click directly on a Cone, Cylinder, or Sphere surface)',
+                    guide: 'Create 3D Point: Click projection foot and <b>hold & drag mouse up/down</b> to set altitude $h$ (or click directly on a <b>Cone, Cylinder, or Sphere surface</b>)'
                 }
             },
             'translate': {
@@ -4963,14 +4963,182 @@
             const cirTargetAfter = checkCircleHit();
             if (cirTargetAfter) return cirTargetAfter;
 
-            // Kiểm tra va chạm với Bề mặt (Đa giác, Hình tròn, Khối tròn xoay, Mặt nền) theo thứ tự khoảng cách gần nhất
+            const excludeSolidSurfaceHit = (
+                ['measure-scale', 'measure-dist', 'measure-angle', 'measure-area'].includes(currentTool) ||
+                (currentTool === 'perp' && selectedPointIds.length === 1)
+            );
+            const isSolidObjectTool = ['delete-obj', 'hide', 'measure-volume'].includes(currentTool);
+            const mouseScreenX = event.clientX - rect.left;
+            const mouseScreenY = event.clientY - rect.top;
+
+            const toScreenXY = (vec3) => {
+                const p = vec3.clone().project(camera);
+                return {
+                    x: (p.x * 0.5 + 0.5) * rect.width,
+                    y: (-(p.y * 0.5) + 0.5) * rect.height,
+                    z: p.z
+                };
+            };
+
+            const normalizeAngleDiff = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+
+            // Bắt dính thông minh vào Đường sinh biên (Nón, Trụ, Nón cụt) và Đường tròn xích đạo / Viền ngoài Mặt cầu
+            if (!excludeSolidSurfaceHit && (geoState.solids || []).length > 0) {
+                const viewDir = getCameraViewToEyeDir();
+                let bestSilSnap = null;
+                let bestSilDist = 9.5;
+
+                const testScreenSegmentSnap = (pA3D, pB3D) => {
+                    const sA = toScreenXY(pA3D);
+                    const sB = toScreenXY(pB3D);
+                    if (sA.z > 1 || sB.z > 1) return null;
+                    const dx = sB.x - sA.x;
+                    const dy = sB.y - sA.y;
+                    const lenSq = dx * dx + dy * dy;
+                    if (lenSq < 4) return null;
+                    let t = ((mouseScreenX - sA.x) * dx + (mouseScreenY - sA.y) * dy) / lenSq;
+                    t = Math.max(0.05, Math.min(0.95, t));
+                    const projX = sA.x + t * dx;
+                    const projY = sA.y + t * dy;
+                    const dist = Math.hypot(mouseScreenX - projX, mouseScreenY - projY);
+                    return { dist, t };
+                };
+
+                (geoState.solids || []).forEach(sol => {
+                    if (!sol || sol.hidden) return;
+                    const solidName = sol.name || (sol.kind === 'cone' ? t('Hình nón', 'Cone') : (sol.kind === 'sphere' ? t('Mặt cầu', 'Sphere') : t('Hình trụ / Nón cụt', 'Cylinder / Frustum')));
+
+                    if (sol.kind === 'cone') {
+                        const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
+                        const S = geoState.points.find(p => p.id === sol.apexId);
+                        const geom = computeCircleGeometry(cir);
+                        if (!geom || !S) return;
+                        const vS = new THREE.Vector3(S.x, S.y, S.z);
+                        const [th1, th2] = computeConeSilhouetteAngles(vS, geom.center, geom.radius, geom.uAxis, geom.vAxis, viewDir);
+                        [th1, th2].forEach(ang => {
+                            const rimPt = geom.center.clone()
+                                .addScaledVector(geom.uAxis, geom.radius * Math.cos(ang))
+                                .addScaledVector(geom.vAxis, geom.radius * Math.sin(ang));
+                            const segHit = testScreenSegmentSnap(vS, rimPt);
+                            if (segHit && segHit.dist < bestSilDist) {
+                                bestSilDist = segHit.dist;
+                                const exactPos = vS.clone().lerp(rimPt, segHit.t);
+                                bestSilSnap = isSolidObjectTool
+                                    ? { type: 'solid', solidId: sol.id, solidKind: 'cone', pos: exactPos, label: solidName }
+                                    : {
+                                        type: 'cone',
+                                        solidId: sol.id,
+                                        t: segHit.t,
+                                        angle: ang,
+                                        pos: exactPos,
+                                        label: t(`Trên đường sinh ${solidName}`, `On generator of ${solidName}`)
+                                    };
+                            }
+                        });
+                    } else if (sol.kind === 'frustum') {
+                        const cir1 = (geoState.circles || []).find(c => c.id === sol.circle1Id);
+                        const cir2 = (geoState.circles || []).find(c => c.id === sol.circle2Id);
+                        const g1 = computeCircleGeometry(cir1);
+                        const g2 = computeCircleGeometry(cir2);
+                        if (!g1 || !g2) return;
+                        const { u2, v2 } = alignSecondCircleBasis(g1.uAxis, g1.vAxis, g1.normal, g2.normal);
+                        const [th1, th2] = computeFrustumSilhouetteAngles(g1.center, g1.radius, g2.center, g2.radius, g1.uAxis, g1.vAxis, viewDir);
+                        [th1, th2].forEach(ang => {
+                            const p1 = g1.center.clone()
+                                .addScaledVector(g1.uAxis, g1.radius * Math.cos(ang))
+                                .addScaledVector(g1.vAxis, g1.radius * Math.sin(ang));
+                            const p2 = g2.center.clone()
+                                .addScaledVector(u2, g2.radius * Math.cos(ang))
+                                .addScaledVector(v2, g2.radius * Math.sin(ang));
+                            const segHit = testScreenSegmentSnap(p1, p2);
+                            if (segHit && segHit.dist < bestSilDist) {
+                                bestSilDist = segHit.dist;
+                                const exactPos = p1.clone().lerp(p2, segHit.t);
+                                bestSilSnap = isSolidObjectTool
+                                    ? { type: 'solid', solidId: sol.id, solidKind: 'frustum', pos: exactPos, label: solidName }
+                                    : {
+                                        type: 'frustum',
+                                        solidId: sol.id,
+                                        t: segHit.t,
+                                        angle: ang,
+                                        pos: exactPos,
+                                        label: t(`Trên đường sinh ${solidName}`, `On generator of ${solidName}`)
+                                    };
+                            }
+                        });
+                    } else if (sol.kind === 'sphere') {
+                        const sGeom = computeSphereGeometry(sol);
+                        if (!sGeom) return;
+                        const silBasis = computeSphereSilhouetteBasis(sGeom.center, sGeom.radius, viewDir);
+                        const samples = 72;
+                        // Kiểm tra bắt dính vào đường tròn lớn viền ngoài (Silhouette) & đường tròn xích đạo nằm ngang của Mặt cầu
+                        for (let i = 0; i < samples; i++) {
+                            const ang = (i / samples) * Math.PI * 2;
+                            // 1) Điểm trên đường tròn xích đạo nằm ngang (phi = PI/2)
+                            const eqPt = new THREE.Vector3(
+                                sGeom.center.x + sGeom.radius * Math.cos(ang),
+                                sGeom.center.y,
+                                sGeom.center.z + sGeom.radius * Math.sin(ang)
+                            );
+                            const sEq = toScreenXY(eqPt);
+                            if (sEq.z <= 1) {
+                                const dEq = Math.hypot(mouseScreenX - sEq.x, mouseScreenY - sEq.y);
+                                if (dEq < bestSilDist) {
+                                    bestSilDist = dEq;
+                                    bestSilSnap = isSolidObjectTool
+                                        ? { type: 'solid', solidId: sol.id, solidKind: 'sphere', pos: eqPt, label: solidName }
+                                        : {
+                                            type: 'sphere',
+                                            solidId: sol.id,
+                                            phi: Math.PI / 2,
+                                            theta: ang,
+                                            pos: eqPt,
+                                            label: t(`Trên đường tròn lớn ${solidName}`, `On equator of ${solidName}`)
+                                        };
+                                }
+                            }
+                            // 2) Điểm trên đường tròn lớn viền ngoài (Silhouette contour)
+                            const silPt = silBasis.center.clone()
+                                .addScaledVector(silBasis.uAxis, silBasis.radius * Math.cos(ang))
+                                .addScaledVector(silBasis.vAxis, silBasis.radius * Math.sin(ang));
+                            const sSil = toScreenXY(silPt);
+                            if (sSil.z <= 1) {
+                                const dSil = Math.hypot(mouseScreenX - sSil.x, mouseScreenY - sSil.y);
+                                if (dSil < bestSilDist) {
+                                    bestSilDist = dSil;
+                                    const rel = new THREE.Vector3().subVectors(silPt, sGeom.center).normalize();
+                                    const phi = Math.acos(Math.max(-1, Math.min(1, rel.y)));
+                                    const theta = Math.atan2(rel.z, rel.x);
+                                    bestSilSnap = isSolidObjectTool
+                                        ? { type: 'solid', solidId: sol.id, solidKind: 'sphere', pos: silPt, label: solidName }
+                                        : {
+                                            type: 'sphere',
+                                            solidId: sol.id,
+                                            phi,
+                                            theta,
+                                            pos: silPt,
+                                            label: t(`Trên ${solidName}`, `On ${solidName}`)
+                                        };
+                                }
+                            }
+                        }
+                    }
+                });
+
+                if (bestSilSnap) return bestSilSnap;
+            }
+
+            // Kiểm tra va chạm với Bề mặt 3D (Đa giác, Hình tròn, Khối tròn xoay) trước, sau đó mới tới Mặt nền (P)
             const surfaceCandidates = [...faceMeshes];
-            if (['delete-obj', 'hide', 'point2d', 'measure-volume'].includes(currentTool) && hitSolidMeshes.length > 0) {
+            if (!excludeSolidSurfaceHit && hitSolidMeshes.length > 0) {
                 surfaceCandidates.push(...hitSolidMeshes);
             }
-            if (isBasePlaneVisible) surfaceCandidates.push(basePlaneMesh);
 
-            const surfaceHits = raycaster.intersectObjects(surfaceCandidates);
+            let surfaceHits = raycaster.intersectObjects(surfaceCandidates);
+            if (surfaceHits.length === 0 && isBasePlaneVisible && basePlaneMesh) {
+                surfaceHits = raycaster.intersectObjects([basePlaneMesh]);
+            }
+
             if (surfaceHits.length > 0) {
                 const topHit = surfaceHits[0];
                 if (topHit.object === basePlaneMesh) {
@@ -4982,34 +5150,43 @@
                             0,
                             Math.round(pt.z * 4) / 4
                         ),
-                        label: `Trên mặt nền (P)`
+                        label: t('Trên mặt nền (P)', 'On base plane (P)')
                     };
                 } else if (topHit.object.userData && topHit.object.userData.solidId) {
                     const { solidId, solidKind, solidName } = topHit.object.userData;
-                    if (currentTool === 'delete-obj' || currentTool === 'hide' || currentTool === 'measure-volume') {
+                    if (isSolidObjectTool) {
                         return {
                             type: 'solid',
                             solidId,
                             solidKind,
                             pos: topHit.point.clone(),
-                            label: solidName || 'khối tròn xoay'
+                            label: solidName || t('khối tròn xoay', 'solid of revolution')
                         };
-                    } else if (currentTool === 'point2d') {
+                    } else {
                         const sol = (geoState.solids || []).find(s => s.id === solidId);
+                        const viewDir = getCameraViewToEyeDir();
                         if (solidKind === 'sphere') {
                             const sGeom = computeSphereGeometry(sol);
                             if (sGeom) {
                                 const rel = new THREE.Vector3().subVectors(topHit.point, sGeom.center).normalize();
-                                const phi = Math.acos(Math.max(-1, Math.min(1, rel.y)));
+                                const snappedEq = Math.abs(rel.y) <= 0.045;
+                                const phi = snappedEq ? (Math.PI / 2) : Math.acos(Math.max(-1, Math.min(1, rel.y)));
                                 const theta = Math.atan2(rel.z, rel.x);
-                                const exactPos = sGeom.center.clone().addScaledVector(rel, sGeom.radius);
+                                const exactPos = new THREE.Vector3(
+                                    sGeom.center.x + sGeom.radius * Math.sin(phi) * Math.cos(theta),
+                                    sGeom.center.y + sGeom.radius * Math.cos(phi),
+                                    sGeom.center.z + sGeom.radius * Math.sin(phi) * Math.sin(theta)
+                                );
+                                const sTitle = solidName || t('mặt cầu', 'sphere');
                                 return {
                                     type: 'sphere',
                                     solidId,
                                     phi,
                                     theta,
                                     pos: exactPos,
-                                    label: `Trên ${solidName || 'mặt cầu'}`
+                                    label: snappedEq
+                                        ? t(`Trên đường tròn lớn ${sTitle}`, `On equator of ${sTitle}`)
+                                        : t(`Trên ${sTitle}`, `On ${sTitle}`)
                                 };
                             }
                         } else if (solidKind === 'cone' && sol) {
@@ -5021,22 +5198,34 @@
                                 const vSO = new THREE.Vector3().subVectors(geom.center, vS);
                                 const vSP = new THREE.Vector3().subVectors(topHit.point, vS);
                                 const denom = vSO.dot(geom.normal);
-                                let t = Math.abs(denom) > 1e-5 ? (vSP.dot(geom.normal) / denom) : 0.5;
-                                t = Math.max(0.05, Math.min(0.95, t));
-                                const centerT = vS.clone().addScaledVector(vSO, t);
+                                let tVal = Math.abs(denom) > 1e-5
+                                    ? (vSP.dot(geom.normal) / denom)
+                                    : (vSO.lengthSq() > 1e-6 ? vSP.dot(vSO) / vSO.lengthSq() : 0.5);
+                                tVal = Math.max(0.04, Math.min(0.96, tVal));
+                                const centerT = vS.clone().addScaledVector(vSO, tVal);
                                 const delta = new THREE.Vector3().subVectors(topHit.point, centerT);
-                                const angle = Math.atan2(delta.dot(geom.vAxis), delta.dot(geom.uAxis));
+                                let angle = Math.atan2(delta.dot(geom.vAxis), delta.dot(geom.uAxis));
+                                const [th1, th2] = computeConeSilhouetteAngles(vS, geom.center, geom.radius, geom.uAxis, geom.vAxis, viewDir);
+                                const d1 = Math.abs(normalizeAngleDiff(angle, th1));
+                                const d2 = Math.abs(normalizeAngleDiff(angle, th2));
+                                let onGen = false;
+                                if (d1 <= 0.075 && d1 <= d2) { angle = th1; onGen = true; }
+                                else if (d2 <= 0.075 && d2 < d1) { angle = th2; onGen = true; }
+
                                 const rimPt = geom.center.clone()
                                     .addScaledVector(geom.uAxis, geom.radius * Math.cos(angle))
                                     .addScaledVector(geom.vAxis, geom.radius * Math.sin(angle));
-                                const exactPos = vS.clone().lerp(rimPt, t);
+                                const exactPos = vS.clone().lerp(rimPt, tVal);
+                                const cTitle = solidName || t('hình nón', 'cone');
                                 return {
                                     type: 'cone',
                                     solidId,
-                                    t,
+                                    t: tVal,
                                     angle,
                                     pos: exactPos,
-                                    label: `Trên ${solidName || 'hình nón'}`
+                                    label: onGen
+                                        ? t(`Trên đường sinh ${cTitle}`, `On generator of ${cTitle}`)
+                                        : t(`Trên bề mặt ${cTitle}`, `On surface of ${cTitle}`)
                                 };
                             }
                         } else if (solidKind === 'frustum' && sol) {
@@ -5049,25 +5238,37 @@
                                 const axis = new THREE.Vector3().subVectors(g2.center, g1.center);
                                 const relP = new THREE.Vector3().subVectors(topHit.point, g1.center);
                                 const denom = axis.dot(g1.normal);
-                                let t = Math.abs(denom) > 1e-5 ? (relP.dot(g1.normal) / denom) : (axis.lengthSq() > 1e-6 ? relP.dot(axis) / axis.lengthSq() : 0.5);
-                                t = Math.max(0.05, Math.min(0.95, t));
-                                const centerT = g1.center.clone().addScaledVector(axis, t);
+                                let tVal = Math.abs(denom) > 1e-5
+                                    ? (relP.dot(g1.normal) / denom)
+                                    : (axis.lengthSq() > 1e-6 ? relP.dot(axis) / axis.lengthSq() : 0.5);
+                                tVal = Math.max(0.04, Math.min(0.96, tVal));
+                                const centerT = g1.center.clone().addScaledVector(axis, tVal);
                                 const delta = new THREE.Vector3().subVectors(topHit.point, centerT);
-                                const angle = Math.atan2(delta.dot(g1.vAxis), delta.dot(g1.uAxis));
+                                let angle = Math.atan2(delta.dot(g1.vAxis), delta.dot(g1.uAxis));
+                                const [th1, th2] = computeFrustumSilhouetteAngles(g1.center, g1.radius, g2.center, g2.radius, g1.uAxis, g1.vAxis, viewDir);
+                                const d1 = Math.abs(normalizeAngleDiff(angle, th1));
+                                const d2 = Math.abs(normalizeAngleDiff(angle, th2));
+                                let onGen = false;
+                                if (d1 <= 0.075 && d1 <= d2) { angle = th1; onGen = true; }
+                                else if (d2 <= 0.075 && d2 < d1) { angle = th2; onGen = true; }
+
                                 const p1 = g1.center.clone()
                                     .addScaledVector(g1.uAxis, g1.radius * Math.cos(angle))
                                     .addScaledVector(g1.vAxis, g1.radius * Math.sin(angle));
                                 const p2 = g2.center.clone()
                                     .addScaledVector(u2, g2.radius * Math.cos(angle))
                                     .addScaledVector(v2, g2.radius * Math.sin(angle));
-                                const exactPos = p1.clone().lerp(p2, t);
+                                const exactPos = p1.clone().lerp(p2, tVal);
+                                const fTitle = solidName || t('khối tròn xoay', 'cylinder / frustum');
                                 return {
                                     type: 'frustum',
                                     solidId,
-                                    t,
+                                    t: tVal,
                                     angle,
                                     pos: exactPos,
-                                    label: `Trên ${solidName || 'khối tròn xoay'}`
+                                    label: onGen
+                                        ? t(`Trên đường sinh ${fTitle}`, `On generator of ${fTitle}`)
+                                        : t(`Trên bề mặt ${fTitle}`, `On surface of ${fTitle}`)
                                 };
                             }
                         }
@@ -5089,17 +5290,22 @@
                                 circleId,
                                 angle,
                                 pos: topHit.point.clone(),
-                                label: `đường tròn ${cir.name || '(C)'}`
+                                label: t(`đường tròn ${cir.name || '(C)'}`, `circle ${cir.name || '(C)'}`)
                             };
                         }
+                        const exactDiskPos = geom.center.clone()
+                            .addScaledVector(geom.uAxis, geom.radius * rRatio * Math.cos(angle))
+                            .addScaledVector(geom.vAxis, geom.radius * rRatio * Math.sin(angle));
                         return {
                             type: 'circleDisk',
                             circleId,
                             faceId: circleId,
                             rRatio,
                             angle,
-                            pos: topHit.point.clone(),
-                            label: currentTool.startsWith('measure-') ? `Mặt hình tròn ${cir.name || '(C)'}` : `Trên bề mặt ${topHit.object.userData.faceName || 'hình tròn'}`
+                            pos: exactDiskPos,
+                            label: currentTool.startsWith('measure-')
+                                ? t(`Mặt hình tròn ${cir.name || '(C)'}`, `Circular disk ${cir.name || '(C)'}`)
+                                : t(`Trên bề mặt hình tròn ${cir.name || '(C)'}`, `On circular disk ${cir.name || '(C)'}`)
                         };
                     }
                 } else {
@@ -5115,12 +5321,14 @@
                             u = coords.u; v = coords.v;
                         }
                     }
-                    const faceTitle = topHit.object.userData.faceName || 'đa giác';
+                    const faceTitle = topHit.object.userData.faceName || t('đa giác', 'polygon');
                     return {
                         type: 'face',
                         faceId, u, v,
                         pos: topHit.point.clone(),
-                        label: (currentTool === 'delete-obj' || currentTool.startsWith('measure-')) ? `Mặt phẳng ${faceTitle}` : `Trên bề mặt ${faceTitle}`
+                        label: (currentTool === 'delete-obj' || currentTool.startsWith('measure-'))
+                            ? t(`Mặt phẳng ${faceTitle}`, `Polygon face ${faceTitle}`)
+                            : t(`Trên bề mặt ${faceTitle}`, `On face ${faceTitle}`)
                     };
                 }
             }
@@ -7587,7 +7795,7 @@
                 return;
             }
 
-            if (currentTool === 'point3d' && target) {
+            if (currentTool === 'point3d' && target && !['sphere', 'cone', 'frustum'].includes(target.type)) {
                 isCreating3DPoint = true;
                 drag3DBasePos = target.pos.clone();
                 drag3DCurrentPos = target.pos.clone().add(new THREE.Vector3(0, 3, 0));
@@ -7703,11 +7911,23 @@
 
             if (!target) return;
 
-            if (currentTool === 'point2d') {
+            if (currentTool === 'point2d' || (currentTool === 'point3d' && ['sphere', 'cone', 'frustum'].includes(target.type))) {
                 if (target.type !== 'point') {
                     saveHistory();
-                    createNewPointFromTarget(target);
+                    const newPtId = createNewPointFromTarget(target);
+                    const createdPt = geoState.points.find(p => p.id === newPtId);
                     updateSceneFromState();
+                    if (createdPt && ['sphere', 'cone', 'frustum', 'circleDisk', 'circle'].includes(target.type)) {
+                        const guideSpan = document.getElementById('guide-span');
+                        if (guideSpan) {
+                            const parentDesc = getParentObjectDescription(createdPt);
+                            guideSpan.innerHTML = t(
+                                `Đã tạo điểm <b>$${createdPt.name}$</b> thuộc <b>${parentDesc}</b>! Bạn có thể kéo điểm hoặc bấm <b>Chạy điểm</b> để di chuyển trên mặt tròn xoay.`,
+                                `Created point <b>$${createdPt.name}$</b> on <b>${parentDesc}</b>! You can drag or <b>Animate</b> this point on the surface of revolution.`
+                            );
+                            renderMathInElementSafe(guideSpan);
+                        }
+                    }
                 }
                 return;
             }
@@ -8459,12 +8679,19 @@
                 const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId);
                 const sGeom = computeSphereGeometry(sol);
                 if (sGeom) {
-                    const camDir = new THREE.Vector3();
-                    camera.getWorldDirection(camDir);
-                    dragPlane.setFromNormalAndCoplanarPoint(camDir, sGeom.center);
-                    const hit = new THREE.Vector3();
-                    if (raycaster.ray.intersectPlane(dragPlane, hit)) {
-                        const rel = new THREE.Vector3().subVectors(hit, sGeom.center);
+                    const solidHits = raycaster.intersectObjects(hitSolidMeshes.filter(m => m.userData && m.userData.solidId === pt.rule.solidId));
+                    let hitPt = solidHits.length > 0 ? solidHits[0].point : null;
+                    if (!hitPt) {
+                        const camDir = new THREE.Vector3();
+                        camera.getWorldDirection(camDir);
+                        dragPlane.setFromNormalAndCoplanarPoint(camDir, sGeom.center);
+                        const fallbackHit = new THREE.Vector3();
+                        if (raycaster.ray.intersectPlane(dragPlane, fallbackHit)) {
+                            hitPt = fallbackHit;
+                        }
+                    }
+                    if (hitPt) {
+                        const rel = new THREE.Vector3().subVectors(hitPt, sGeom.center);
                         if (rel.lengthSq() > 1e-6) {
                             rel.normalize();
                             pt.rule.phi = Math.acos(Math.max(-1, Math.min(1, rel.y)));
@@ -8475,10 +8702,19 @@
             }
             else if (rType === 'onCone' || rType === 'onFrustum') {
                 const solidHits = raycaster.intersectObjects(hitSolidMeshes.filter(m => m.userData && m.userData.solidId === pt.rule.solidId));
-                if (solidHits.length > 0) {
-                    const hitPt = solidHits[0].point;
-                    const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId);
-                    if (rType === 'onCone' && sol) {
+                let hitPt = solidHits.length > 0 ? solidHits[0].point : null;
+                const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId);
+                if (!hitPt && sol) {
+                    const camDir = new THREE.Vector3();
+                    camera.getWorldDirection(camDir);
+                    dragPlane.setFromNormalAndCoplanarPoint(camDir, new THREE.Vector3(pt.x, pt.y, pt.z));
+                    const fallbackHit = new THREE.Vector3();
+                    if (raycaster.ray.intersectPlane(dragPlane, fallbackHit)) {
+                        hitPt = fallbackHit;
+                    }
+                }
+                if (hitPt && sol) {
+                    if (rType === 'onCone') {
                         const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
                         const S = geoState.points.find(p => p.id === sol.apexId);
                         const geom = computeCircleGeometry(cir);
@@ -8487,14 +8723,16 @@
                             const vSO = new THREE.Vector3().subVectors(geom.center, vS);
                             const vSP = new THREE.Vector3().subVectors(hitPt, vS);
                             const denom = vSO.dot(geom.normal);
-                            let t = Math.abs(denom) > 1e-5 ? (vSP.dot(geom.normal) / denom) : 0.5;
-                            t = Math.max(0.05, Math.min(0.95, t));
+                            let t = Math.abs(denom) > 1e-5
+                                ? (vSP.dot(geom.normal) / denom)
+                                : (vSO.lengthSq() > 1e-6 ? vSP.dot(vSO) / vSO.lengthSq() : 0.5);
+                            t = Math.max(0.04, Math.min(0.96, t));
                             const centerT = vS.clone().addScaledVector(vSO, t);
                             const delta = new THREE.Vector3().subVectors(hitPt, centerT);
                             pt.rule.t = t;
                             pt.rule.angle = Math.atan2(delta.dot(geom.vAxis), delta.dot(geom.uAxis));
                         }
-                    } else if (rType === 'onFrustum' && sol) {
+                    } else if (rType === 'onFrustum') {
                         const cir1 = (geoState.circles || []).find(c => c.id === sol.circle1Id);
                         const cir2 = (geoState.circles || []).find(c => c.id === sol.circle2Id);
                         const g1 = computeCircleGeometry(cir1);
@@ -8504,7 +8742,7 @@
                             const relP = new THREE.Vector3().subVectors(hitPt, g1.center);
                             const denom = axis.dot(g1.normal);
                             let t = Math.abs(denom) > 1e-5 ? (relP.dot(g1.normal) / denom) : (axis.lengthSq() > 1e-6 ? relP.dot(axis) / axis.lengthSq() : 0.5);
-                            t = Math.max(0.05, Math.min(0.95, t));
+                            t = Math.max(0.04, Math.min(0.96, t));
                             const centerT = g1.center.clone().addScaledVector(axis, t);
                             const delta = new THREE.Vector3().subVectors(hitPt, centerT);
                             pt.rule.t = t;
