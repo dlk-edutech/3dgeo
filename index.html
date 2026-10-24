@@ -649,6 +649,79 @@
             display: flex; justify-content: space-between; align-items: center;
         }
 
+        /* Bảng nổi tùy chỉnh Kích thước Điểm & Đường */
+        #style-size-popover {
+            position: absolute; top: 54px; left: 74px; z-index: 38;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border: 1px solid #cbd5e1; border-radius: 12px;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
+            padding: 12px 14px; width: 292px;
+            display: none; flex-direction: column; gap: 10px;
+        }
+        #style-size-popover.open {
+            display: flex;
+        }
+        .style-pop-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #e2e8f0; padding-bottom: 7px;
+            font-size: 12.5px; font-weight: 800; color: #0f172a;
+        }
+        .style-pop-row {
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .style-pop-label-line {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 12px; font-weight: 700; color: #334155;
+        }
+        .style-pop-val-badge {
+            background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;
+            padding: 1px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 800;
+        }
+        .style-slider-wrap {
+            display: flex; align-items: center; gap: 6px;
+        }
+        .style-step-btn {
+            width: 26px; height: 26px; border-radius: 6px;
+            border: 1px solid #cbd5e1; background: #f8fafc; color: #1e293b;
+            font-weight: 800; font-size: 14px; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all 0.15s; flex-shrink: 0;
+        }
+        .style-step-btn:hover { background: #e2e8f0; border-color: #94a3b8; }
+        .style-range-input {
+            flex: 1; accent-color: #2563eb; cursor: pointer; height: 5px;
+        }
+        .settings-style-bar {
+            padding: 10px 20px; background: #ffffff; border-bottom: 1px solid #e2e8f0;
+            display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; align-items: center;
+        }
+        @media (max-width: 640px) {
+            .settings-style-bar { grid-template-columns: 1fr; }
+        }
+        .pt-opt-quick-actions {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
+        }
+        .pt-opt-quick-btn {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 8px 10px; border-radius: 8px; font-size: 12.5px; font-weight: 700;
+            cursor: pointer; border: 1px solid #cbd5e1; background: #f8fafc; color: #1e293b;
+            transition: all 0.15s;
+        }
+        .pt-opt-quick-btn svg {
+            width: 15px; height: 15px; stroke: currentColor; stroke-width: 2; fill: none; flex-shrink: 0;
+        }
+        .pt-opt-quick-btn:hover { background: #eff6ff; border-color: #60a5fa; color: #1d4ed8; }
+        .pt-opt-quick-btn.warn:hover { background: #fef2f2; border-color: #f87171; color: #dc2626; }
+        .pt-opt-check-row {
+            display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+            margin-top: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #1e293b;
+        }
+        .pt-opt-check-row input[type="checkbox"] {
+            width: 16px; height: 16px; accent-color: #2563eb; cursor: pointer; margin: 0;
+        }
+
         /* Footer */
         footer {
             background-color: #0f172a; color: #94a3b8;
@@ -739,6 +812,45 @@
             <button class="top-ctrl-btn secondary" id="open-toolbar-settings-btn" data-tip="<b>Cài đặt công cụ:</b> Chọn công cụ thường trực, Ẩn/Hiện & Sắp xếp thanh công cụ" onclick="openToolbarSettingsModal()">
                 <svg class="svg-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </button>
+            <button class="top-ctrl-btn secondary" id="open-style-size-btn" data-tip="<b>Kích thước Điểm & Độ dày Đường:</b> Điều chỉnh cỡ điểm và độ đậm nét vẽ" onclick="toggleStyleSizePopover()">
+                <svg class="svg-ic" viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.5" fill="currentColor"/><line x1="12" y1="7" x2="21" y2="7" stroke-width="1.8"/><circle cx="6" cy="17" r="4.2" fill="currentColor"/><line x1="13" y1="17" x2="21" y2="17" stroke-width="3.6"/></svg>
+            </button>
+        </div>
+
+        <!-- Bảng điều chỉnh nhanh Kích thước Điểm & Độ dày Đường -->
+        <div id="style-size-popover">
+            <div class="style-pop-header">
+                <span id="style-pop-title">KÍCH THƯỚC ĐIỂM & ĐƯỜNG</span>
+                <button class="measure-close-btn" onclick="closeStyleSizePopover()" title="Đóng">
+                    <svg class="svg-ic" style="width:14px;height:14px;" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="style-pop-row">
+                <div class="style-pop-label-line">
+                    <span id="style-lbl-point-size">Kích thước điểm:</span>
+                    <span class="style-pop-val-badge" id="style-val-point-size">9 px</span>
+                </div>
+                <div class="style-slider-wrap">
+                    <button class="style-step-btn" onclick="stepVisualPointSize(-1)" title="Giảm cỡ điểm">-</button>
+                    <input type="range" class="style-range-input" id="style-slider-point-size" min="4" max="18" step="1" value="9" oninput="setVisualPointSize(Number(this.value))">
+                    <button class="style-step-btn" onclick="stepVisualPointSize(1)" title="Tăng cỡ điểm">+</button>
+                </div>
+            </div>
+            <div class="style-pop-row">
+                <div class="style-pop-label-line">
+                    <span id="style-lbl-line-width">Độ dày đường vẽ:</span>
+                    <span class="style-pop-val-badge" id="style-val-line-width">2.0 px</span>
+                </div>
+                <div class="style-slider-wrap">
+                    <button class="style-step-btn" onclick="stepVisualLineWidth(-0.5)" title="Giảm độ dày đường">-</button>
+                    <input type="range" class="style-range-input" id="style-slider-line-width" min="1" max="5" step="0.5" value="2" oninput="setVisualLineWidth(Number(this.value))">
+                    <button class="style-step-btn" onclick="stepVisualLineWidth(0.5)" title="Tăng độ dày đường">+</button>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-top:4px; border-top:1px solid #f1f5f9;">
+                <button class="measure-mini-btn" id="style-reset-default-btn" onclick="resetVisualStyleToDefault()">Mặc định (9px / 2px)</button>
+                <button class="measure-mini-btn primary" id="style-done-btn" onclick="closeStyleSizePopover()">Xong</button>
+            </div>
         </div>
 
         <!-- Thanh công cụ dọc hiển thị tất cả (Cuộn chuột & Hỗ trợ Kéo thả trực tiếp) -->
@@ -873,6 +985,31 @@
                     </button>
                 </div>
             </div>
+            <div class="settings-style-bar">
+                <div class="style-pop-row">
+                    <div class="style-pop-label-line">
+                        <span id="settings-lbl-point-size">Kích thước điểm:</span>
+                        <span class="style-pop-val-badge" id="settings-val-point-size">9 px</span>
+                    </div>
+                    <div class="style-slider-wrap">
+                        <button class="style-step-btn" onclick="stepVisualPointSize(-1)">-</button>
+                        <input type="range" class="style-range-input" id="settings-slider-point-size" min="4" max="18" step="1" value="9" oninput="setVisualPointSize(Number(this.value))">
+                        <button class="style-step-btn" onclick="stepVisualPointSize(1)">+</button>
+                    </div>
+                </div>
+                <div class="style-pop-row">
+                    <div class="style-pop-label-line">
+                        <span id="settings-lbl-line-width">Độ dày đường vẽ:</span>
+                        <span class="style-pop-val-badge" id="settings-val-line-width">2.0 px</span>
+                    </div>
+                    <div class="style-slider-wrap">
+                        <button class="style-step-btn" onclick="stepVisualLineWidth(-0.5)">-</button>
+                        <input type="range" class="style-range-input" id="settings-slider-line-width" min="1" max="5" step="0.5" value="2" oninput="setVisualLineWidth(Number(this.value))">
+                        <button class="style-step-btn" onclick="stepVisualLineWidth(0.5)">+</button>
+                    </div>
+                </div>
+                <button class="measure-mini-btn" id="settings-style-reset-btn" onclick="resetVisualStyleToDefault()">Mặc định</button>
+            </div>
             <div class="settings-hint">
                 <span id="settings-hint-text">Bấm biểu tượng <b>Ghim</b> để đưa công cụ lên thanh <b>Thường trực</b> (góc trên bên phải).</span>
                 <div class="settings-hint-actions">
@@ -897,7 +1034,7 @@
         </div>
     </div>
 
-    <footer id="app-footer">EZ3D - GEOMETRY: Chạm không gian - Xoay góc nhìn - Mở tri thức | Dlk Edu Tech - Phát triển bởi tranhongdan@tranphudlk.edu.vn</footer>
+    <footer id="app-footer">EZ3D - GEOMETRY: "Chạm không gian - Xoay góc nhìn - Mở tri thức" | Dlk Edu Tech - Phát triển bởi tranhongdan@tranphudlk.edu.vn</footer>
 
     <script>
         // =========================================================================
@@ -1127,7 +1264,8 @@
             measureDist: `<svg viewBox="0 0 24 24"><line x1="4" y1="20" x2="20" y2="4"/><polyline points="14 4 20 4 20 10"/><polyline points="10 20 4 20 4 14"/><circle cx="4" cy="20" r="2" fill="currentColor"/><circle cx="20" cy="4" r="2" fill="currentColor"/></svg>`,
             measureAngle: `<svg viewBox="0 0 24 24"><polyline points="21 19 4 19 17 5"/><path d="M13.5 19a9.5 9.5 0 0 0-2.8-6.7"/><circle cx="4" cy="19" r="2" fill="currentColor"/></svg>`,
             measureArea: `<svg viewBox="0 0 24 24"><polygon points="12 3 21 9 18 20 6 20 3 9"/><line x1="6" y1="20" x2="18" y2="9" stroke-dasharray="2 2"/><line x1="3" y1="9" x2="18" y2="20" stroke-dasharray="2 2"/></svg>`,
-            measureVolume: `<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`
+            measureVolume: `<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+            styleSize: `<svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.5" fill="currentColor"/><line x1="12" y1="7" x2="21" y2="7" stroke-width="1.8"/><circle cx="6" cy="17" r="4.2" fill="currentColor"/><line x1="13" y1="17" x2="21" y2="17" stroke-width="3.6"/></svg>`
         };
 
         const GROUP_NAMES_I18N = {
@@ -1176,6 +1314,10 @@
             'toggle-face-tint': {
                 vi: { name: 'Bật / Tắt tô màu nhẹ bề mặt', tip: '<b>Bật / Tắt tô màu nhẹ bề mặt đa giác & khối tròn xoay</b>' },
                 en: { name: 'Toggle Surface Color Tint', tip: '<b>Toggle light color tint on polygon faces & solids of revolution</b>' }
+            },
+            'style-size': {
+                vi: { name: 'Điều chỉnh kích thước Điểm / Đường', tip: '<b>Kích thước Điểm & Độ dày Đường:</b> Tùy chỉnh kích thước chấm điểm và độ đậm nhạt của đường vẽ' },
+                en: { name: 'Adjust Point Size & Line Width', tip: '<b>Point Size & Line Width:</b> Customize vertex dot size and stroke thickness' }
             },
             'point2d': {
                 vi: {
@@ -1621,6 +1763,13 @@
                 iconHtml: SVG_ICONS.fillDrip,
                 tip: TOOL_I18N['toggle-face-tint'].vi.tip
             },
+            {
+                id: 'style-size', group: 1, groupName: 'Nhóm 1: Góc nhìn & Nền',
+                name: 'Điều chỉnh kích thước Điểm / Đường', type: 'action',
+                actionFn: () => toggleStyleSizePopover(),
+                iconHtml: SVG_ICONS.styleSize,
+                tip: TOOL_I18N['style-size'].vi.tip
+            },
 
             // NHÓM 2: Tạo Điểm
             {
@@ -1862,13 +2011,11 @@
         ];
 
         const DEFAULT_PINNED_IDS = [
-            'point2d', 'point3d', 'segment', 'line', 'parallel', 'perp', 'poly-free', 'circle-center',
-            'measure-dist', 'measure-angle', 'measure-area', 'measure-volume',
-            'delete-obj', 'undo-action', 'reset-camera', 'toggle-face-tint', 'export-png'
+            'point2d', 'point3d', 'segment', 'line', 'circle-center', 'poly-free'
         ];
         const DEFAULT_HIDDEN_VERTICAL_IDS = ['move', 'reset-camera', 'toggle-face-tint'];
 
-        const TOOLBAR_STORAGE_KEY = 'ez3d_geometry_toolbar_v12';
+        const TOOLBAR_STORAGE_KEY = 'ez3d_geometry_toolbar_v13';
         let toolbarConfig = {
             sortMode: 'group',
             customOrder: MASTER_TOOLS.map(t => t.id),
@@ -1993,15 +2140,6 @@
             const qcEl = document.getElementById('quick-controls');
             if (!qcEl) return;
             qcEl.innerHTML = '';
-
-            const settingsBtn = document.createElement('button');
-            settingsBtn.className = 'q-btn settings-trigger';
-            settingsBtn.setAttribute('data-tip', t('<b>Cài đặt công cụ thường trực & Thanh công cụ</b>', '<b>Toolbar & Quick Tools Settings</b>'));
-            settingsBtn.innerHTML = SVG_ICONS.sliders;
-            settingsBtn.onclick = () => openToolbarSettingsModal();
-            settingsBtn.addEventListener('mouseenter', () => positionTooltipSmart(settingsBtn));
-            settingsBtn.addEventListener('mouseleave', () => { tooltipEl.style.display = 'none'; });
-            qcEl.appendChild(settingsBtn);
 
             toolbarConfig.pinnedIds.forEach(id => {
                 const tool = MASTER_TOOLS.find(t => t.id === id);
@@ -2770,7 +2908,110 @@
         const tooltipEl = document.getElementById('tool-tooltip');
 
         const AUTOSAVE_STORAGE_KEY = 'make_math_ez_3d_autosave_v1';
+        const VISUAL_STYLE_STORAGE_KEY = 'ez3d_geometry_visual_style_v1';
         let autoSaveTimer = null;
+
+        let visualStyle = {
+            pointSize: 9,
+            lineWidth: 2
+        };
+
+        function normalizeVisualStyleConfig(raw) {
+            const ptRaw = raw && typeof raw.pointSize === 'number' ? raw.pointSize : parseFloat(raw?.pointSize);
+            const lwRaw = raw && typeof raw.lineWidth === 'number' ? raw.lineWidth : parseFloat(raw?.lineWidth);
+            const pointSize = Number.isFinite(ptRaw) ? Math.max(4, Math.min(18, Math.round(ptRaw))) : 9;
+            const lineWidth = Number.isFinite(lwRaw) ? Math.max(1, Math.min(5, Math.round(lwRaw * 2) / 2)) : 2;
+            return { pointSize, lineWidth };
+        }
+
+        function loadVisualStyleConfig() {
+            try {
+                const raw = localStorage.getItem(VISUAL_STYLE_STORAGE_KEY);
+                if (raw) {
+                    visualStyle = normalizeVisualStyleConfig(JSON.parse(raw));
+                }
+            } catch (e) {
+                visualStyle = { pointSize: 9, lineWidth: 2 };
+            }
+            syncVisualStyleUI();
+        }
+
+        function saveVisualStyleConfig() {
+            try {
+                localStorage.setItem(VISUAL_STYLE_STORAGE_KEY, JSON.stringify(visualStyle));
+            } catch (e) {}
+        }
+
+        function syncVisualStyleUI() {
+            const ptSize = visualStyle.pointSize;
+            const lw = visualStyle.lineWidth;
+            const lwText = Number.isInteger(lw) ? `${lw}.0 px` : `${lw.toFixed(1)} px`;
+
+            ['style-slider-point-size', 'settings-slider-point-size'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = String(ptSize);
+            });
+            ['style-slider-line-width', 'settings-slider-line-width'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = String(lw);
+            });
+            ['style-val-point-size', 'settings-val-point-size'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = `${ptSize} px`;
+            });
+            ['style-val-line-width', 'settings-val-line-width'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = lwText;
+            });
+
+            if (tracePointsCloud && tracePointsCloud.material) {
+                tracePointsCloud.material.size = Math.max(4, Math.round(ptSize * 0.72));
+                tracePointsCloud.material.needsUpdate = true;
+            }
+        }
+
+        function setVisualPointSize(val) {
+            visualStyle = normalizeVisualStyleConfig({ ...visualStyle, pointSize: parseFloat(val) });
+            saveVisualStyleConfig();
+            syncVisualStyleUI();
+            if (scene) updateSceneFromState();
+        }
+
+        function setVisualLineWidth(val) {
+            visualStyle = normalizeVisualStyleConfig({ ...visualStyle, lineWidth: parseFloat(val) });
+            saveVisualStyleConfig();
+            syncVisualStyleUI();
+            if (scene) updateSceneFromState();
+        }
+
+        function stepVisualPointSize(delta) {
+            setVisualPointSize((visualStyle.pointSize || 9) + delta);
+        }
+
+        function stepVisualLineWidth(delta) {
+            setVisualLineWidth((visualStyle.lineWidth || 2) + delta);
+        }
+
+        function resetVisualStyleToDefault() {
+            visualStyle = { pointSize: 9, lineWidth: 2 };
+            saveVisualStyleConfig();
+            syncVisualStyleUI();
+            if (scene) updateSceneFromState();
+        }
+
+        function toggleStyleSizePopover(forceState) {
+            const pop = document.getElementById('style-size-popover');
+            const btn = document.getElementById('open-style-size-btn');
+            if (!pop) return;
+            const willOpen = typeof forceState === 'boolean' ? forceState : !pop.classList.contains('open');
+            pop.classList.toggle('open', willOpen);
+            if (btn) btn.classList.toggle('active', willOpen);
+            if (willOpen) syncVisualStyleUI();
+        }
+
+        function closeStyleSizePopover() {
+            toggleStyleSizePopover(false);
+        }
 
         function initSharedPointTextures() {
             const oldTextures = [texPointNormal, texPointConstrained, texPointSelected, texPointHover, texPointTrace, texSnapEdge, texSnapIntersection];
@@ -2796,6 +3037,10 @@
                     if (obj.geometry && !disposedGeos.has(obj.geometry)) {
                         disposedGeos.add(obj.geometry);
                         if (typeof obj.geometry.dispose === 'function') obj.geometry.dispose();
+                    }
+                    if (obj.userData && obj.userData.strandMat && !disposedMats.has(obj.userData.strandMat)) {
+                        disposedMats.add(obj.userData.strandMat);
+                        if (typeof obj.userData.strandMat.dispose === 'function') obj.userData.strandMat.dispose();
                     }
                     if (obj.material) {
                         const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
@@ -2925,6 +3170,16 @@
             setTxt('settings-col-vertical', 'Thanh dọc', 'Toolbar');
             setTxt('settings-reset-text', 'Khôi phục mặc định', 'Reset to Default');
             setTxt('settings-done-btn', 'Hoàn tất', 'Done');
+
+            setTxt('style-pop-title', 'KÍCH THƯỚC ĐIỂM & ĐƯỜNG', 'POINT & LINE SIZE');
+            setTxt('style-lbl-point-size', 'Kích thước điểm:', 'Point Size:');
+            setTxt('style-lbl-line-width', 'Độ dày đường vẽ:', 'Line Width:');
+            setTxt('style-reset-default-btn', 'Mặc định (9px / 2px)', 'Default (9px / 2px)');
+            setTxt('style-done-btn', 'Xong', 'Done');
+            setTxt('settings-lbl-point-size', 'Kích thước điểm:', 'Point Size:');
+            setTxt('settings-lbl-line-width', 'Độ dày đường vẽ:', 'Line Width:');
+            setTxt('settings-style-reset-btn', 'Mặc định', 'Default');
+            syncVisualStyleUI();
             const sloganVi = 'Chạm không gian - Xoay góc nhìn - Mở tri thức';
             const sloganEn = 'Touch Space - Rotate Perspective - Unlock Knowledge';
             const activeSlogan = t(sloganVi, sloganEn);
@@ -2955,6 +3210,8 @@
 
             const collapseBtn = document.getElementById('toggle-toolbar-btn');
             if (collapseBtn) collapseBtn.setAttribute('data-tip', t('<b>Ẩn / Hiện thanh công cụ dọc</b>', '<b>Collapse / Expand vertical toolbar</b>'));
+            const styleSizeBtn = document.getElementById('open-style-size-btn');
+            if (styleSizeBtn) styleSizeBtn.setAttribute('data-tip', t('<b>Cỡ Điểm & Đường:</b> Điều chỉnh kích thước điểm và độ dày nét vẽ', '<b>Point & Line Size:</b> Adjust point size and line thickness'));
             const settingsBtn = document.getElementById('open-toolbar-settings-btn');
             if (settingsBtn) settingsBtn.setAttribute('data-tip', t('<b>Cài đặt công cụ:</b> Chọn công cụ thường trực, Ẩn/Hiện & Sắp xếp thanh công cụ', '<b>Toolbar Settings:</b> Customize pinned quick tools, visibility & order'));
 
@@ -2992,7 +3249,9 @@
                     } : null,
                     options: {
                         isBasePlaneVisible,
-                        showFaceTint
+                        showFaceTint,
+                        pointSize: visualStyle.pointSize,
+                        lineWidth: visualStyle.lineWidth
                     },
                     geoState: JSON.parse(JSON.stringify(geoState))
                 };
@@ -3078,6 +3337,14 @@
                         if (typeof parsed.options.showFaceTint === 'boolean') {
                             showFaceTint = parsed.options.showFaceTint;
                         }
+                        if (parsed.options.pointSize !== undefined || parsed.options.lineWidth !== undefined) {
+                            visualStyle = normalizeVisualStyleConfig({
+                                pointSize: parsed.options.pointSize ?? visualStyle.pointSize,
+                                lineWidth: parsed.options.lineWidth ?? visualStyle.lineWidth
+                            });
+                            saveVisualStyleConfig();
+                            syncVisualStyleUI();
+                        }
                     }
 
                     if (parsed.camera && camera && controls) {
@@ -3139,8 +3406,19 @@
             raycaster.params.Line.threshold = 0.22;
             mouse = new THREE.Vector2();
 
+            loadVisualStyleConfig();
             loadToolbarConfig();
             renderToolbar();
+
+            document.addEventListener('pointerdown', (e) => {
+                const pop = document.getElementById('style-size-popover');
+                const btn = document.getElementById('open-style-size-btn');
+                if (pop && pop.classList.contains('open')) {
+                    if (!pop.contains(e.target) && (!btn || !btn.contains(e.target)) && !e.target.closest('[data-tool-id="style-size"]')) {
+                        closeStyleSizePopover();
+                    }
+                }
+            });
 
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0xffffff);
@@ -4601,6 +4879,45 @@
             });
         }
 
+        function computeLineStrandOffsets(effectiveLw, camZoom = 1) {
+            const offsets = [[0, 0, 0]];
+            if (effectiveLw <= 1.25) return offsets;
+            const z = Math.max(0.25, Number.isFinite(camZoom) ? camZoom : 1);
+            const r = ((effectiveLw - 1) * 0.0085) / z;
+            offsets.push([r, 0, 0], [-r, 0, 0], [0, r, 0], [0, -r, 0], [0, 0, r], [0, 0, -r]);
+            if (effectiveLw >= 2.75) {
+                const d = r * 0.72;
+                offsets.push([d, d, 0], [-d, d, 0], [0, d, d], [0, -d, d]);
+            }
+            return offsets;
+        }
+
+        function applyLineThicknessStrands(lineObj, extraWeight = 0) {
+            if (!lineObj || !lineObj.material) return lineObj;
+            const baseLw = visualStyle.lineWidth || 2;
+            const effectiveLw = Math.max(1, Math.min(6, baseLw + extraWeight));
+            lineObj.material.linewidth = effectiveLw;
+            while (lineObj.children && lineObj.children.length > 0) {
+                lineObj.remove(lineObj.children[0]);
+            }
+            if (effectiveLw <= 1.25) return lineObj;
+            const camZoom = (camera && camera.isOrthographicCamera && camera.zoom) ? camera.zoom : 1;
+            const offsets = computeLineStrandOffsets(effectiveLw, camZoom);
+            const strandMat = lineObj.material.clone();
+            strandMat.transparent = true;
+            strandMat.opacity = effectiveLw < 2 ? 0.55 : 0.88;
+            lineObj.userData = lineObj.userData || {};
+            lineObj.userData.strandMat = strandMat;
+            for (let i = 1; i < offsets.length; i++) {
+                const [ox, oy, oz] = offsets[i];
+                const child = new THREE.Line(lineObj.geometry, strandMat);
+                child.position.set(ox, oy, oz);
+                child.renderOrder = lineObj.renderOrder;
+                lineObj.add(child);
+            }
+            return lineObj;
+        }
+
         function addDualDepthSegment(v1, v2, colorHex = 0x0f172a) {
             const lineGeo = new THREE.BufferGeometry().setFromPoints([v1, v2]);
             const dashedMat = new THREE.LineDashedMaterial({
@@ -4614,17 +4931,19 @@
             const dashedLine = new THREE.Line(lineGeo.clone(), dashedMat);
             dashedLine.computeLineDistances();
             dashedLine.renderOrder = 4;
+            applyLineThicknessStrands(dashedLine, -0.3);
             scene.add(dashedLine);
             solidMeshes.push(dashedLine);
 
             const solidMat = new THREE.LineBasicMaterial({
                 color: colorHex,
-                linewidth: 2,
+                linewidth: visualStyle.lineWidth || 2,
                 depthTest: true,
                 depthFunc: THREE.LessEqualDepth
             });
             const solidLine = new THREE.Line(lineGeo, solidMat);
             solidLine.renderOrder = 5;
+            applyLineThicknessStrands(solidLine, 0);
             scene.add(solidLine);
             solidMeshes.push(solidLine);
             return { dashedLine, solidLine };
@@ -4952,17 +5271,19 @@
                         const eqDashed = new THREE.Line(eqGeo.clone(), eqDashedMat);
                         eqDashed.computeLineDistances();
                         eqDashed.renderOrder = 4;
+                        applyLineThicknessStrands(eqDashed, -0.3);
                         scene.add(eqDashed);
                         solidMeshes.push(eqDashed);
 
                         const eqSolidMat = new THREE.LineBasicMaterial({
                             color: 0x0f172a,
-                            linewidth: 1.8,
+                            linewidth: visualStyle.lineWidth || 2,
                             depthTest: true,
                             depthFunc: THREE.LessEqualDepth
                         });
                         const eqSolid = new THREE.Line(eqGeo, eqSolidMat);
                         eqSolid.renderOrder = 5;
+                        applyLineThicknessStrands(eqSolid, 0);
                         scene.add(eqSolid);
                         solidMeshes.push(eqSolid);
                     }
@@ -4979,18 +5300,20 @@
                     });
                     const silDashed = new THREE.Line(silDashedGeo, silDashedMat);
                     silDashed.renderOrder = 4;
+                    applyLineThicknessStrands(silDashed, -0.3);
                     scene.add(silDashed);
                     solidMeshes.push(silDashed);
 
                     const silSolidGeo = new THREE.BufferGeometry();
                     const silSolidMat = new THREE.LineBasicMaterial({
                         color: 0x0f172a,
-                        linewidth: 2,
+                        linewidth: visualStyle.lineWidth || 2,
                         depthTest: true,
                         depthFunc: THREE.LessEqualDepth
                     });
                     const silSolid = new THREE.Line(silSolidGeo, silSolidMat);
                     silSolid.renderOrder = 5;
+                    applyLineThicknessStrands(silSolid, 0);
                     scene.add(silSolid);
                     solidMeshes.push(silSolid);
 
@@ -5044,17 +5367,19 @@
                 const dashedLine = new THREE.Line(lineGeo.clone(), dashedMat);
                 dashedLine.computeLineDistances();
                 dashedLine.renderOrder = 4;
+                applyLineThicknessStrands(dashedLine, -0.3);
                 scene.add(dashedLine);
                 edgeMeshes.push(dashedLine);
 
                 const solidMat = new THREE.LineBasicMaterial({
                     color: lineColor,
-                    linewidth: 2,
+                    linewidth: visualStyle.lineWidth || 2,
                     depthTest: true,
                     depthFunc: THREE.LessEqualDepth
                 });
                 const solidLine = new THREE.Line(lineGeo, solidMat);
                 solidLine.renderOrder = 5;
+                applyLineThicknessStrands(solidLine, 0);
                 scene.add(solidLine);
                 edgeMeshes.push(solidLine);
 
@@ -5155,17 +5480,19 @@
                 const dashedCir = new THREE.Line(cirGeo.clone(), dashedCirMat);
                 dashedCir.computeLineDistances();
                 dashedCir.renderOrder = 4;
+                applyLineThicknessStrands(dashedCir, (isSelectedCir || isHoveredCir) ? 0.5 : -0.3);
                 scene.add(dashedCir);
                 circleMeshes.push(dashedCir);
 
                 const solidCirMat = new THREE.LineBasicMaterial({
                     color: cirColor,
-                    linewidth: (isSelectedCir || isHoveredCir) ? 3 : 2,
+                    linewidth: (isSelectedCir || isHoveredCir) ? (visualStyle.lineWidth || 2) + 1 : (visualStyle.lineWidth || 2),
                     depthTest: true,
                     depthFunc: THREE.LessEqualDepth
                 });
                 const solidCir = new THREE.Line(cirGeo, solidCirMat);
                 solidCir.renderOrder = 5;
+                applyLineThicknessStrands(solidCir, (isSelectedCir || isHoveredCir) ? 1 : 0);
                 scene.add(solidCir);
                 circleMeshes.push(solidCir);
 
@@ -5179,6 +5506,7 @@
                 hitCircleMeshes.push(hitCir);
             });
 
+            const basePtSize = visualStyle.pointSize || 9;
             geoState.points.forEach(pt => {
                 if (pt.hidden) return;
                 const isSelected = selectedPointIds.includes(pt.id);
@@ -5193,7 +5521,7 @@
 
                 const ptGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(pt.x, pt.y, pt.z)]);
                 const ptMat = new THREE.PointsMaterial({
-                    size: (isSelected || isHovered) ? 13 : 9,
+                    size: (isSelected || isHovered) ? (basePtSize + 4) : basePtSize,
                     sizeAttenuation: false,
                     map: tex,
                     transparent: true,
@@ -5224,10 +5552,12 @@
             cachedPointLabelItems = [];
             cachedMeasureLabelItems = [];
 
+            const labelFontPx = Math.max(13, Math.min(24, Math.round(16 + ((visualStyle.pointSize || 9) - 9) * 0.55)));
             geoState.points.forEach(pt => {
-                if (pt.hidden) return;
+                if (pt.hidden || pt.hideLabel) return;
                 const div = document.createElement('div');
                 div.className = 'point-label';
+                div.style.fontSize = `${labelFontPx}px`;
                 div.innerHTML = formatPointNameHTML(pt.name);
                 if (selectedPointIds.includes(pt.id) || (hoveredPointId === pt.id && currentTool === 'delete-obj')) {
                     div.style.color = '#dc2626';
@@ -5254,7 +5584,7 @@
 
         function updateLabels() {
             if (!camera || !labelsContainer) return;
-            if (cachedPointLabelItems.length === 0 && cachedMeasureLabelItems.length === 0 && geoState.points.some(p => !p.hidden)) {
+            if (cachedPointLabelItems.length === 0 && cachedMeasureLabelItems.length === 0 && geoState.points.some(p => !p.hidden && !p.hideLabel)) {
                 rebuildLabelsDOM();
             }
             const width = container.clientWidth;
@@ -5262,7 +5592,7 @@
             const tempVec = new THREE.Vector3();
 
             cachedPointLabelItems.forEach(({ pt, div }) => {
-                if (pt.hidden || !Number.isFinite(pt.x) || !Number.isFinite(pt.y) || !Number.isFinite(pt.z)) {
+                if (pt.hidden || pt.hideLabel || !Number.isFinite(pt.x) || !Number.isFinite(pt.y) || !Number.isFinite(pt.z)) {
                     div.style.display = 'none';
                     return;
                 }
@@ -5312,7 +5642,8 @@
 
             const hiddenItems = [];
             geoState.points.forEach(pt => {
-                if (pt.hidden) hiddenItems.push({ kind: 'point', id: pt.id, label: `Điểm ${pt.name}`, icon: SVG_ICONS.point2d });
+                if (pt.hidden) hiddenItems.push({ kind: 'point', id: pt.id, label: t(`Điểm ${pt.name}`, `Point ${pt.name}`), icon: SVG_ICONS.point2d });
+                else if (pt.hideLabel) hiddenItems.push({ kind: 'point-label', id: pt.id, label: t(`Tên điểm ${pt.name}`, `Label ${pt.name}`), icon: SVG_ICONS.point2d });
             });
             geoState.segments.forEach(seg => {
                 if (seg.hidden) {
@@ -5348,13 +5679,16 @@
             hiddenItems.forEach(item => {
                 const chip = document.createElement('div');
                 chip.className = 'hidden-chip';
-                chip.title = 'Click để hiện lại đối tượng này';
+                chip.title = t('Click để hiện lại đối tượng này', 'Click to restore this object');
                 chip.innerHTML = `${item.icon} <span>${item.label}</span>`;
                 chip.onclick = () => {
                     saveHistory();
                     if (item.kind === 'point') {
                         const pt = geoState.points.find(p => p.id === item.id);
                         if (pt) pt.hidden = false;
+                    } else if (item.kind === 'point-label') {
+                        const pt = geoState.points.find(p => p.id === item.id);
+                        if (pt) pt.hideLabel = false;
                     } else if (item.kind === 'seg') {
                         const s = geoState.segments.find(sg => sg.id === item.id);
                         if (s) s.hidden = false;
@@ -5377,7 +5711,7 @@
 
         function unhideAllObjects() {
             saveHistory();
-            geoState.points.forEach(p => p.hidden = false);
+            geoState.points.forEach(p => { p.hidden = false; p.hideLabel = false; });
             geoState.segments.forEach(s => s.hidden = false);
             (geoState.circles || []).forEach(c => c.hidden = false);
             geoState.faces.forEach(f => f.hidden = false);
@@ -5393,7 +5727,7 @@
             raycaster.setFromCamera(mouse, camera);
 
             let closestPt = null;
-            let minScreenDist = 13;
+            let minScreenDist = Math.max(13, (visualStyle.pointSize || 9) + 5);
             geoState.points.forEach(pt => {
                 if (pt.hidden) return;
                 const v = new THREE.Vector3(pt.x, pt.y, pt.z).project(camera);
@@ -8075,33 +8409,148 @@
             }
         }
 
+        let pointModalState = {
+            historySaved: false,
+            labelAllTouched: false,
+            pointAllTouched: false
+        };
+
+        function ensurePointModalHistory() {
+            if (!pointModalState.historySaved) {
+                saveHistory();
+                pointModalState.historySaved = true;
+            }
+        }
+
+        function applyPendingPointRenameInModal(pt) {
+            if (!pt) return false;
+            const newNameEl = document.getElementById('rename-input');
+            if (!newNameEl) return false;
+            const newName = newNameEl.value.trim();
+            if (newName && newName !== pt.name) {
+                ensurePointModalHistory();
+                pt.name = newName;
+                geoState.faces.forEach(f => {
+                    f.name = '(' + f.pointIds.map(id => {
+                        const p = geoState.points.find(item => item.id === id);
+                        return p ? p.name : '';
+                    }).join('') + ')';
+                });
+                return true;
+            }
+            return false;
+        }
+
+        function quickTogglePointLabelFromModal(ptId) {
+            const pt = geoState.points.find(p => p.id === ptId);
+            if (!pt) return;
+            ensurePointModalHistory();
+            applyPendingPointRenameInModal(pt);
+            pt.hideLabel = !pt.hideLabel;
+            closeModal();
+            updateAnimationControlPanel();
+        }
+
+        function quickHidePointFromModal(ptId) {
+            const pt = geoState.points.find(p => p.id === ptId);
+            if (!pt) return;
+            ensurePointModalHistory();
+            applyPendingPointRenameInModal(pt);
+            pt.hidden = !pt.hidden;
+            closeModal();
+            updateAnimationControlPanel();
+        }
+
+        function toggleAllPointsLabelFromModal(checked) {
+            const wantHide = Boolean(checked);
+            ensurePointModalHistory();
+            pointModalState.labelAllTouched = true;
+            geoState.points.forEach(p => {
+                p.hideLabel = wantHide;
+            });
+            updateSceneFromState();
+            updateAnimationControlPanel();
+        }
+
+        function toggleAllPointsHiddenFromModal(checked) {
+            const wantHide = Boolean(checked);
+            ensurePointModalHistory();
+            pointModalState.pointAllTouched = true;
+            geoState.points.forEach(p => {
+                p.hidden = wantHide;
+            });
+            updateSceneFromState();
+            updateAnimationControlPanel();
+        }
+
+        function openPointOptionsModal(pt) {
+            if (!pt) return;
+            pointModalState = {
+                historySaved: false,
+                labelAllTouched: false,
+                pointAllTouched: false
+            };
+            const isThisLabelHidden = Boolean(pt.hideLabel);
+            const isThisPointHidden = Boolean(pt.hidden);
+            const initialAllLabelsHidden = geoState.points.length > 0 && geoState.points.every(p => Boolean(p.hideLabel));
+            const initialAllPointsHidden = geoState.points.length > 0 && geoState.points.every(p => Boolean(p.hidden));
+
+            openModal(
+                t(`Tùy chỉnh điểm <b>${pt.name}</b>`, `Customize Point <b>${pt.name}</b>`),
+                `<div class="modal-field">
+                    <label>${t('1. Đổi tên điểm (VD: S, M, A_1, M\', H, I):', '1. Rename point (e.g., S, M, A_1, M\', H, I):')}</label>
+                    <input type="text" id="rename-input" value="${pt.name}" maxlength="8">
+                </div>
+                <div class="modal-field">
+                    <label>${t('2. Thao tác nhanh:', '2. Quick actions:')}</label>
+                    <div class="pt-opt-quick-actions">
+                        <button type="button" class="pt-opt-quick-btn" id="pt-quick-toggle-label-btn" onclick="quickTogglePointLabelFromModal('${pt.id}')">
+                            ${SVG_ICONS.eyeSlash}
+                            <span>${isThisLabelHidden ? t('Hiện tên điểm này', 'Show This Point Label') : t('Ẩn tên điểm này', 'Hide This Point Label')}</span>
+                        </button>
+                        <button type="button" class="pt-opt-quick-btn warn" id="pt-quick-hide-point-btn" onclick="quickHidePointFromModal('${pt.id}')">
+                            ${SVG_ICONS.eyeSlash}
+                            <span>${isThisPointHidden ? t('Hiện điểm này', 'Show This Point') : t('Ẩn điểm này', 'Hide This Point')}</span>
+                        </button>
+                    </div>
+                    <label class="pt-opt-check-row" for="pt-opt-hide-label">
+                        <input type="checkbox" id="pt-opt-hide-label" ${initialAllLabelsHidden ? 'checked' : ''} onchange="toggleAllPointsLabelFromModal(this.checked)">
+                        <span>${t('Ẩn toàn bộ tên điểm (giữ lại chấm điểm trên hình)', 'Hide all point labels (keep point dots visible)')}</span>
+                    </label>
+                    <label class="pt-opt-check-row" for="pt-opt-hide-point">
+                        <input type="checkbox" id="pt-opt-hide-point" ${initialAllPointsHidden ? 'checked' : ''} onchange="toggleAllPointsHiddenFromModal(this.checked)">
+                        <span>${t('Ẩn toàn bộ điểm khỏi hình vẽ', 'Hide all points from scene')}</span>
+                    </label>
+                </div>`,
+                () => {
+                    const renamed = applyPendingPointRenameInModal(pt);
+                    const wantHideAllLabels = Boolean(document.getElementById('pt-opt-hide-label')?.checked);
+                    const wantHideAllPoints = Boolean(document.getElementById('pt-opt-hide-point')?.checked);
+                    const allLabelsChanged = pointModalState.labelAllTouched || (wantHideAllLabels !== initialAllLabelsHidden);
+                    const allPointsChanged = pointModalState.pointAllTouched || (wantHideAllPoints !== initialAllPointsHidden);
+
+                    if (allLabelsChanged) {
+                        ensurePointModalHistory();
+                        geoState.points.forEach(p => { p.hideLabel = wantHideAllLabels; });
+                    }
+                    if (allPointsChanged) {
+                        ensurePointModalHistory();
+                        geoState.points.forEach(p => { p.hidden = wantHideAllPoints; });
+                    }
+                    if (renamed || allLabelsChanged || allPointsChanged) {
+                        updateSceneFromState();
+                        updateAnimationControlPanel();
+                    }
+                }
+            );
+        }
+
         function onDoubleClick(event) {
             const target = computeSmartTarget(event);
             if (target && target.type === 'point') {
                 const pt = geoState.points.find(p => p.id === target.pointId);
                 if (!pt) return;
-                openModal(
-                    `Đổi tên điểm <b>${pt.name}</b>`,
-                    `<div class="modal-field">
-                        <label>Nhập tên mới cho điểm (VD: S, M, A_1, M', H, I):</label>
-                        <input type="text" id="rename-input" value="${pt.name}" maxlength="8">
-                    </div>`,
-                    () => {
-                        const newName = document.getElementById('rename-input').value.trim();
-                        if (newName && newName !== pt.name) {
-                            saveHistory();
-                            pt.name = newName;
-                            geoState.faces.forEach(f => {
-                                f.name = '(' + f.pointIds.map(id => {
-                                    const p = geoState.points.find(item => item.id === id);
-                                    return p ? p.name : '';
-                                }).join('') + ')';
-                            });
-                            updateSceneFromState();
-                            updateAnimationControlPanel();
-                        }
-                    }
-                );
+                openPointOptionsModal(pt);
             }
         }
 
@@ -8251,8 +8700,10 @@
             const cssW = container.clientWidth || (w / dpr);
             const cssH = container.clientHeight || (h / dpr);
 
+            const exportFontMain = Math.max(14, Math.min(26, Math.round(18 + ((visualStyle.pointSize || 9) - 9) * 0.55)));
+            const exportFontSub = Math.max(10, Math.round(exportFontMain * 0.68));
             geoState.points.forEach(pt => {
-                if (pt.hidden) return;
+                if (pt.hidden || pt.hideLabel) return;
                 const vec = new THREE.Vector3(pt.x, pt.y, pt.z);
                 vec.project(camera);
                 if (vec.z > 1) return;
@@ -8272,7 +8723,7 @@
                 const subText = subMatch ? subMatch[2] : '';
 
                 ctx.save();
-                ctx.font = `bold italic ${Math.round(18 * dpr)}px "Times New Roman", Times, serif`;
+                ctx.font = `bold italic ${Math.round(exportFontMain * dpr)}px "Times New Roman", Times, serif`;
                 ctx.lineJoin = 'round';
                 ctx.lineWidth = 3.5 * dpr;
                 ctx.strokeStyle = '#ffffff';
@@ -8283,7 +8734,7 @@
 
                 if (subText) {
                     const mainW = ctx.measureText(mainText).width;
-                    ctx.font = `bold ${Math.round(12 * dpr)}px "Times New Roman", Times, serif`;
+                    ctx.font = `bold ${Math.round(exportFontSub * dpr)}px "Times New Roman", Times, serif`;
                     ctx.lineWidth = 2.8 * dpr;
                     ctx.strokeText(subText, px + mainW + 1 * dpr, py + 4 * dpr);
                     ctx.fillText(subText, px + mainW + 1 * dpr, py + 4 * dpr);
