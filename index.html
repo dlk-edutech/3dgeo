@@ -897,7 +897,7 @@
         </div>
     </div>
 
-    <footer id="app-footer">EZ3D - GEOMETRY: "Chạm không gian - Xoay góc nhìn - Mở tri thức" | Dlk Edu Tech - Phát triển bởi tranhongdan@tranphudlk.edu.vn</footer>
+    <footer id="app-footer">EZ3D - GEOMETRY: Chạm không gian - Xoay góc nhìn - Mở tri thức | Dlk Edu Tech - Phát triển bởi tranhongdan@tranphudlk.edu.vn</footer>
 
     <script>
         // =========================================================================
@@ -2517,6 +2517,9 @@
                 const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId);
                 return sol ? `${sol.name || t('mặt tròn xoay', 'solid surface')}` : t('mặt tròn xoay', 'solid surface');
             }
+            if (['intersection', 'lineFaceIntersection', 'lineCircleIntersection', 'lineSolidIntersection', 'generatorFaceIntersection', 'lineBasePlaneIntersection'].includes(pt.rule.type)) {
+                return t('giao điểm đường - mặt', 'line-surface intersection');
+            }
             return '';
         }
 
@@ -3674,6 +3677,55 @@
                             }
                         }
                     }
+                    else if (r.type === 'lineFaceIntersection') {
+                        const seg = geoState.segments.find(s => s.id === r.segId);
+                        const face = geoState.faces.find(f => f.id === r.faceId);
+                        if (seg && face) {
+                            const inter = intersectLineWithFace(seg, face, true);
+                            if (inter) {
+                                pt.x = inter.pos.x; pt.y = inter.pos.y; pt.z = inter.pos.z;
+                            }
+                        }
+                    }
+                    else if (r.type === 'lineCircleIntersection') {
+                        const seg = geoState.segments.find(s => s.id === r.segId);
+                        const cir = (geoState.circles || []).find(c => c.id === r.circleId);
+                        if (seg && cir) {
+                            const hits = intersectLineWithCircle(seg, cir, true, r.mode || null, typeof r.rootIdx === 'number' ? r.rootIdx : null);
+                            if (hits.length > 0) {
+                                pt.x = hits[0].pos.x; pt.y = hits[0].pos.y; pt.z = hits[0].pos.z;
+                            }
+                        }
+                    }
+                    else if (r.type === 'lineSolidIntersection') {
+                        const seg = geoState.segments.find(s => s.id === r.segId);
+                        const sol = (geoState.solids || []).find(s => s.id === r.solidId);
+                        if (seg && sol) {
+                            const hits = intersectLineWithSolid(seg, sol, true, typeof r.rootIdx === 'number' ? r.rootIdx : null);
+                            if (hits.length > 0) {
+                                pt.x = hits[0].pos.x; pt.y = hits[0].pos.y; pt.z = hits[0].pos.z;
+                            }
+                        }
+                    }
+                    else if (r.type === 'generatorFaceIntersection') {
+                        const sol = (geoState.solids || []).find(s => s.id === r.solidId);
+                        const face = geoState.faces.find(f => f.id === r.faceId);
+                        if (sol && face) {
+                            const inter = intersectGeneratorWithFace(sol, face, typeof r.genIdx === 'number' ? r.genIdx : 0, true);
+                            if (inter) {
+                                pt.x = inter.pos.x; pt.y = inter.pos.y; pt.z = inter.pos.z;
+                            }
+                        }
+                    }
+                    else if (r.type === 'lineBasePlaneIntersection') {
+                        const seg = geoState.segments.find(s => s.id === r.segId);
+                        if (seg) {
+                            const inter = intersectLineWithBasePlane(seg, true);
+                            if (inter) {
+                                pt.x = inter.pos.x; pt.y = inter.pos.y; pt.z = inter.pos.z;
+                            }
+                        }
+                    }
                     else if (r.type === 'translate') {
                         const M = geoState.points.find(p => p.id === r.mId);
                         const A = geoState.points.find(p => p.id === r.aId);
@@ -4042,19 +4094,511 @@
                 pos: intersectionPos,
                 segAId: segA.id,
                 segBId: segB.id,
-                label: `Giao điểm: ${p1.name}${p2.name} × ${q1.name}${q2.name}`
+                rule: { type: 'intersection', segAId: segA.id, segBId: segB.id },
+                isSurfaceIntersection: false,
+                label: t(`Giao điểm: ${p1.name}${p2.name} × ${q1.name}${q2.name}`, `Intersection: ${p1.name}${p2.name} × ${q1.name}${q2.name}`)
+            };
+        }
+
+        function getSegmentDisplayName(seg) {
+            if (!seg) return 'd';
+            const p1 = geoState.points.find(p => p.id === seg.p1Id);
+            const p2 = geoState.points.find(p => p.id === seg.p2Id);
+            if (p1 && p2 && !p1.hidden && !p2.hidden) return `${p1.name}${p2.name}`;
+            if (p1 && !p1.hidden) return `d(${p1.name})`;
+            if (p2 && !p2.hidden) return `d(${p2.name})`;
+            return 'd';
+        }
+
+        function isPointInPolygon2D(px, py, poly2D, boundaryTol = 0.045) {
+            const n = poly2D.length;
+            if (n < 3) return false;
+            const tolSq = boundaryTol * boundaryTol;
+            for (let i = 0; i < n; i++) {
+                const a = poly2D[i];
+                const b = poly2D[(i + 1) % n];
+                const dx = b.x - a.x;
+                const dy = b.y - a.y;
+                const lenSq = dx * dx + dy * dy;
+                let s = lenSq > 1e-10 ? ((px - a.x) * dx + (py - a.y) * dy) / lenSq : 0;
+                s = Math.max(0, Math.min(1, s));
+                const cx = a.x + s * dx;
+                const cy = a.y + s * dy;
+                if ((px - cx) * (px - cx) + (py - cy) * (py - cy) <= tolSq) return true;
+            }
+            let inside = false;
+            for (let i = 0, j = n - 1; i < n; j = i++) {
+                const xi = poly2D[i].x, yi = poly2D[i].y;
+                const xj = poly2D[j].x, yj = poly2D[j].y;
+                const intersect = ((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi + 1e-15) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        function intersectPointsWithPolygonFace3D(P1, P2, isLine, face, ignoreBounds = false) {
+            if (!face || face.hidden || !Array.isArray(face.pointIds) || face.pointIds.length < 3) return null;
+            const facePts = face.pointIds.map(id => geoState.points.find(p => p.id === id)).filter(Boolean);
+            if (facePts.length < 3) return null;
+
+            const v0 = new THREE.Vector3(facePts[0].x, facePts[0].y, facePts[0].z);
+            let normal = null;
+            let e1 = null;
+            for (let i = 1; i < facePts.length - 1 && !normal; i++) {
+                const va = new THREE.Vector3(facePts[i].x, facePts[i].y, facePts[i].z).sub(v0);
+                if (va.lengthSq() < 1e-8) continue;
+                for (let j = i + 1; j < facePts.length; j++) {
+                    const vb = new THREE.Vector3(facePts[j].x, facePts[j].y, facePts[j].z).sub(v0);
+                    const cr = new THREE.Vector3().crossVectors(va, vb);
+                    if (cr.lengthSq() > 1e-8) {
+                        normal = cr.normalize();
+                        e1 = va.clone().normalize();
+                        break;
+                    }
+                }
+            }
+            if (!normal || !e1) return null;
+            const e2 = new THREE.Vector3().crossVectors(normal, e1).normalize();
+
+            const u = new THREE.Vector3().subVectors(P2, P1);
+            const denom = u.dot(normal);
+            if (Math.abs(denom) < 1e-6) return null;
+
+            const d1 = new THREE.Vector3().subVectors(P1, v0).dot(normal);
+            const d2 = new THREE.Vector3().subVectors(P2, v0).dot(normal);
+            const tVal = -d1 / denom;
+
+            if (!ignoreBounds && !isLine && (tVal < -1e-4 || tVal > 1 + 1e-4)) return null;
+
+            const pos = P1.clone().addScaledVector(u, tVal);
+            const poly2D = facePts.map(pt => {
+                const rel = new THREE.Vector3(pt.x - v0.x, pt.y - v0.y, pt.z - v0.z);
+                return { x: rel.dot(e1), y: rel.dot(e2) };
+            });
+            const relPos = new THREE.Vector3().subVectors(pos, v0);
+            const insidePolygon = isPointInPolygon2D(relPos.dot(e1), relPos.dot(e2), poly2D, 0.045);
+
+            if (!ignoreBounds && !insidePolygon) {
+                if (!isLine) return null;
+                if (Math.abs(d1) < 2e-2 || Math.abs(d2) < 2e-2) return null;
+                const centroid = new THREE.Vector3();
+                facePts.forEach(pt => centroid.add(new THREE.Vector3(pt.x, pt.y, pt.z)));
+                centroid.divideScalar(facePts.length);
+                let maxR = 1.0;
+                facePts.forEach(pt => {
+                    maxR = Math.max(maxR, centroid.distanceTo(new THREE.Vector3(pt.x, pt.y, pt.z)));
+                });
+                if (pos.distanceTo(centroid) > maxR * 2.0) return null;
+            }
+
+            return { pos, t: tVal, insidePolygon };
+        }
+
+        function intersectLineWithFace(seg, face, ignoreBounds = false) {
+            if (!seg || seg.hidden || !face || face.hidden) return null;
+            if (!ignoreBounds && (face.pointIds.includes(seg.p1Id) || face.pointIds.includes(seg.p2Id))) return null;
+            const p1 = geoState.points.find(p => p.id === seg.p1Id);
+            const p2 = geoState.points.find(p => p.id === seg.p2Id);
+            if (!p1 || !p2) return null;
+            const P1 = new THREE.Vector3(p1.x, p1.y, p1.z);
+            const P2 = new THREE.Vector3(p2.x, p2.y, p2.z);
+            const res = intersectPointsWithPolygonFace3D(P1, P2, seg.isLine, face, ignoreBounds);
+            if (!res) return null;
+            const segName = getSegmentDisplayName(seg);
+            const faceTitle = face.name || '(P)';
+            return {
+                pos: res.pos,
+                segAId: seg.id,
+                segBId: null,
+                rule: { type: 'lineFaceIntersection', segId: seg.id, faceId: face.id },
+                isSurfaceIntersection: true,
+                label: res.insidePolygon
+                    ? t(`Giao điểm: ${segName} × mặt ${faceTitle}`, `Intersection: ${segName} × face ${faceTitle}`)
+                    : t(`Giao điểm: ${segName} × mp${faceTitle}`, `Intersection: ${segName} × plane ${faceTitle}`)
+            };
+        }
+
+        function intersectLineWithCircle(seg, cir, ignoreBounds = false, filterMode = null, filterRootIdx = null) {
+            if (!seg || seg.hidden || !cir || cir.hidden) return [];
+            const p1 = geoState.points.find(p => p.id === seg.p1Id);
+            const p2 = geoState.points.find(p => p.id === seg.p2Id);
+            const geom = computeCircleGeometry(cir);
+            if (!p1 || !p2 || !geom) return [];
+
+            const P1 = new THREE.Vector3(p1.x, p1.y, p1.z);
+            const P2 = new THREE.Vector3(p2.x, p2.y, p2.z);
+            const u = new THREE.Vector3().subVectors(P2, P1);
+            if (u.lengthSq() < 1e-8 || geom.radius < 1e-5) return [];
+
+            const n = geom.normal.clone().normalize();
+            const d1 = new THREE.Vector3().subVectors(P1, geom.center).dot(n);
+            const d2 = new THREE.Vector3().subVectors(P2, geom.center).dot(n);
+            const segName = getSegmentDisplayName(seg);
+            const cirName = cir.name || '(C)';
+            const isCoplanar = (Math.abs(d1) <= 0.035 && Math.abs(d2) <= 0.035);
+
+            if (filterMode === 'rimSecant' || (!filterMode && isCoplanar)) {
+                const wRaw = new THREE.Vector3().subVectors(P1, geom.center);
+                const w = wRaw.clone().addScaledVector(n, -wRaw.dot(n));
+                const uProj = u.clone().addScaledVector(n, -u.dot(n));
+                const a = uProj.dot(uProj);
+                if (a < 1e-8) return [];
+                const b = w.dot(uProj);
+                const c = w.dot(w) - geom.radius * geom.radius;
+                const disc = b * b - a * c;
+                if (disc < -1e-3 && !ignoreBounds) return [];
+                const sq = Math.sqrt(Math.max(0, disc));
+                const roots = [(-b - sq) / a, (-b + sq) / a];
+                const out = [];
+                for (let k = 0; k < 2; k++) {
+                    if (filterRootIdx !== null && filterRootIdx !== k) continue;
+                    if (k === 1 && sq < 1e-4 && !ignoreBounds) continue;
+                    const tk = roots[k];
+                    if (!ignoreBounds && !seg.isLine && (tk < -1e-4 || tk > 1 + 1e-4)) continue;
+                    const pos = geom.center.clone().add(w).addScaledVector(uProj, tk);
+                    out.push({
+                        pos,
+                        segAId: seg.id,
+                        segBId: null,
+                        rule: { type: 'lineCircleIntersection', segId: seg.id, circleId: cir.id, mode: 'rimSecant', rootIdx: k },
+                        isSurfaceIntersection: true,
+                        label: t(`Giao điểm: ${segName} × đ.tròn ${cirName}`, `Intersection: ${segName} × circle ${cirName}`)
+                    });
+                }
+                return out;
+            }
+
+            if (filterMode === 'planePierce' || !isCoplanar) {
+                const denom = u.dot(n);
+                if (Math.abs(denom) < 1e-6) return [];
+                const tVal = -d1 / denom;
+                if (!ignoreBounds && !seg.isLine && (tVal < -1e-4 || tVal > 1 + 1e-4)) return [];
+                const pos = P1.clone().addScaledVector(u, tVal);
+                const distToCenter = pos.distanceTo(geom.center);
+                if (!ignoreBounds && distToCenter > geom.radius + 0.045) return [];
+                const onRim = Math.abs(distToCenter - geom.radius) <= 0.045;
+                return [{
+                    pos,
+                    segAId: seg.id,
+                    segBId: null,
+                    rule: { type: 'lineCircleIntersection', segId: seg.id, circleId: cir.id, mode: 'planePierce', rootIdx: 0 },
+                    isSurfaceIntersection: true,
+                    label: onRim
+                        ? t(`Giao điểm: ${segName} × đ.tròn ${cirName}`, `Intersection: ${segName} × circle ${cirName}`)
+                        : t(`Giao điểm: ${segName} × mặt tròn ${cirName}`, `Intersection: ${segName} × disk ${cirName}`)
+                }];
+            }
+
+            return [];
+        }
+
+        function intersectLineWithSolid(seg, sol, ignoreBounds = false, filterRootIdx = null) {
+            if (!seg || seg.hidden || !sol || sol.hidden) return [];
+            const p1 = geoState.points.find(p => p.id === seg.p1Id);
+            const p2 = geoState.points.find(p => p.id === seg.p2Id);
+            if (!p1 || !p2) return [];
+
+            const P1 = new THREE.Vector3(p1.x, p1.y, p1.z);
+            const P2 = new THREE.Vector3(p2.x, p2.y, p2.z);
+            const u = new THREE.Vector3().subVectors(P2, P1);
+            if (u.lengthSq() < 1e-8) return [];
+
+            const segName = getSegmentDisplayName(seg);
+            const solidName = sol.name || (sol.kind === 'cone' ? t('Hình nón', 'Cone') : (sol.kind === 'sphere' ? t('Mặt cầu', 'Sphere') : t('Hình trụ / Nón cụt', 'Cylinder / Frustum')));
+
+            if (sol.kind === 'sphere') {
+                const sGeom = computeSphereGeometry(sol);
+                if (!sGeom || sGeom.radius < 1e-5) return [];
+                const a = u.dot(u);
+                const w = new THREE.Vector3().subVectors(P1, sGeom.center);
+                const b = w.dot(u);
+                const c = w.dot(w) - sGeom.radius * sGeom.radius;
+                const disc = b * b - a * c;
+                if (disc < -1e-3 && !ignoreBounds) return [];
+                const sq = Math.sqrt(Math.max(0, disc));
+                const roots = [(-b - sq) / a, (-b + sq) / a];
+                const out = [];
+                for (let k = 0; k < 2; k++) {
+                    if (filterRootIdx !== null && filterRootIdx !== k) continue;
+                    if (k === 1 && sq < 1e-4 && !ignoreBounds) continue;
+                    const tk = roots[k];
+                    if (!ignoreBounds && !seg.isLine && (tk < -1e-4 || tk > 1 + 1e-4)) continue;
+                    const pos = P1.clone().addScaledVector(u, tk);
+                    out.push({
+                        pos,
+                        segAId: seg.id,
+                        segBId: null,
+                        rule: { type: 'lineSolidIntersection', segId: seg.id, solidId: sol.id, rootIdx: k },
+                        isSurfaceIntersection: true,
+                        label: t(`Giao điểm: ${segName} × ${solidName}`, `Intersection: ${segName} × ${solidName}`)
+                    });
+                }
+                return out;
+            }
+
+            if (sol.kind === 'cone') {
+                const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
+                const S = geoState.points.find(p => p.id === sol.apexId);
+                const geom = computeCircleGeometry(cir);
+                if (!geom || !S || geom.radius < 1e-5) return [];
+
+                const vS = new THREE.Vector3(S.x, S.y, S.z);
+                const n = geom.normal.clone().normalize();
+                const axis = new THREE.Vector3().subVectors(geom.center, vS);
+                const h = axis.dot(n);
+                if (Math.abs(h) < 1e-6) return [];
+
+                const p0 = new THREE.Vector3().subVectors(P1, vS);
+                const s0 = p0.dot(n) / h;
+                const s1 = u.dot(n) / h;
+                const d0 = p0.clone().addScaledVector(axis, -s0);
+                const d1 = u.clone().addScaledVector(axis, -s1);
+
+                const R2 = geom.radius * geom.radius;
+                const A = d1.dot(d1) - R2 * s1 * s1;
+                const B = d0.dot(d1) - R2 * s0 * s1;
+                const C = d0.dot(d0) - R2 * s0 * s0;
+
+                let roots = [];
+                if (Math.abs(A) < 1e-7) {
+                    if (Math.abs(B) < 1e-7) return [];
+                    const tLin = -C / (2 * B);
+                    roots = [tLin, tLin];
+                } else {
+                    const disc = B * B - A * C;
+                    if (disc < -1e-3 && !ignoreBounds) return [];
+                    const sq = Math.sqrt(Math.max(0, disc));
+                    const rA = (-B - sq) / A;
+                    const rB = (-B + sq) / A;
+                    roots = rA <= rB ? [rA, rB] : [rB, rA];
+                }
+
+                const out = [];
+                for (let k = 0; k < 2; k++) {
+                    if (filterRootIdx !== null && filterRootIdx !== k) continue;
+                    if (k === 1 && Math.abs(roots[1] - roots[0]) < 1e-4 && !ignoreBounds) continue;
+                    const tk = roots[k];
+                    const sk = s0 + s1 * tk;
+                    if (!ignoreBounds) {
+                        if (sk < 0.005 || sk > 1.002) continue;
+                        if (!seg.isLine && (tk < -1e-4 || tk > 1 + 1e-4)) continue;
+                    }
+                    const pos = P1.clone().addScaledVector(u, tk);
+                    out.push({
+                        pos,
+                        segAId: seg.id,
+                        segBId: null,
+                        rule: { type: 'lineSolidIntersection', segId: seg.id, solidId: sol.id, rootIdx: k },
+                        isSurfaceIntersection: true,
+                        label: t(`Giao điểm: ${segName} × ${solidName}`, `Intersection: ${segName} × ${solidName}`)
+                    });
+                }
+                return out;
+            }
+
+            if (sol.kind === 'frustum') {
+                const cir1 = (geoState.circles || []).find(c => c.id === sol.circle1Id);
+                const cir2 = (geoState.circles || []).find(c => c.id === sol.circle2Id);
+                const g1 = computeCircleGeometry(cir1);
+                const g2 = computeCircleGeometry(cir2);
+                if (!g1 || !g2) return [];
+
+                const axis = new THREE.Vector3().subVectors(g2.center, g1.center);
+                const axisLenSq = axis.lengthSq();
+                if (axisLenSq < 1e-8) return [];
+                const n = g1.normal.clone().normalize();
+                const h = axis.dot(n);
+
+                const p0 = new THREE.Vector3().subVectors(P1, g1.center);
+                const s0 = Math.abs(h) > 1e-6 ? p0.dot(n) / h : p0.dot(axis) / axisLenSq;
+                const s1 = Math.abs(h) > 1e-6 ? u.dot(n) / h : u.dot(axis) / axisLenSq;
+                const d0 = p0.clone().addScaledVector(axis, -s0);
+                const d1 = u.clone().addScaledVector(axis, -s1);
+
+                const dR = g2.radius - g1.radius;
+                const r0 = g1.radius + s0 * dR;
+                const r1 = s1 * dR;
+
+                const A = d1.dot(d1) - r1 * r1;
+                const B = d0.dot(d1) - r0 * r1;
+                const C = d0.dot(d0) - r0 * r0;
+
+                let roots = [];
+                if (Math.abs(A) < 1e-7) {
+                    if (Math.abs(B) < 1e-7) return [];
+                    const tLin = -C / (2 * B);
+                    roots = [tLin, tLin];
+                } else {
+                    const disc = B * B - A * C;
+                    if (disc < -1e-3 && !ignoreBounds) return [];
+                    const sq = Math.sqrt(Math.max(0, disc));
+                    const rA = (-B - sq) / A;
+                    const rB = (-B + sq) / A;
+                    roots = rA <= rB ? [rA, rB] : [rB, rA];
+                }
+
+                const out = [];
+                for (let k = 0; k < 2; k++) {
+                    if (filterRootIdx !== null && filterRootIdx !== k) continue;
+                    if (k === 1 && Math.abs(roots[1] - roots[0]) < 1e-4 && !ignoreBounds) continue;
+                    const tk = roots[k];
+                    const sk = s0 + s1 * tk;
+                    if (!ignoreBounds) {
+                        if (sk < -0.002 || sk > 1.002) continue;
+                        if (!seg.isLine && (tk < -1e-4 || tk > 1 + 1e-4)) continue;
+                    }
+                    const pos = P1.clone().addScaledVector(u, tk);
+                    out.push({
+                        pos,
+                        segAId: seg.id,
+                        segBId: null,
+                        rule: { type: 'lineSolidIntersection', segId: seg.id, solidId: sol.id, rootIdx: k },
+                        isSurfaceIntersection: true,
+                        label: t(`Giao điểm: ${segName} × ${solidName}`, `Intersection: ${segName} × ${solidName}`)
+                    });
+                }
+                return out;
+            }
+
+            return [];
+        }
+
+        function intersectGeneratorWithFace(sol, face, genIdx = 0, ignoreBounds = false) {
+            if (!sol || sol.hidden || !face || face.hidden) return null;
+            const viewDir = getCameraViewToEyeDir();
+            let pA = null, pB = null;
+            const solidName = sol.name || (sol.kind === 'cone' ? t('Hình nón', 'Cone') : t('Hình trụ / Nón cụt', 'Cylinder / Frustum'));
+
+            if (sol.kind === 'cone') {
+                const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
+                const S = geoState.points.find(p => p.id === sol.apexId);
+                const geom = computeCircleGeometry(cir);
+                if (!geom || !S) return null;
+                pA = new THREE.Vector3(S.x, S.y, S.z);
+                const [th1, th2] = computeConeSilhouetteAngles(pA, geom.center, geom.radius, geom.uAxis, geom.vAxis, viewDir);
+                const ang = genIdx === 1 ? th2 : th1;
+                pB = geom.center.clone()
+                    .addScaledVector(geom.uAxis, geom.radius * Math.cos(ang))
+                    .addScaledVector(geom.vAxis, geom.radius * Math.sin(ang));
+            } else if (sol.kind === 'frustum') {
+                const cir1 = (geoState.circles || []).find(c => c.id === sol.circle1Id);
+                const cir2 = (geoState.circles || []).find(c => c.id === sol.circle2Id);
+                const g1 = computeCircleGeometry(cir1);
+                const g2 = computeCircleGeometry(cir2);
+                if (!g1 || !g2) return null;
+                const { u2, v2 } = alignSecondCircleBasis(g1.uAxis, g1.vAxis, g1.normal, g2.normal);
+                const [th1, th2] = computeFrustumSilhouetteAngles(g1.center, g1.radius, g2.center, g2.radius, g1.uAxis, g1.vAxis, viewDir);
+                const ang = genIdx === 1 ? th2 : th1;
+                pA = g1.center.clone()
+                    .addScaledVector(g1.uAxis, g1.radius * Math.cos(ang))
+                    .addScaledVector(g1.vAxis, g1.radius * Math.sin(ang));
+                pB = g2.center.clone()
+                    .addScaledVector(u2, g2.radius * Math.cos(ang))
+                    .addScaledVector(v2, g2.radius * Math.sin(ang));
+            } else {
+                return null;
+            }
+
+            const res = intersectPointsWithPolygonFace3D(pA, pB, false, face, ignoreBounds);
+            if (!res) return null;
+            const faceTitle = face.name || '(P)';
+            return {
+                pos: res.pos,
+                segAId: null,
+                segBId: null,
+                rule: { type: 'generatorFaceIntersection', solidId: sol.id, faceId: face.id, genIdx },
+                isSurfaceIntersection: true,
+                label: t(`Giao điểm: đ.sinh ${solidName} × ${faceTitle}`, `Intersection: generator of ${solidName} × ${faceTitle}`)
+            };
+        }
+
+        function intersectLineWithBasePlane(seg, ignoreBounds = false) {
+            if (!seg || seg.hidden || (!ignoreBounds && !isBasePlaneVisible)) return null;
+            const p1 = geoState.points.find(p => p.id === seg.p1Id);
+            const p2 = geoState.points.find(p => p.id === seg.p2Id);
+            if (!p1 || !p2) return null;
+            if (!ignoreBounds && (Math.abs(p1.y) < 1e-2 || Math.abs(p2.y) < 1e-2)) return null;
+            const dy = p2.y - p1.y;
+            if (Math.abs(dy) < 1e-5) return null;
+            const tVal = -p1.y / dy;
+            if (!ignoreBounds && !seg.isLine && (tVal < -1e-4 || tVal > 1 + 1e-4)) return null;
+            const pos = new THREE.Vector3(
+                p1.x + tVal * (p2.x - p1.x),
+                0,
+                p1.z + tVal * (p2.z - p1.z)
+            );
+            if (!ignoreBounds && (Math.abs(pos.x) > 12 || Math.abs(pos.z) > 12)) return null;
+            const segName = getSegmentDisplayName(seg);
+            return {
+                pos,
+                segAId: seg.id,
+                segBId: null,
+                rule: { type: 'lineBasePlaneIntersection', segId: seg.id },
+                isSurfaceIntersection: true,
+                label: t(`Giao điểm: ${segName} × mặt nền (P)`, `Intersection: ${segName} × base plane (P)`)
             };
         }
 
         function computeEdgeIntersections() {
             cachedIntersections = [];
+            const hasExistingVisibleVertex = (pos) => geoState.points.some(pt =>
+                !pt.hidden && Math.hypot(pt.x - pos.x, pt.y - pos.y, pt.z - pos.z) < 1.5e-2
+            );
+            const pushCandidate = (cand) => {
+                if (!cand || !cand.pos || !Number.isFinite(cand.pos.x) || !Number.isFinite(cand.pos.y) || !Number.isFinite(cand.pos.z)) return;
+                if (hasExistingVisibleVertex(cand.pos)) return;
+                const duplicate = cachedIntersections.some(ex => ex.pos.distanceTo(cand.pos) < 1.5e-2);
+                if (!duplicate) cachedIntersections.push(cand);
+            };
+
             const n = geoState.segments.length;
+            // 1. Giao điểm giữa Đoạn/Đường thẳng và Đoạn/Đường thẳng
             for (let i = 0; i < n; i++) {
                 for (let j = i + 1; j < n; j++) {
                     const inter = intersect3DSegmentsOrLines(geoState.segments[i], geoState.segments[j]);
-                    if (inter) cachedIntersections.push(inter);
+                    if (inter) pushCandidate(inter);
                 }
             }
+
+            // 2. Giao điểm giữa Đoạn/Đường thẳng với Mặt đa giác, Đường tròn / Mặt hình tròn, và Khối tròn xoay (Nón, Trụ, Nón cụt, Mặt cầu)
+            for (let i = 0; i < n; i++) {
+                const seg = geoState.segments[i];
+                if (!seg || seg.hidden) continue;
+
+                // 2a. Với các Đường tròn & Miền trong Hình tròn
+                (geoState.circles || []).forEach(cir => {
+                    const hits = intersectLineWithCircle(seg, cir, false);
+                    hits.forEach(h => pushCandidate(h));
+                });
+
+                // 2b. Với các Mặt đa giác
+                (geoState.faces || []).forEach(face => {
+                    const hit = intersectLineWithFace(seg, face, false);
+                    if (hit) pushCandidate(hit);
+                });
+
+                // 2c. Với các Bề mặt tròn xoay (Mặt cầu, Hình nón, Hình trụ / Hình nón cụt)
+                (geoState.solids || []).forEach(sol => {
+                    const hits = intersectLineWithSolid(seg, sol, false);
+                    hits.forEach(h => pushCandidate(h));
+                });
+
+                // 2d. Với Mặt phẳng nền (P) khi đường thẳng xuyên từ không gian qua mặt nền
+                const baseHit = intersectLineWithBasePlane(seg, false);
+                if (baseHit) pushCandidate(baseHit);
+            }
+
+            // 3. Giao điểm giữa Đường sinh biên của Khối tròn xoay (Nón, Trụ, Nón cụt) với Mặt đa giác cắt ngang
+            (geoState.solids || []).forEach(sol => {
+                if (!sol || sol.hidden || (sol.kind !== 'cone' && sol.kind !== 'frustum')) return;
+                (geoState.faces || []).forEach(face => {
+                    if (!face || face.hidden) return;
+                    [0, 1].forEach(genIdx => {
+                        const hit = intersectGeneratorWithFace(sol, face, genIdx, false);
+                        if (hit) pushCandidate(hit);
+                    });
+                });
+            });
         }
 
         function addDualDepthSegment(v1, v2, colorHex = 0x0f172a) {
@@ -4645,7 +5189,7 @@
                 else if (isHovered && currentTool === 'delete-obj') tex = texPointSelected;
                 else if (isHovered) tex = texPointHover;
                 else if (pt.trace) tex = texPointTrace;
-                else if (pt.rule && ['onEdge', 'onFace', 'onCircle', 'onCircleDisk', 'onSphere', 'onCone', 'onFrustum'].includes(pt.rule.type)) tex = texPointConstrained;
+                else if (pt.rule && ['onEdge', 'onFace', 'onCircle', 'onCircleDisk', 'onSphere', 'onCone', 'onFrustum', 'intersection', 'lineFaceIntersection', 'lineCircleIntersection', 'lineSolidIntersection', 'generatorFaceIntersection', 'lineBasePlaneIntersection'].includes(pt.rule.type)) tex = texPointConstrained;
 
                 const ptGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(pt.x, pt.y, pt.z)]);
                 const ptMat = new THREE.PointsMaterial({
@@ -4874,7 +5418,7 @@
             }
 
             let closestInter = null;
-            let minInterDist = 15;
+            let minInterDist = 16;
             cachedIntersections.forEach(inter => {
                 const v = inter.pos.clone().project(camera);
                 if (v.z <= 1) {
@@ -4894,6 +5438,7 @@
                     pos: closestInter.pos.clone(),
                     segAId: closestInter.segAId,
                     segBId: closestInter.segBId,
+                    rule: closestInter.rule ? { ...closestInter.rule } : { type: 'intersection', segAId: closestInter.segAId, segBId: closestInter.segBId },
                     label: closestInter.label
                 };
             }
@@ -5369,7 +5914,7 @@
             } else if (target.type === 'face') {
                 rule = { type: 'onFace', faceId: target.faceId, u: target.u, v: target.v };
             } else if (target.type === 'intersection') {
-                rule = { type: 'intersection', segAId: target.segAId, segBId: target.segBId };
+                rule = target.rule ? { ...target.rule } : { type: 'intersection', segAId: target.segAId, segBId: target.segBId };
             }
             return createNewPoint(target.pos.x, target.pos.y, target.pos.z, preferredName, rule);
         }
@@ -5410,12 +5955,31 @@
             geoState.segments.forEach(s => {
                 if (s.isLine) return;
                 addAdjEdge(s.p1Id, s.p2Id);
-                // Hỗ trợ các điểm thuộc cạnh (onEdge) tham gia khép kín miền đa giác trên mặt
-                const onEdgePts = geoState.points
-                    .filter(pt => !pt.hidden && pt.rule && pt.rule.type === 'onEdge' && pt.rule.segId === s.id && typeof pt.rule.t === 'number' && pt.rule.t > 0 && pt.rule.t < 1)
-                    .sort((a, b) => a.rule.t - b.rule.t);
-                if (onEdgePts.length > 0) {
-                    const chain = [s.p1Id, ...onEdgePts.map(pt => pt.id), s.p2Id];
+                const P1 = geoState.points.find(p => p.id === s.p1Id);
+                const P2 = geoState.points.find(p => p.id === s.p2Id);
+                if (!P1 || !P2) return;
+                const v1 = new THREE.Vector3(P1.x, P1.y, P1.z);
+                const v2 = new THREE.Vector3(P2.x, P2.y, P2.z);
+                const ab = new THREE.Vector3().subVectors(v2, v1);
+                const lenSq = ab.lengthSq();
+                if (lenSq < 1e-6) return;
+
+                // Hỗ trợ cả các điểm thuộc cạnh (onEdge) và các điểm giao điểm nằm trên cạnh tham gia khép kín miền đa giác
+                const onSegPts = [];
+                geoState.points.forEach(pt => {
+                    if (pt.hidden || pt.id === s.p1Id || pt.id === s.p2Id) return;
+                    const vP = new THREE.Vector3(pt.x, pt.y, pt.z);
+                    const tProj = new THREE.Vector3().subVectors(vP, v1).dot(ab) / lenSq;
+                    if (tProj > 0.01 && tProj < 0.99) {
+                        const proj = v1.clone().addScaledVector(ab, tProj);
+                        if (proj.distanceTo(vP) < 0.03) {
+                            onSegPts.push({ id: pt.id, t: tProj });
+                        }
+                    }
+                });
+                onSegPts.sort((a, b) => a.t - b.t);
+                if (onSegPts.length > 0) {
+                    const chain = [s.p1Id, ...onSegPts.map(item => item.id), s.p2Id];
                     for (let i = 0; i < chain.length; i++) {
                         for (let j = i + 1; j < chain.length; j++) {
                             addAdjEdge(chain[i], chain[j]);
@@ -7142,6 +7706,12 @@
                     openSetScaleForPairModal(target.p1Id, target.p2Id);
                     return;
                 }
+                if (target.type === 'intersection') {
+                    saveHistory();
+                    const newPtId = createNewPointFromTarget(target);
+                    target = { type: 'point', pointId: newPtId, pos: target.pos.clone() };
+                    updateSceneFromState();
+                }
                 if (target.type === 'point') {
                     if (!selectedPointIds.includes(target.pointId)) {
                         selectedPointIds.push(target.pointId);
@@ -7176,6 +7746,13 @@
 
             if (!target) return;
             if (target.type === 'plane' && measurePendingItems.length === 0) return;
+
+            if (target.type === 'intersection') {
+                saveHistory();
+                const newPtId = createNewPointFromTarget(target);
+                target = { type: 'point', pointId: newPtId, pos: target.pos.clone() };
+                updateSceneFromState();
+            }
 
             // Chuẩn hóa đối tượng được click
             let item = null;
@@ -7795,7 +8372,7 @@
                 return;
             }
 
-            if (currentTool === 'point3d' && target && !['sphere', 'cone', 'frustum'].includes(target.type)) {
+            if (currentTool === 'point3d' && target && !['sphere', 'cone', 'frustum', 'intersection'].includes(target.type)) {
                 isCreating3DPoint = true;
                 drag3DBasePos = target.pos.clone();
                 drag3DCurrentPos = target.pos.clone().add(new THREE.Vector3(0, 3, 0));
@@ -7911,13 +8488,22 @@
 
             if (!target) return;
 
-            if (currentTool === 'point2d' || (currentTool === 'point3d' && ['sphere', 'cone', 'frustum'].includes(target.type))) {
+            if (currentTool === 'point2d' || (currentTool === 'point3d' && ['sphere', 'cone', 'frustum', 'intersection'].includes(target.type))) {
                 if (target.type !== 'point') {
                     saveHistory();
                     const newPtId = createNewPointFromTarget(target);
                     const createdPt = geoState.points.find(p => p.id === newPtId);
                     updateSceneFromState();
-                    if (createdPt && ['sphere', 'cone', 'frustum', 'circleDisk', 'circle'].includes(target.type)) {
+                    if (createdPt && target.type === 'intersection') {
+                        const guideSpan = document.getElementById('guide-span');
+                        if (guideSpan) {
+                            guideSpan.innerHTML = t(
+                                `Đã tạo giao điểm <b>$${createdPt.name}$</b> (${target.label})! Điểm này sẽ tự động cập nhật khi kéo hình.`,
+                                `Created intersection point <b>$${createdPt.name}$</b> (${target.label})! This point updates dynamically when dragging.`
+                            );
+                            renderMathInElementSafe(guideSpan);
+                        }
+                    } else if (createdPt && ['sphere', 'cone', 'frustum', 'circleDisk', 'circle'].includes(target.type)) {
                         const guideSpan = document.getElementById('guide-span');
                         if (guideSpan) {
                             const parentDesc = getParentObjectDescription(createdPt);
