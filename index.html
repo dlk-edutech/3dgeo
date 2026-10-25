@@ -383,7 +383,7 @@
             backdrop-filter: blur(8px);
             border: 1px solid #cbd5e1; border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            padding: 10px 12px; width: 372px; max-height: calc(100vh - 200px);
+            padding: 10px 12px; width: 396px; max-height: calc(100vh - 200px);
             display: none; flex-direction: column; gap: 8px;
         }
         .measure-panel-header {
@@ -417,7 +417,7 @@
             background: #fffbeb; border-color: #fcd34d; color: #92400e;
         }
         .measure-quick-tools {
-            display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px;
         }
         .measure-qtool-btn {
             background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 7px;
@@ -502,23 +502,48 @@
         }
         .modal-box {
             background: white; padding: 22px; border-radius: 14px;
-            width: 390px; max-width: 92vw; box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            width: 430px; max-width: 94vw; box-shadow: 0 12px 30px rgba(0,0,0,0.25);
         }
         .modal-title { font-weight: 700; font-size: 16px; margin-bottom: 14px; color: #0f172a; line-height: 1.4; }
         .modal-field { margin-bottom: 12px; }
         .modal-field label { display: block; font-size: 13px; margin-bottom: 6px; color: #475569; font-weight: 600; }
-        .modal-field input, .modal-field select {
+        .modal-field input[type="text"], .modal-field select {
             width: 100%; padding: 9px 11px; border: 1px solid #cbd5e1;
             border-radius: 8px; font-size: 14px; font-weight: 500; outline: none;
         }
-        .modal-field input:focus, .modal-field select:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+        .modal-field input[type="text"]:focus, .modal-field select:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
         .preset-chips { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
         .chip {
-            background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 10px;
-            border-radius: 6px; font-size: 12.5px; font-weight: 600; color: #334155;
+            background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 9px;
+            border-radius: 6px; font-size: 12px; font-weight: 600; color: #334155;
+            cursor: pointer; transition: 0.15s; user-select: none;
+        }
+        .chip:hover { background: #e2e8f0; color: #0f172a; border-color: #94a3b8; }
+        .chip.sym-chip { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 700; }
+        .chip.sym-chip:hover { background: #dbeafe; }
+        .math-live-preview {
+            margin-top: 6px; font-size: 12px; font-weight: 600;
+            padding: 5px 9px; border-radius: 6px;
+            background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .math-live-preview.invalid {
+            background: #fef2f2; border-color: #fecaca; color: #dc2626;
+        }
+        .seg-len-info-box {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 9px;
+            padding: 9px 11px; margin-bottom: 12px; font-size: 12.5px; color: #334155;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .seg-len-dir-row {
+            display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
+        }
+        .seg-len-swap-btn {
+            background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8;
+            border-radius: 6px; padding: 3px 8px; font-size: 11.5px; font-weight: 700;
             cursor: pointer; transition: 0.15s;
         }
-        .chip:hover { background: #e2e8f0; color: #0f172a; }
+        .seg-len-swap-btn:hover { background: #dbeafe; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
         .btn-primary { background: #2563eb; color: white; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
         .btn-primary:hover { background: #1d4ed8; }
@@ -919,9 +944,13 @@
                     <svg class="svg-ic" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/></svg>
                     <span id="mq-lbl-scale">Quy chuẩn</span>
                 </button>
+                <button class="measure-qtool-btn" id="mq-btn-set-len" data-mtool="set-seg-length" onclick="selectTool('set-seg-length')" title="Điều chỉnh độ dài đoạn thẳng theo quy chuẩn (Điểm 1 cố định -> Điểm 2 dịch chuyển)">
+                    <svg class="svg-ic" viewBox="0 0 24 24"><circle cx="4" cy="18" r="2.3" fill="currentColor"/><line x1="6" y1="16.5" x2="19" y2="6.5"/><polyline points="14 6 19.5 6 19.5 11.5"/><circle cx="19.5" cy="6" r="2" fill="currentColor"/><line x1="4" y1="22" x2="20" y2="22" stroke-dasharray="2 2"/></svg>
+                    <span id="mq-lbl-set-len">Đặt độ dài</span>
+                </button>
                 <button class="measure-qtool-btn" id="mq-btn-dist" data-mtool="measure-dist" onclick="selectTool('measure-dist')" title="Đo khoảng cách (2 điểm, điểm-đường, điểm-mặt)">
                     <svg class="svg-ic" viewBox="0 0 24 24"><line x1="4" y1="20" x2="20" y2="4"/><polyline points="14 4 20 4 20 10"/><polyline points="10 20 4 20 4 14"/></svg>
-                    <span id="mq-lbl-dist">Khoảng cách</span>
+                    <span id="mq-lbl-dist">K.Cách</span>
                 </button>
                 <button class="measure-qtool-btn" id="mq-btn-angle" data-mtool="measure-angle" onclick="selectTool('measure-angle')" title="Đo góc (3 điểm, 2 đường, đường-mặt, 2 mặt)">
                     <svg class="svg-ic" viewBox="0 0 24 24"><polyline points="21 19 4 19 17 5"/><path d="M13 19a9 9 0 0 0-2.6-6.3"/></svg>
@@ -1265,6 +1294,7 @@
             measureAngle: `<svg viewBox="0 0 24 24"><polyline points="21 19 4 19 17 5"/><path d="M13.5 19a9.5 9.5 0 0 0-2.8-6.7"/><circle cx="4" cy="19" r="2" fill="currentColor"/></svg>`,
             measureArea: `<svg viewBox="0 0 24 24"><polygon points="12 3 21 9 18 20 6 20 3 9"/><line x1="6" y1="20" x2="18" y2="9" stroke-dasharray="2 2"/><line x1="3" y1="9" x2="18" y2="20" stroke-dasharray="2 2"/></svg>`,
             measureVolume: `<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+            setSegLength: `<svg viewBox="0 0 24 24"><circle cx="4" cy="18" r="2.3" fill="currentColor"/><line x1="6" y1="16.5" x2="19" y2="6.5"/><polyline points="14 6 19.5 6 19.5 11.5"/><circle cx="19.5" cy="6" r="2" fill="currentColor"/><line x1="4" y1="22" x2="20" y2="22" stroke-dasharray="2 2"/></svg>`,
             styleSize: `<svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.5" fill="currentColor"/><line x1="12" y1="7" x2="21" y2="7" stroke-width="1.8"/><circle cx="6" cy="17" r="4.2" fill="currentColor"/><line x1="13" y1="17" x2="21" y2="17" stroke-width="3.6"/></svg>`
         };
 
@@ -1569,6 +1599,18 @@
                     name: 'Set Reference Length Scale (e.g. AB = 5)',
                     tip: '<b>Set Reference Scale (e.g. $AB = 5$):</b> Click <b>1 Segment</b> (or <b>2 Points $A, B$</b>) to calibrate the reference length for all measurements',
                     guide: 'Reference Scale (e.g. $AB = 5$): Click <b>1 Segment</b> (or select <b>2 Points $A, B$</b>) to set the reference length for all measurements'
+                }
+            },
+            'set-seg-length': {
+                vi: {
+                    name: 'Điều chỉnh độ dài đoạn thẳng (theo quy chuẩn)',
+                    tip: '<b>Điều chỉnh độ dài đoạn thẳng (theo quy chuẩn):</b> Chọn <b>Điểm thứ nhất $A$</b> rồi chọn <b>Điểm thứ 2 $B$</b>, nhập độ dài cần set (hỗ trợ cả số vô tỉ như $\\sqrt{2}, 2\\sqrt{3}$) $\\Rightarrow$ Điểm $B$ dịch chuyển theo hướng $\\overrightarrow{AB}$',
+                    guide: 'Điều chỉnh độ dài đoạn thẳng: Chọn <b>Điểm thứ nhất $A$ (cố định)</b> $\\to$ Chọn <b>Điểm thứ 2 $B$ (dịch chuyển theo hướng $\\overrightarrow{AB}$)</b> $\\to$ Nhập độ dài (hỗ trợ cả số vô tỉ $\\sqrt{2}, 2\\sqrt{3}, \\dots$)'
+                },
+                en: {
+                    name: 'Adjust Segment Length (Calibrated)',
+                    tip: '<b>Adjust Segment Length (Calibrated):</b> Select <b>Point 1 ($A$)</b> then <b>Point 2 ($B$)</b>, enter target length (supports irrationals like $\\sqrt{2}, 2\\sqrt{3}$) $\\Rightarrow$ Point $B$ moves along ray $\\overrightarrow{AB}$',
+                    guide: 'Adjust Segment Length: Select <b>Point 1 $A$ (fixed)</b> $\\to$ Select <b>Point 2 $B$ (moves along ray $\\overrightarrow{AB}$)</b> $\\to$ Enter target length (supports $\\sqrt{2}, 2\\sqrt{3}, \\dots$)'
                 }
             },
             'measure-dist': {
@@ -1899,12 +1941,18 @@
                 tip: TOOL_I18N['solid-sphere'].vi.tip
             },
 
-            // NHÓM 6: Đo đạc theo quy chuẩn (Quy chuẩn độ dài, Khoảng cách, Góc, Thể tích)
+            // NHÓM 6: Đo đạc theo quy chuẩn (Quy chuẩn độ dài, Điều chỉnh độ dài, Khoảng cách, Góc, Thể tích)
             {
                 id: 'measure-scale', group: 6, groupName: 'Nhóm 6: Đo đạc & Tính toán',
                 name: 'Quy định độ dài chuẩn (VD: AB = 5)', type: 'mode',
                 iconHtml: SVG_ICONS.measureScale,
                 tip: TOOL_I18N['measure-scale'].vi.tip
+            },
+            {
+                id: 'set-seg-length', group: 6, groupName: 'Nhóm 6: Đo đạc & Tính toán',
+                name: 'Điều chỉnh độ dài đoạn thẳng (theo quy chuẩn)', type: 'mode',
+                iconHtml: SVG_ICONS.setSegLength,
+                tip: TOOL_I18N['set-seg-length'].vi.tip
             },
             {
                 id: 'measure-dist', group: 6, groupName: 'Nhóm 6: Đo đạc & Tính toán',
@@ -2083,7 +2131,7 @@
             if (!tool) return;
             incrementToolUsage(tool.id);
             if (tool.type === 'mode') {
-                if (['measure-scale', 'measure-dist', 'measure-angle', 'measure-volume'].includes(tool.id)) {
+                if (['measure-scale', 'set-seg-length', 'measure-dist', 'measure-angle', 'measure-area', 'measure-volume'].includes(tool.id)) {
                     isMeasurePanelDismissed = false;
                 }
                 selectTool(tool.id);
@@ -2099,8 +2147,11 @@
             let s = tex
                 .replace(/\\overrightarrow\{([^}]+)\}/g, '<span class="math-vec">$1</span>')
                 .replace(/\\widehat\{([^}]+)\}/g, '<span class="math-hat">$1</span>')
+                .replace(/\\sqrt\{([^}]+)\}/g, (_, rad) => rad.length === 1 ? `√${rad}` : `√(${rad})`)
                 .replace(/\\dfrac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)')
                 .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)')
+                .replace(/\\approx/g, '≈')
+                .replace(/\\pi\b/g, 'π')
                 .replace(/\\Rightarrow/g, '⇒')
                 .replace(/\\to/g, '→')
                 .replace(/\\parallel/g, '∥')
@@ -2788,20 +2839,64 @@
         // =========================================================================
         // 9. HÀM TIỆN ÍCH & TEXTURE ĐIỂM
         // =========================================================================
-        function parseMathFraction(str) {
-            if (typeof str === 'number') return str;
-            if (!str) return NaN;
-            const cleaned = str.toString().trim().replace(/,/g, '.');
-            if (cleaned.includes('/')) {
-                const parts = cleaned.split('/');
-                if (parts.length === 2) {
-                    const num = parseFloat(parts[0]);
-                    const den = parseFloat(parts[1]);
-                    if (!isNaN(num) && !isNaN(den) && den !== 0) return num / den;
-                }
+        function parseMathExpression(rawInput) {
+            if (typeof rawInput === 'number') {
+                return Number.isFinite(rawInput) ? rawInput : NaN;
+            }
+            if (rawInput === null || rawInput === undefined) return NaN;
+            let s = String(rawInput).trim();
+            if (!s) return NaN;
+
+            s = s
+                .replace(/,/g, '.')
+                .replace(/[−–—]/g, '-')
+                .replace(/[×·]/g, '*')
+                .replace(/[÷:]/g, '/');
+
+            s = s.replace(/\\(?:d?frac)\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, '(($1)/($2))');
+            s = s.replace(/\\sqrt\s*\{([^{}]+)\}/g, 'sqrt($1)');
+            s = s.replace(/\\pi\b/g, 'pi');
+            s = s.replace(/\$/g, '');
+
+            s = s.replace(/^[aA]\s*=\s*/, '');
+            s = s.replace(/(?<![a-zA-Z])a(?![a-zA-Z])/gi, '(1)');
+
+            s = s.replace(/π|(?<!\.)\bpi\b/gi, '(Math.PI)');
+            s = s.replace(/\bphi\b/gi, '((1+Math.sqrt(5))/2)');
+            s = s.replace(/(?<![a-zA-Z0-9.])e(?![a-zA-Z0-9+-])/g, '(Math.E)');
+
+            for (let pass = 0; pass < 4; pass++) {
+                s = s.replace(/√\s*\(([^()]+)\)/g, 'sqrt($1)');
+                s = s.replace(/√\s*(\d+(?:\.\d+)?)/g, 'sqrt($1)');
+            }
+
+            s = s.replace(/(\d|\))\s*(?=(?:sqrt|cbrt|sin|cos|tan|abs|Math|\())/gi, '$1*');
+            s = s.replace(/(\))\s*(\d)/g, '$1*$2');
+
+            s = s.replace(/\bsqrt\s*\(/gi, 'Math.sqrt(');
+            s = s.replace(/\bcbrt\s*\(/gi, 'Math.cbrt(');
+            s = s.replace(/\bsin\s*\(/gi, 'Math.sin(');
+            s = s.replace(/\bcos\s*\(/gi, 'Math.cos(');
+            s = s.replace(/\btan\s*\(/gi, 'Math.tan(');
+            s = s.replace(/\babs\s*\(/gi, 'Math.abs(');
+
+            s = s.replace(/\^/g, '**');
+
+            const stripped = s.replace(/Math\.(?:sqrt|cbrt|sin|cos|tan|abs|PI|E)/g, '');
+            if (!/^[0-9+\-*/().\s]+$/.test(stripped)) {
                 return NaN;
             }
-            return parseFloat(cleaned);
+
+            try {
+                const val = Function('"use strict"; return (' + s + ')')();
+                return typeof val === 'number' && Number.isFinite(val) ? val : NaN;
+            } catch (_) {
+                return NaN;
+            }
+        }
+
+        function parseMathFraction(str) {
+            return parseMathExpression(str);
         }
 
         function formatPointNameHTML(name) {
@@ -3138,11 +3233,13 @@
             setTitle('measure-close-btn', 'Đóng bảng đo đạc', 'Close measurement panel');
 
             setTxt('mq-lbl-scale', 'Quy chuẩn', 'Scale');
+            setTxt('mq-lbl-set-len', 'Đặt độ dài', 'Set Len');
             setTxt('mq-lbl-dist', 'K.Cách', 'Dist');
             setTxt('mq-lbl-angle', 'Đo góc', 'Angle');
             setTxt('mq-lbl-area', 'Diện tích', 'Area');
             setTxt('mq-lbl-volume', 'Thể tích', 'Volume');
             setTitle('mq-btn-scale', 'Quy định 1 độ dài làm chuẩn (VD: AB = 5)', 'Set a reference length scale (e.g., AB = 5)');
+            setTitle('mq-btn-set-len', 'Điều chỉnh độ dài đoạn thẳng theo quy chuẩn (Điểm 1 cố định -> Điểm 2 dịch chuyển)', 'Adjust segment length by reference scale (Point 1 fixed -> Point 2 moves)');
             setTitle('mq-btn-dist', 'Đo khoảng cách (2 điểm, điểm-đường, điểm-mặt)', 'Measure distance (2 points, point-line, point-plane)');
             setTitle('mq-btn-angle', 'Đo góc (3 điểm, 2 đường, đường-mặt, 2 mặt)', 'Measure angle (3 points, 2 lines, line-plane, 2 planes)');
             setTitle('mq-btn-area', 'Đo diện tích (Tam giác, Đa giác, Hình tròn)', 'Measure area (Triangle, Polygon, Circle)');
@@ -6448,22 +6545,42 @@
         let measurePendingItems = [];
 
         function parsePositiveMeasureInput(rawStr) {
-            if (!rawStr) return NaN;
-            let s = String(rawStr).trim().replace(/,/g, '.');
-            s = s.replace(/√\s*\(([^)]+)\)/g, 'Math.sqrt($1)');
-            s = s.replace(/√\s*(\d+(\.\d+)?)/g, 'Math.sqrt($1)');
-            s = s.replace(/sqrt\s*\(([^)]+)\)/gi, 'Math.sqrt($1)');
-            const val = parseMathFraction(s);
-            if (!isNaN(val) && val > 0) return val;
-            try {
-                if (/^[0-9+\-*/().\sMathsqrt]+$/.test(s)) {
-                    const evaluated = Function('"use strict"; return (' + s + ')')();
-                    if (typeof evaluated === 'number' && isFinite(evaluated) && evaluated > 0) {
-                        return evaluated;
-                    }
-                }
-            } catch (_) {}
-            return NaN;
+            const val = parseMathExpression(rawStr);
+            return (!isNaN(val) && val > 0) ? val : NaN;
+        }
+
+        function updateLiveMathPreview(inputId, previewId, requirePositive = true) {
+            const inputEl = document.getElementById(inputId);
+            const previewEl = document.getElementById(previewId);
+            if (!inputEl || !previewEl) return;
+            const raw = inputEl.value;
+            const val = requirePositive ? parsePositiveMeasureInput(raw) : parseMathExpression(raw);
+            if (!isNaN(val) && isFinite(val)) {
+                previewEl.classList.remove('invalid');
+                const approxStr = Math.abs(val - Math.round(val)) < 1e-7
+                    ? String(Math.round(val))
+                    : val.toFixed(4).replace(/\.?0+$/, '');
+                previewEl.innerHTML = `<span>${t('Giá trị tính được:', 'Evaluated value:')} <b>≈ ${approxStr}</b></span><span>✓ ${t('Hợp lệ', 'Valid')}</span>`;
+            } else {
+                previewEl.classList.add('invalid');
+                previewEl.innerHTML = `<span>${t('Biểu thức chưa hợp lệ (VD: 2√3, sqrt(2), 3√2/2, 5)', 'Invalid expression (e.g., 2√3, sqrt(2), 3√2/2, 5)')}</span>`;
+            }
+        }
+
+        function insertSymbolIntoInput(inputId, symbolText, previewId = null, requirePositive = true) {
+            const el = document.getElementById(inputId);
+            if (!el) return;
+            const start = typeof el.selectionStart === 'number' ? el.selectionStart : el.value.length;
+            const end = typeof el.selectionEnd === 'number' ? el.selectionEnd : el.value.length;
+            el.value = el.value.slice(0, start) + symbolText + el.value.slice(end);
+            el.focus();
+            const newCursor = start + symbolText.length;
+            if (typeof el.setSelectionRange === 'function') {
+                el.setSelectionRange(newCursor, newCursor);
+            }
+            if (previewId) {
+                updateLiveMathPreview(inputId, previewId, requirePositive);
+            }
         }
 
         function formatMeasureNumber(val, decimals = 2) {
@@ -7451,7 +7568,7 @@
             isMeasurePanelDismissed = true;
             const panel = document.getElementById('measurement-panel');
             if (panel) panel.style.display = 'none';
-            if (['measure-scale', 'measure-dist', 'measure-angle', 'measure-area', 'measure-volume'].includes(currentTool)) {
+            if (['measure-scale', 'set-seg-length', 'measure-dist', 'measure-angle', 'measure-area', 'measure-volume'].includes(currentTool)) {
                 selectTool('view');
             }
         }
@@ -7465,7 +7582,7 @@
 
             const scaleInfo = getMeasureScaleInfo();
             const hasMeasurements = geoState.measurements && geoState.measurements.length > 0;
-            const isMeasureToolActive = ['measure-scale', 'measure-dist', 'measure-angle', 'measure-area', 'measure-volume'].includes(currentTool);
+            const isMeasureToolActive = ['measure-scale', 'set-seg-length', 'measure-dist', 'measure-angle', 'measure-area', 'measure-volume'].includes(currentTool);
 
             if (isMeasureToolActive) {
                 isMeasurePanelDismissed = false;
@@ -7564,7 +7681,7 @@
             const p2 = geoState.points.find(p => p.id === p2Id);
             if (!p1 || !p2 || p1.id === p2.id) return;
             const currentVal = (geoState.measureScale && ((geoState.measureScale.p1Id === p1Id && geoState.measureScale.p2Id === p2Id) || (geoState.measureScale.p1Id === p2Id && geoState.measureScale.p2Id === p1Id)))
-                ? geoState.measureScale.value
+                ? formatMeasureNumber(geoState.measureScale.value, 4)
                 : 5;
 
             openModal(
@@ -7574,19 +7691,24 @@
                 ),
                 `<div class="modal-field">
                     <label>${t(
-                        `Nhập độ dài quy chuẩn cho đoạn <b>$${p1.name}${p2.name}$</b> (Tất cả khoảng cách & thể tích sẽ được tính theo quy chuẩn này):`,
-                        `Enter reference length for segment <b>$${p1.name}${p2.name}$</b> (All distances & volumes will be scaled accordingly):`
+                        `Nhập độ dài quy chuẩn cho đoạn <b>$${p1.name}${p2.name}$</b> (Hỗ trợ cả số vô tỉ như $\\sqrt{2}, 2\\sqrt{3}, \\frac{\\sqrt{3}}{2}$):`,
+                        `Enter reference length for segment <b>$${p1.name}${p2.name}$</b> (Supports irrationals like $\\sqrt{2}, 2\\sqrt{3}, \\frac{\\sqrt{3}}{2}$):`
                     )}</label>
-                    <input type="text" id="scale-len-input" value="${currentVal}">
+                    <input type="text" id="scale-len-input" value="${currentVal}" oninput="updateLiveMathPreview('scale-len-input', 'scale-len-preview', true)">
+                    <div class="math-live-preview" id="scale-len-preview"></div>
                     <div class="preset-chips">
+                        <span class="chip sym-chip" onclick="insertSymbolIntoInput('scale-len-input', '√', 'scale-len-preview', true)">+ √</span>
+                        <span class="chip sym-chip" onclick="insertSymbolIntoInput('scale-len-input', 'π', 'scale-len-preview', true)">+ π</span>
                         <span class="chip" onclick="setInputValue('scale-len-input', '1')">1 (a = 1)</span>
                         <span class="chip" onclick="setInputValue('scale-len-input', '2')">2</span>
                         <span class="chip" onclick="setInputValue('scale-len-input', '3')">3</span>
                         <span class="chip" onclick="setInputValue('scale-len-input', '4')">4</span>
                         <span class="chip" onclick="setInputValue('scale-len-input', '5')">5</span>
-                        <span class="chip" onclick="setInputValue('scale-len-input', '6')">6</span>
-                        <span class="chip" onclick="setInputValue('scale-len-input', 'sqrt(2)')">$\\sqrt{2}$</span>
-                        <span class="chip" onclick="setInputValue('scale-len-input', 'sqrt(3)')">$\\sqrt{3}$</span>
+                        <span class="chip" onclick="setInputValue('scale-len-input', '√2')">$\\sqrt{2}$</span>
+                        <span class="chip" onclick="setInputValue('scale-len-input', '√3')">$\\sqrt{3}$</span>
+                        <span class="chip" onclick="setInputValue('scale-len-input', '2√2')">$2\\sqrt{2}$</span>
+                        <span class="chip" onclick="setInputValue('scale-len-input', '2√3')">$2\\sqrt{3}$</span>
+                        <span class="chip" onclick="setInputValue('scale-len-input', '√3/2')">$\\frac{\\sqrt{3}}{2}$</span>
                     </div>
                 </div>`,
                 () => {
@@ -7613,6 +7735,305 @@
                     }
                 }
             );
+            setTimeout(() => updateLiveMathPreview('scale-len-input', 'scale-len-preview', true), 20);
+        }
+
+        function applySegmentLengthAdjustment(p1Id, p2Id, targetLen, options = {}) {
+            const p1 = geoState.points.find(p => p.id === p1Id && !p.hidden);
+            const p2 = geoState.points.find(p => p.id === p2Id && !p.hidden);
+            if (!p1 || !p2 || p1.id === p2.id || !(targetLen > 0) || !isFinite(targetLen)) return false;
+
+            const scaleInfo = getMeasureScaleInfo();
+            const prevScaleFactor = scaleInfo ? scaleInfo.scale : 1;
+
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const dz = p2.z - p1.z;
+            const rawDist = Math.hypot(dx, dy, dz);
+            const ux = rawDist > 1e-8 ? dx / rawDist : 1;
+            const uy = rawDist > 1e-8 ? dy / rawDist : 0;
+            const uz = rawDist > 1e-8 ? dz / rawDist : 0;
+
+            const targetWorldDist = targetLen / prevScaleFactor;
+            const newX = p1.x + ux * targetWorldDist;
+            const newY = p1.y + uy * targetWorldDist;
+            const newZ = p1.z + uz * targetWorldDist;
+
+            if (!isFinite(newX) || !isFinite(newY) || !isFinite(newZ)) return false;
+
+            saveHistory();
+
+            p2.x = newX;
+            p2.y = newY;
+            p2.z = newZ;
+
+            // Cập nhật rule của điểm thứ 2 để recomputeAllDependentGeometry() bảo toàn vị trí mới
+            let updatedRule = null;
+            if (p2.rule && p2.rule.type === 'onEdge') {
+                const edgeSeg = geoState.segments.find(s => s.id === p2.rule.segId);
+                if (edgeSeg) {
+                    const e1 = geoState.points.find(p => p.id === edgeSeg.p1Id);
+                    const e2 = geoState.points.find(p => p.id === edgeSeg.p2Id);
+                    if (e1 && e2 && e1.id !== p2.id && e2.id !== p2.id) {
+                        const vE1 = new THREE.Vector3(e1.x, e1.y, e1.z);
+                        const vE2 = new THREE.Vector3(e2.x, e2.y, e2.z);
+                        const vNew = new THREE.Vector3(newX, newY, newZ);
+                        const vEdge = new THREE.Vector3().subVectors(vE2, vE1);
+                        const lenSq = vEdge.lengthSq();
+                        if (lenSq > 1e-8) {
+                            const tProj = new THREE.Vector3().subVectors(vNew, vE1).dot(vEdge) / lenSq;
+                            const projPt = vE1.clone().addScaledVector(vEdge, tProj);
+                            if (projPt.distanceTo(vNew) < 1e-3) {
+                                updatedRule = { type: 'onEdge', segId: edgeSeg.id, t: tProj };
+                            }
+                        }
+                    }
+                }
+            } else if (p2.rule && p2.rule.type === 'homothety' && p2.rule.aId === p1.id) {
+                const refB = geoState.points.find(p => p.id === p2.rule.bId);
+                if (refB && refB.id !== p2.id) {
+                    const refDist = Math.hypot(refB.x - p1.x, refB.y - p1.y, refB.z - p1.z);
+                    if (refDist > 1e-7) {
+                        const sign = ((refB.x - p1.x) * ux + (refB.y - p1.y) * uy + (refB.z - p1.z) * uz) >= 0 ? 1 : -1;
+                        updatedRule = {
+                            type: 'homothety',
+                            aId: p1.id,
+                            bId: refB.id,
+                            k: sign * (targetWorldDist / refDist)
+                        };
+                    }
+                }
+            }
+
+            if (!updatedRule) {
+                updatedRule = { type: Math.abs(newY) < 1e-4 ? 'plane' : '3d' };
+            }
+            p2.rule = updatedRule;
+
+            recomputeAllDependentGeometry();
+
+            // Đảm bảo quy chuẩn độ dài (measureScale) giữ nguyên hệ số tỉ lệ k (hoặc khởi tạo nếu chưa có)
+            const ms = geoState.measureScale;
+            if (!ms || !ms.p1Id || !ms.p2Id || !(ms.value > 0)) {
+                geoState.measureScale = { p1Id: p1.id, p2Id: p2.id, value: targetLen };
+            } else {
+                const isSameRefPair =
+                    (ms.p1Id === p1.id && ms.p2Id === p2.id) ||
+                    (ms.p1Id === p2.id && ms.p2Id === p1.id);
+                if (isSameRefPair) {
+                    geoState.measureScale.value = targetLen;
+                } else {
+                    const refP1 = geoState.points.find(p => p.id === ms.p1Id && !p.hidden);
+                    const refP2 = geoState.points.find(p => p.id === ms.p2Id && !p.hidden);
+                    if (refP1 && refP2) {
+                        const newRefRawDist = Math.hypot(refP2.x - refP1.x, refP2.y - refP1.y, refP2.z - refP1.z);
+                        if (newRefRawDist > 1e-6) {
+                            geoState.measureScale.value = prevScaleFactor * newRefRawDist;
+                        }
+                    }
+                }
+            }
+
+            if (options.autoConnectSegment) {
+                addSegmentAndCheckClosedLoops(p1.id, p2.id, false);
+            }
+
+            if (options.showMeasureBadge) {
+                if (!geoState.measurements) geoState.measurements = [];
+                const alreadyMeasured = geoState.measurements.some(m =>
+                    m.category === 'dist' &&
+                    m.subType === 'point-point' &&
+                    ((m.p1Id === p1.id && m.p2Id === p2.id) || (m.p1Id === p2.id && m.p2Id === p1.id))
+                );
+                if (!alreadyMeasured) {
+                    geoState.measurements.push({
+                        id: 'meas_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                        category: 'dist',
+                        subType: 'point-point',
+                        p1Id: p1.id,
+                        p2Id: p2.id
+                    });
+                }
+                isMeasurePanelDismissed = false;
+            }
+
+            selectedPointIds = [];
+            measurePendingItems = [];
+            updateSceneFromState();
+            updateAnimationControlPanel();
+            return true;
+        }
+
+        function openSetSegmentLengthModal(initialP1Id = null, initialP2Id = null) {
+            isMeasurePanelDismissed = false;
+            const visiblePts = geoState.points.filter(p => !p.hidden);
+            if (visiblePts.length < 2) {
+                const guideSpan = document.getElementById('guide-span');
+                if (guideSpan) {
+                    guideSpan.innerHTML = `<span style="color:#fbbf24;">${t('Cần ít nhất 2 điểm trên hình để điều chỉnh độ dài đoạn thẳng!', 'At least 2 points are required to adjust segment length!')}</span>`;
+                }
+                return;
+            }
+
+            let activeP1Id = initialP1Id && visiblePts.some(p => p.id === initialP1Id) ? initialP1Id : visiblePts[0].id;
+            let activeP2Id = initialP2Id && visiblePts.some(p => p.id === initialP2Id) && initialP2Id !== activeP1Id
+                ? initialP2Id
+                : (visiblePts.find(p => p.id !== activeP1Id)?.id || visiblePts[1].id);
+
+            const getPairCurrentInfo = (id1, id2) => {
+                const pt1 = geoState.points.find(p => p.id === id1);
+                const pt2 = geoState.points.find(p => p.id === id2);
+                const scaleInfo = getMeasureScaleInfo();
+                const k = scaleInfo ? scaleInfo.scale : 1;
+                const rawDist = (pt1 && pt2) ? Math.hypot(pt2.x - pt1.x, pt2.y - pt1.y, pt2.z - pt1.z) : 0;
+                const curCalibrated = rawDist * k;
+                return { pt1, pt2, scaleInfo, k, rawDist, curCalibrated };
+            };
+
+            const initInfo = getPairCurrentInfo(activeP1Id, activeP2Id);
+            const defaultInputVal = initInfo.curCalibrated > 1e-4 ? formatMeasureNumber(initInfo.curCalibrated, 4) : '3';
+            const hasExistingSeg = geoState.segments.some(s =>
+                !s.hidden && !s.isLine &&
+                ((s.p1Id === activeP1Id && s.p2Id === activeP2Id) || (s.p1Id === activeP2Id && s.p2Id === activeP1Id))
+            );
+
+            window.refreshSetSegLengthModalHeader = () => {
+                const sel1 = document.getElementById('set-len-p1-select');
+                const sel2 = document.getElementById('set-len-p2-select');
+                if (sel1 && sel2) {
+                    activeP1Id = sel1.value;
+                    activeP2Id = sel2.value;
+                }
+                const info = getPairCurrentInfo(activeP1Id, activeP2Id);
+                if (!info.pt1 || !info.pt2) return;
+                const dirDescEl = document.getElementById('set-len-dir-desc');
+                const scaleDescEl = document.getElementById('set-len-scale-desc');
+                if (dirDescEl) {
+                    dirDescEl.innerHTML = t(
+                        `Giữ cố định <b>$${info.pt1.name}$</b> $\\to$ Dịch chuyển <b>$${info.pt2.name}$</b> theo hướng $\\overrightarrow{${info.pt1.name}${info.pt2.name}}$`,
+                        `Fix <b>$${info.pt1.name}$</b> $\\to$ Move <b>$${info.pt2.name}$</b> along ray $\\overrightarrow{${info.pt1.name}${info.pt2.name}}$`
+                    );
+                    renderMathInElementSafe(dirDescEl);
+                }
+                if (scaleDescEl) {
+                    const scaleStr = info.scaleInfo
+                        ? `${t('Quy chuẩn:', 'Scale:')} <b>$${info.scaleInfo.name} = ${formatMeasureNumber(info.scaleInfo.value)}$</b>`
+                        : `${t('Quy chuẩn:', 'Scale:')} <b>${t('Tự động theo độ dài nhập', 'Auto-calibrate')}</b>`;
+                    scaleDescEl.innerHTML = `${scaleStr} &nbsp;|&nbsp; ${t('Hiện tại:', 'Current:')} <b>$${info.pt1.name}${info.pt2.name} \\approx ${formatMeasureNumber(info.curCalibrated)}$</b>`;
+                    renderMathInElementSafe(scaleDescEl);
+                }
+            };
+
+            window.swapSetSegLengthPoints = () => {
+                const sel1 = document.getElementById('set-len-p1-select');
+                const sel2 = document.getElementById('set-len-p2-select');
+                if (!sel1 || !sel2) return;
+                const tmp = sel1.value;
+                sel1.value = sel2.value;
+                sel2.value = tmp;
+                window.refreshSetSegLengthModalHeader();
+            };
+
+            const buildPtOpts = (selId) => visiblePts.map(p =>
+                `<option value="${p.id}" ${p.id === selId ? 'selected' : ''}>${t('Điểm', 'Point')} ${p.name}</option>`
+            ).join('');
+
+            openModal(
+                t(
+                    `Điều chỉnh độ dài đoạn thẳng theo quy chuẩn`,
+                    `Adjust Segment Length (Calibrated)`
+                ),
+                `<div class="seg-len-info-box">
+                    <div class="seg-len-dir-row">
+                        <span id="set-len-dir-desc"></span>
+                        <button type="button" class="seg-len-swap-btn" onclick="window.swapSetSegLengthPoints()" title="${t('Đổi thứ tự: đảo điểm cố định và điểm dịch chuyển', 'Swap fixed point and moving point')}">
+                            ⇄ ${t('Đổi chiều', 'Swap')}
+                        </button>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                        <div>
+                            <label style="font-size:11.5px; color:#64748b; margin-bottom:3px; display:block;">${t('Điểm 1 (Cố định):', 'Point 1 (Fixed):')}</label>
+                            <select id="set-len-p1-select" onchange="window.refreshSetSegLengthModalHeader()">${buildPtOpts(activeP1Id)}</select>
+                        </div>
+                        <div>
+                            <label style="font-size:11.5px; color:#64748b; margin-bottom:3px; display:block;">${t('Điểm 2 (Dịch chuyển):', 'Point 2 (Moves):')}</label>
+                            <select id="set-len-p2-select" onchange="window.refreshSetSegLengthModalHeader()">${buildPtOpts(activeP2Id)}</select>
+                        </div>
+                    </div>
+                    <div id="set-len-scale-desc" style="font-size:12px; color:#0f766e; padding-top:2px;"></div>
+                </div>
+                <div class="modal-field">
+                    <label>${t(
+                        'Nhập độ dài cần đặt (hỗ trợ phân số & số vô tỉ như $\\sqrt{2}, 2\\sqrt{3}, \\frac{\\sqrt{3}}{2}, a\\sqrt{2}$):',
+                        'Enter target length (supports fractions & irrationals like $\\sqrt{2}, 2\\sqrt{3}, \\frac{\\sqrt{3}}{2}$):'
+                    )}</label>
+                    <input type="text" id="set-seg-len-input" value="${defaultInputVal}" oninput="updateLiveMathPreview('set-seg-len-input', 'set-seg-len-preview', true)">
+                    <div class="math-live-preview" id="set-seg-len-preview"></div>
+                    <div class="preset-chips">
+                        <span class="chip sym-chip" onclick="insertSymbolIntoInput('set-seg-len-input', '√', 'set-seg-len-preview', true)">+ √</span>
+                        <span class="chip sym-chip" onclick="insertSymbolIntoInput('set-seg-len-input', 'sqrt()', 'set-seg-len-preview', true)">+ sqrt()</span>
+                        <span class="chip sym-chip" onclick="insertSymbolIntoInput('set-seg-len-input', 'π', 'set-seg-len-preview', true)">+ π</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '1')">1</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '2')">2</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '3')">3</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '4')">4</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '5')">5</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '√2')">$\\sqrt{2}$</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '√3')">$\\sqrt{3}$</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '√5')">$\\sqrt{5}$</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '2√2')">$2\\sqrt{2}$</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '2√3')">$2\\sqrt{3}$</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '3√2')">$3\\sqrt{2}$</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '√2/2')">$\\frac{\\sqrt{2}}{2}$</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '√3/2')">$\\frac{\\sqrt{3}}{2}$</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '√3/3')">$\\frac{\\sqrt{3}}{3}$</span>
+                        <span class="chip" onclick="setInputValue('set-seg-len-input', '(√5+1)/2')">$\\frac{\\sqrt{5}+1}{2}$</span>
+                    </div>
+                </div>
+                <div class="modal-field" style="margin-bottom:4px;">
+                    <label class="pt-opt-check-row" for="set-seg-len-auto-connect" style="margin-top:4px;">
+                        <input type="checkbox" id="set-seg-len-auto-connect" ${!hasExistingSeg ? 'checked' : 'checked'}>
+                        <span>${t('Nối đoạn thẳng giữa 2 điểm (nếu chưa có)', 'Connect segment between the 2 points (if not yet connected)')}</span>
+                    </label>
+                    <label class="pt-opt-check-row" for="set-seg-len-show-measure">
+                        <input type="checkbox" id="set-seg-len-show-measure" checked>
+                        <span>${t('Hiển thị nhãn số đo độ dài đoạn thẳng trên hình 3D', 'Display calibrated segment length badge in 3D')}</span>
+                    </label>
+                </div>`,
+                () => {
+                    const p1Sel = document.getElementById('set-len-p1-select')?.value || activeP1Id;
+                    const p2Sel = document.getElementById('set-len-p2-select')?.value || activeP2Id;
+                    const rawExpr = document.getElementById('set-seg-len-input')?.value || '';
+                    const targetLen = parsePositiveMeasureInput(rawExpr);
+                    const autoConnectSegment = Boolean(document.getElementById('set-seg-len-auto-connect')?.checked);
+                    const showMeasureBadge = Boolean(document.getElementById('set-seg-len-show-measure')?.checked);
+
+                    if (p1Sel && p2Sel && p1Sel !== p2Sel && !isNaN(targetLen) && targetLen > 0) {
+                        const pt1 = geoState.points.find(p => p.id === p1Sel);
+                        const pt2 = geoState.points.find(p => p.id === p2Sel);
+                        const ok = applySegmentLengthAdjustment(p1Sel, p2Sel, targetLen, {
+                            autoConnectSegment,
+                            showMeasureBadge
+                        });
+                        if (ok && pt1 && pt2) {
+                            const guideSpan = document.getElementById('guide-span');
+                            if (guideSpan) {
+                                guideSpan.innerHTML = t(
+                                    `Đã dịch chuyển điểm <b>$${pt2.name}$</b> theo hướng $\\overrightarrow{${pt1.name}${pt2.name}}$ để độ dài <b>$${pt1.name}${pt2.name} = ${formatMeasureNumber(targetLen)}$</b> ( nhập: <code>${rawExpr.trim()}</code> )!`,
+                                    `Moved point <b>$${pt2.name}$</b> along ray $\\overrightarrow{${pt1.name}${pt2.name}}$ so that <b>$${pt1.name}${pt2.name} = ${formatMeasureNumber(targetLen)}$</b> ( input: <code>${rawExpr.trim()}</code> )!`
+                                );
+                                renderMathInElementSafe(guideSpan);
+                            }
+                        }
+                    }
+                }
+            );
+            setTimeout(() => {
+                if (typeof window.refreshSetSegLengthModalHeader === 'function') {
+                    window.refreshSetSegLengthModalHeader();
+                }
+                updateLiveMathPreview('set-seg-len-input', 'set-seg-len-preview', true);
+            }, 20);
         }
 
         function openReferenceScaleModal(nextToolAfterSave = null) {
@@ -8065,6 +8486,48 @@
                     return;
                 }
                 openReferenceScaleModal();
+                return;
+            }
+
+            // 1b. Công cụ điều chỉnh độ dài của 1 đoạn thẳng theo quy chuẩn (set-seg-length)
+            // Chọn điểm thứ nhất (cố định) -> Chọn điểm thứ 2 (dịch chuyển theo hướng thứ tự đã chọn) -> Nhập độ dài cần set
+            if (currentTool === 'set-seg-length') {
+                if (!target) return;
+                if (target.type === 'intersection') {
+                    saveHistory();
+                    const newPtId = createNewPointFromTarget(target);
+                    target = { type: 'point', pointId: newPtId, pos: target.pos.clone() };
+                    updateSceneFromState();
+                }
+                if (target.type === 'point') {
+                    if (!selectedPointIds.includes(target.pointId)) {
+                        selectedPointIds.push(target.pointId);
+                    }
+                    if (selectedPointIds.length === 1) {
+                        const p1 = geoState.points.find(p => p.id === selectedPointIds[0]);
+                        if (guideSpan && p1) {
+                            guideSpan.innerHTML = t(
+                                `Đã chọn điểm thứ nhất <b>$${p1.name}$</b> (giữ cố định) $\\to$ Hãy chọn tiếp <b>điểm thứ 2 $B$</b> (điểm sẽ dịch chuyển theo hướng $\\overrightarrow{${p1.name}B}$)!`,
+                                `Selected Point 1 <b>$${p1.name}$</b> (fixed) $\\to$ Now select <b>Point 2 $B$</b> (which will move along ray $\\overrightarrow{${p1.name}B}$)!`
+                            );
+                            renderMathInElementSafe(guideSpan);
+                        }
+                        updateSceneFromState();
+                    } else if (selectedPointIds.length >= 2) {
+                        const [p1Id, p2Id] = selectedPointIds;
+                        selectedPointIds = [];
+                        updateSceneFromState();
+                        openSetSegmentLengthModal(p1Id, p2Id);
+                    }
+                    return;
+                }
+                if (target.type === 'edge' && target.p1Id && target.p2Id && selectedPointIds.length === 0) {
+                    const useRev = typeof target.t === 'number' && target.t > 0.5;
+                    const p1Id = useRev ? target.p2Id : target.p1Id;
+                    const p2Id = useRev ? target.p1Id : target.p2Id;
+                    openSetSegmentLengthModal(p1Id, p2Id);
+                    return;
+                }
                 return;
             }
 
@@ -8571,7 +9034,11 @@
 
         function setInputValue(inputId, val) {
             const el = document.getElementById(inputId);
-            if (el) el.value = val;
+            if (el) {
+                el.value = val;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.focus();
+            }
         }
 
         function createConeSolid(circleId, apexId) {
@@ -8861,8 +9328,8 @@
         function executeToolClickAction(event, precomputedTarget) {
             const target = precomputedTarget !== undefined ? precomputedTarget : computeSmartTarget(event);
 
-            // XỬ LÝ NHÓM CÔNG CỤ ĐO ĐẠC (QUY CHUẨN ĐỘ DÀI, ĐO KHOẢNG CÁCH, ĐO GÓC, ĐO DIỆN TÍCH, ĐO THỂ TÍCH)
-            if (['measure-scale', 'measure-dist', 'measure-angle', 'measure-area', 'measure-volume'].includes(currentTool)) {
+            // XỬ LÝ NHÓM CÔNG CỤ ĐO ĐẠC & ĐIỀU CHỈNH ĐỘ DÀI ĐOẠN THẲNG THEO QUY CHUẨN
+            if (['measure-scale', 'set-seg-length', 'measure-dist', 'measure-angle', 'measure-area', 'measure-volume'].includes(currentTool)) {
                 handleMeasurementPointerDown(target);
                 return;
             }
@@ -10024,7 +10491,7 @@
             selectedCircleIds = [];
             measurePendingItems = [];
             pendingPointerGesture = null;
-            if (['measure-scale', 'measure-dist', 'measure-angle', 'measure-area', 'measure-volume'].includes(tool)) {
+            if (['measure-scale', 'set-seg-length', 'measure-dist', 'measure-angle', 'measure-area', 'measure-volume'].includes(tool)) {
                 isMeasurePanelDismissed = false;
             }
             clearHelpers();
