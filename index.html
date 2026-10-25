@@ -4400,8 +4400,7 @@
             updateAnimationControlPanel();
         }
 
-        function getNextPointName(customPreferred = null) {
-            const usedNames = new Set(geoState.points.map(p => p.name));
+        function getNextPointNameFromSet(usedNames, customPreferred = null) {
             if (customPreferred && !usedNames.has(customPreferred)) return customPreferred;
             const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             for (let i = 0; i < alphabet.length; i++) {
@@ -4415,6 +4414,11 @@
                 }
                 idx++;
             }
+        }
+
+        function getNextPointName(customPreferred = null) {
+            const usedNames = new Set(geoState.points.map(p => p.name));
+            return getNextPointNameFromSet(usedNames, customPreferred);
         }
 
         function intersect3DSegmentsOrLines(segA, segB, ignoreExistingCheck = false) {
@@ -8885,6 +8889,85 @@
             }
         }
 
+        function refreshDependentObjectNames() {
+            (geoState.faces || []).forEach(f => {
+                f.name = '(' + f.pointIds.map(id => {
+                    const p = geoState.points.find(item => item.id === id);
+                    return p ? p.name : '';
+                }).join('') + ')';
+            });
+            (geoState.circles || []).forEach(c => {
+                if (c.mode === 'centerRadius') {
+                    const O = geoState.points.find(p => p.id === c.centerId);
+                    if (O) c.name = `(${O.name}, R=${c.radius})`;
+                } else if (c.mode === 'centerPt') {
+                    const O = geoState.points.find(p => p.id === c.centerId);
+                    const A = geoState.points.find(p => p.id === c.ptId);
+                    if (O && A) c.name = `(${O.name}, ${O.name}${A.name})`;
+                } else if (c.mode === 'threePts') {
+                    const A = geoState.points.find(p => p.id === c.p1Id);
+                    const B = geoState.points.find(p => p.id === c.p2Id);
+                    const C = geoState.points.find(p => p.id === c.p3Id);
+                    if (A && B && C) c.name = `(${A.name}${B.name}${C.name})`;
+                } else if (c.mode === 'parallelCircle') {
+                    const O2 = geoState.points.find(p => p.id === c.centerId);
+                    if (O2) {
+                        const k = c.ratio !== undefined ? c.ratio : 1;
+                        c.name = `(${O2.name}, ${k === 1 ? 'R' : k + 'R'})`;
+                    }
+                }
+            });
+            (geoState.solids || []).forEach(s => {
+                if (s.kind === 'cone') {
+                    const S = geoState.points.find(p => p.id === s.apexId);
+                    const cir = (geoState.circles || []).find(c => c.id === s.circleId);
+                    if (S && cir) s.name = `Nón (${S.name}, ${cir.name || 'C'})`;
+                } else if (s.kind === 'sphere' && s.centerId && s.ptId) {
+                    const I = geoState.points.find(p => p.id === s.centerId);
+                    const A = geoState.points.find(p => p.id === s.ptId);
+                    if (I && A) s.name = `Mặt cầu (${I.name}, ${I.name}${A.name})`;
+                } else if (s.kind === 'frustum') {
+                    const cir1 = (geoState.circles || []).find(c => c.id === s.circle1Id);
+                    const cir2 = (geoState.circles || []).find(c => c.id === s.circle2Id);
+                    if (cir1 && cir2 && s.name) {
+                        const prefix = s.name.startsWith('Hình trụ') ? 'Hình trụ' : 'Hình nón cụt';
+                        s.name = `${prefix} (${cir1.name || 'C1'}, ${cir2.name || 'C2'})`;
+                    }
+                }
+            });
+        }
+
+        function updatePointRenameCollisionHint(ptId) {
+            const pt = geoState.points.find(p => p.id === ptId);
+            const inputEl = document.getElementById('rename-input');
+            const hintEl = document.getElementById('rename-collision-hint');
+            if (!pt || !inputEl || !hintEl) return;
+            const newName = inputEl.value.trim();
+            if (!newName || newName === pt.name) {
+                hintEl.style.display = 'none';
+                hintEl.innerHTML = '';
+                return;
+            }
+            const collidingPts = geoState.points.filter(p => p.id !== pt.id && p.name === newName);
+            if (collidingPts.length === 0) {
+                hintEl.style.display = 'none';
+                hintEl.innerHTML = '';
+                return;
+            }
+            const usedNames = new Set(geoState.points.map(p => p.name));
+            usedNames.add(newName);
+            const previewMappings = collidingPts.map(otherPt => {
+                const rep = getNextPointNameFromSet(usedNames);
+                usedNames.add(rep);
+                return `<b>${formatPointNameHTML(otherPt.name)}</b> → <b>${formatPointNameHTML(rep)}</b>`;
+            }).join(', ');
+            hintEl.style.display = 'block';
+            hintEl.innerHTML = t(
+                `Tên <b>${formatPointNameHTML(newName)}</b> đang trùng với điểm hiện có → Điểm bị trùng sẽ tự động đổi thành tên mới (${previewMappings}).`,
+                `Name <b>${formatPointNameHTML(newName)}</b> collides with an existing point → Colliding point will automatically be renamed (${previewMappings}).`
+            );
+        }
+
         function applyPendingPointRenameInModal(pt) {
             if (!pt) return false;
             const newNameEl = document.getElementById('rename-input');
@@ -8892,13 +8975,42 @@
             const newName = newNameEl.value.trim();
             if (newName && newName !== pt.name) {
                 ensurePointModalHistory();
+                const oldName = pt.name;
+                const usedNames = new Set(geoState.points.map(p => p.name));
+                usedNames.add(newName);
+                const collidingPts = geoState.points.filter(p => p.id !== pt.id && p.name === newName);
+                const autoRenamedList = [];
+
                 pt.name = newName;
-                geoState.faces.forEach(f => {
-                    f.name = '(' + f.pointIds.map(id => {
-                        const p = geoState.points.find(item => item.id === id);
-                        return p ? p.name : '';
-                    }).join('') + ')';
+                collidingPts.forEach(otherPt => {
+                    const prevOtherName = otherPt.name;
+                    const uniqueReplacement = getNextPointNameFromSet(usedNames);
+                    otherPt.name = uniqueReplacement;
+                    usedNames.add(uniqueReplacement);
+                    autoRenamedList.push({
+                        id: otherPt.id,
+                        oldName: prevOtherName,
+                        newName: uniqueReplacement
+                    });
                 });
+
+                refreshDependentObjectNames();
+
+                const guideSpan = document.getElementById('guide-span');
+                if (guideSpan) {
+                    if (autoRenamedList.length > 0) {
+                        const autoDesc = autoRenamedList.map(item => `<b>${formatPointNameHTML(item.oldName)}</b> → <b>${formatPointNameHTML(item.newName)}</b>`).join(', ');
+                        guideSpan.innerHTML = t(
+                            `Đã đổi tên điểm <b>${formatPointNameHTML(oldName)}</b> thành <b>${formatPointNameHTML(newName)}</b>. Điểm bị trùng tên đã tự động đổi thành tên duy nhất (${autoDesc}).`,
+                            `Renamed point <b>${formatPointNameHTML(oldName)}</b> to <b>${formatPointNameHTML(newName)}</b>. Colliding point automatically renamed to unique name (${autoDesc}).`
+                        );
+                    } else {
+                        guideSpan.innerHTML = t(
+                            `Đã đổi tên điểm <b>${formatPointNameHTML(oldName)}</b> thành <b>${formatPointNameHTML(newName)}</b>.`,
+                            `Renamed point <b>${formatPointNameHTML(oldName)}</b> to <b>${formatPointNameHTML(newName)}</b>.`
+                        );
+                    }
+                }
                 return true;
             }
             return false;
@@ -8962,7 +9074,8 @@
                 t(`Tùy chỉnh điểm <b>${pt.name}</b>`, `Customize Point <b>${pt.name}</b>`),
                 `<div class="modal-field">
                     <label>${t('1. Đổi tên điểm (VD: S, M, A_1, M\', H, I):', '1. Rename point (e.g., S, M, A_1, M\', H, I):')}</label>
-                    <input type="text" id="rename-input" value="${pt.name}" maxlength="8">
+                    <input type="text" id="rename-input" value="${pt.name}" maxlength="8" oninput="updatePointRenameCollisionHint('${pt.id}')">
+                    <div id="rename-collision-hint" style="display:none;margin-top:6px;padding:6px 9px;border-radius:6px;background:#f0f9ff;border:1px solid #bae6fd;color:#0369a1;font-size:12px;line-height:1.4;"></div>
                 </div>
                 <div class="modal-field">
                     <label>${t('2. Thao tác nhanh:', '2. Quick actions:')}</label>
