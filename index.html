@@ -4310,43 +4310,205 @@
             recordTraces();
         }
 
-        function recordTraces() {
+        const pointTraceMap = new Map();
+        const segmentTraceMap = new Map();
+
+        function computeTracedSegmentEndpoints3D(p1, p2, isLine = false, lineHalfExtent = 30) {
+            if (!p1 || !p2) return null;
+            if (!Number.isFinite(p1.x) || !Number.isFinite(p1.y) || !Number.isFinite(p1.z) ||
+                !Number.isFinite(p2.x) || !Number.isFinite(p2.y) || !Number.isFinite(p2.z)) {
+                return null;
+            }
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const dz = p2.z - p1.z;
+            const len = Math.hypot(dx, dy, dz);
+            if (len < 1e-8) return null;
+            if (!isLine) {
+                return {
+                    v1: { x: p1.x, y: p1.y, z: p1.z },
+                    v2: { x: p2.x, y: p2.y, z: p2.z }
+                };
+            }
+            const extent = (Number.isFinite(lineHalfExtent) && lineHalfExtent > 0) ? lineHalfExtent : 30;
+            const ux = dx / len;
+            const uy = dy / len;
+            const uz = dz / len;
+            return {
+                v1: { x: p1.x - ux * extent, y: p1.y - uy * extent, z: p1.z - uz * extent },
+                v2: { x: p2.x + ux * extent, y: p2.y + uy * extent, z: p2.z + uz * extent }
+            };
+        }
+
+        function shouldRecordPointTraceSample3D(candidate, history, minStepDist = 0.035, duplicateTol = 0.04) {
+            if (!candidate || !Number.isFinite(candidate.x) || !Number.isFinite(candidate.y) || !Number.isFinite(candidate.z)) {
+                return false;
+            }
+            if (!history || history.length === 0) return true;
+            const last = history[history.length - 1];
+            if (Math.hypot(candidate.x - last.x, candidate.y - last.y, candidate.z - last.z) < minStepDist) {
+                return false;
+            }
+            if (duplicateTol > 0 && history.length > 3) {
+                for (let i = 0; i < history.length - 2; i++) {
+                    const pt = history[i];
+                    if (Math.hypot(candidate.x - pt.x, candidate.y - pt.y, candidate.z - pt.z) < duplicateTol) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function getNormalizedTraceChord3D(v1, v2) {
+            const mx = 0.5 * (v1.x + v2.x);
+            const my = 0.5 * (v1.y + v2.y);
+            const mz = 0.5 * (v1.z + v2.z);
+            const dx = v2.x - v1.x;
+            const dy = v2.y - v1.y;
+            const dz = v2.z - v1.z;
+            const len = Math.hypot(dx, dy, dz) || 1;
+            const halfLen = Math.min(len * 0.5, 3.0);
+            const ux = dx / len;
+            const uy = dy / len;
+            const uz = dz / len;
+            return {
+                q1: { x: mx - ux * halfLen, y: my - uy * halfLen, z: mz - uz * halfLen },
+                q2: { x: mx + ux * halfLen, y: my + uy * halfLen, z: mz + uz * halfLen }
+            };
+        }
+
+        function shouldRecordSegmentTraceSample3D(v1, v2, history, minStepDist = 0.045, duplicateTol = 0.075) {
+            if (!v1 || !v2) return false;
+            if (!Number.isFinite(v1.x) || !Number.isFinite(v1.y) || !Number.isFinite(v1.z) ||
+                !Number.isFinite(v2.x) || !Number.isFinite(v2.y) || !Number.isFinite(v2.z)) {
+                return false;
+            }
+            if (!history || history.length === 0) return true;
+            const cand = getNormalizedTraceChord3D(v1, v2);
+            const last = getNormalizedTraceChord3D(history[history.length - 1].v1, history[history.length - 1].v2);
+            const d1 = Math.hypot(cand.q1.x - last.q1.x, cand.q1.y - last.q1.y, cand.q1.z - last.q1.z);
+            const d2 = Math.hypot(cand.q2.x - last.q2.x, cand.q2.y - last.q2.y, cand.q2.z - last.q2.z);
+            if (Math.max(d1, d2) < minStepDist) {
+                return false;
+            }
+            if (duplicateTol > 0 && history.length > 3) {
+                for (let i = 0; i < history.length - 2; i++) {
+                    const item = getNormalizedTraceChord3D(history[i].v1, history[i].v2);
+                    const s1 = Math.hypot(cand.q1.x - item.q1.x, cand.q1.y - item.q1.y, cand.q1.z - item.q1.z);
+                    const s2 = Math.hypot(cand.q2.x - item.q2.x, cand.q2.y - item.q2.y, cand.q2.z - item.q2.z);
+                    if (Math.max(s1, s2) < duplicateTol) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function rebuildPointTraceCloudBuffer() {
             if (!tracePointsCloud) return;
-            let addedPointTrace = false;
+            tracePositions = [];
+            pointTraceMap.forEach(history => {
+                for (let i = 0; i < history.length; i++) {
+                    const pt = history[i];
+                    tracePositions.push(pt.x, pt.y, pt.z);
+                }
+            });
+            tracePointsCloud.geometry.setAttribute('position', new THREE.Float32BufferAttribute(tracePositions, 3));
+            tracePointsCloud.geometry.computeBoundingSphere();
+        }
+
+        function recordTraces() {
+            if (!tracePointsCloud || !traceLinesGroup) return;
+            let pointCloudDirty = false;
+
+            // 1. Dọn vết của các điểm đã tắt vết, bị ẩn hoặc bị xóa
+            Array.from(pointTraceMap.keys()).forEach(ptId => {
+                const pt = geoState.points.find(p => p.id === ptId);
+                if (!pt || !pt.trace || pt.hidden) {
+                    pointTraceMap.delete(ptId);
+                    pointCloudDirty = true;
+                }
+            });
+
+            // 2. Ghi nhận vị trí vết mới của các điểm đang bật vết
             geoState.points.forEach(pt => {
                 if (pt.trace && !pt.hidden && Number.isFinite(pt.x) && Number.isFinite(pt.y) && Number.isFinite(pt.z)) {
-                    const len = tracePositions.length;
-                    if (len < 3 || Math.hypot(tracePositions[len-3] - pt.x, tracePositions[len-2] - pt.y, tracePositions[len-1] - pt.z) > 0.04) {
-                        tracePositions.push(pt.x, pt.y, pt.z);
-                        addedPointTrace = true;
+                    let history = pointTraceMap.get(pt.id);
+                    if (!history) {
+                        history = [];
+                        pointTraceMap.set(pt.id, history);
+                    }
+                    const candidate = { x: pt.x, y: pt.y, z: pt.z };
+                    if (shouldRecordPointTraceSample3D(candidate, history, 0.035, 0.04)) {
+                        history.push(candidate);
+                        if (history.length > 2500) {
+                            history.shift();
+                        }
+                        pointCloudDirty = true;
                     }
                 }
             });
 
-            if (addedPointTrace) {
-                if (tracePositions.length > 15000) {
-                    tracePositions.splice(0, 300);
-                }
-                tracePointsCloud.geometry.setAttribute('position', new THREE.Float32BufferAttribute(tracePositions, 3));
-                tracePointsCloud.geometry.computeBoundingSphere();
+            if (pointCloudDirty) {
+                rebuildPointTraceCloudBuffer();
             }
 
+            // 3. Dọn vết của các đoạn/đường thẳng đã tắt vết, bị ẩn hoặc bị xóa
+            Array.from(segmentTraceMap.keys()).forEach(segId => {
+                const seg = geoState.segments.find(s => s.id === segId);
+                if (!seg || !seg.trace || seg.hidden) {
+                    const history = segmentTraceMap.get(segId) || [];
+                    history.forEach(item => {
+                        if (item.lineObj) {
+                            traceLinesGroup.remove(item.lineObj);
+                            if (item.lineObj.geometry) item.lineObj.geometry.dispose();
+                            if (item.lineObj.material) item.lineObj.material.dispose();
+                        }
+                    });
+                    segmentTraceMap.delete(segId);
+                }
+            });
+
+            // 4. Ghi nhận vị trí vết mới của các đoạn thẳng & đường thẳng (mở rộng đối xứng 2 phía nếu seg.isLine === true)
             geoState.segments.forEach(seg => {
                 if (seg.trace && !seg.hidden) {
                     const p1 = geoState.points.find(p => p.id === seg.p1Id);
                     const p2 = geoState.points.find(p => p.id === seg.p2Id);
-                    if (p1 && p2) {
+                    if (!p1 || !p2) return;
+                    const endpoints = computeTracedSegmentEndpoints3D(p1, p2, Boolean(seg.isLine), 30);
+                    if (!endpoints) return;
+
+                    let history = segmentTraceMap.get(seg.id);
+                    if (!history) {
+                        history = [];
+                        segmentTraceMap.set(seg.id, history);
+                    }
+
+                    if (shouldRecordSegmentTraceSample3D(endpoints.v1, endpoints.v2, history, 0.045, 0.075)) {
                         const lineGeo = new THREE.BufferGeometry().setFromPoints([
-                            new THREE.Vector3(p1.x, p1.y, p1.z),
-                            new THREE.Vector3(p2.x, p2.y, p2.z)
+                            new THREE.Vector3(endpoints.v1.x, endpoints.v1.y, endpoints.v1.z),
+                            new THREE.Vector3(endpoints.v2.x, endpoints.v2.y, endpoints.v2.z)
                         ]);
-                        const lineMat = new THREE.LineBasicMaterial({ color: 0x9333ea, transparent: true, opacity: 0.35 });
-                        traceLinesGroup.add(new THREE.Line(lineGeo, lineMat));
-                        if (traceLinesGroup.children.length > 250) {
-                            const oldest = traceLinesGroup.children[0];
-                            traceLinesGroup.remove(oldest);
-                            if (oldest.geometry) oldest.geometry.dispose();
-                            if (oldest.material) oldest.material.dispose();
+                        const lineMat = new THREE.LineBasicMaterial({
+                            color: 0x9333ea,
+                            transparent: true,
+                            opacity: 0.35,
+                            depthWrite: false
+                        });
+                        const lineObj = new THREE.Line(lineGeo, lineMat);
+                        lineObj.renderOrder = 3;
+                        lineObj.userData = { segId: seg.id };
+                        traceLinesGroup.add(lineObj);
+                        history.push({ v1: endpoints.v1, v2: endpoints.v2, lineObj });
+
+                        if (history.length > 1500) {
+                            const oldest = history.shift();
+                            if (oldest && oldest.lineObj) {
+                                traceLinesGroup.remove(oldest.lineObj);
+                                if (oldest.lineObj.geometry) oldest.lineObj.geometry.dispose();
+                                if (oldest.lineObj.material) oldest.lineObj.material.dispose();
+                            }
                         }
                     }
                 }
@@ -4354,6 +4516,8 @@
         }
 
         function clearAllTraces() {
+            pointTraceMap.clear();
+            segmentTraceMap.clear();
             tracePositions = [];
             if (tracePointsCloud) {
                 tracePointsCloud.geometry.setAttribute('position', new THREE.Float32BufferAttribute([], 3));
