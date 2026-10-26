@@ -189,17 +189,26 @@
             background: #1e40af; color: #dbeafe;
         }
 
-        /* Tooltip hiển thị hướng dẫn */
+        /* Tooltip hiển thị hướng dẫn (Gọn gàng, tự động xuống dòng khi dài) */
         #tool-tooltip {
             position: fixed; left: 74px; top: 0;
-            background: rgba(15, 23, 42, 0.96); color: #ffffff;
-            padding: 7px 12px; border-radius: 8px;
-            font-size: 13px; font-weight: 500;
+            background: rgba(15, 23, 42, 0.96); color: #f8fafc;
+            padding: 7px 11px; border-radius: 8px;
+            font-size: 12.5px; font-weight: 450;
+            line-height: 1.45;
+            max-width: min(320px, calc(100vw - 88px));
+            width: max-content;
+            white-space: normal;
+            overflow-wrap: break-word;
             pointer-events: none; z-index: 100;
             box-shadow: 0 6px 16px rgba(0,0,0,0.28);
-            display: none; white-space: nowrap;
+            display: none;
             border: 1px solid #334155;
             transition: opacity 0.1s;
+        }
+        #tool-tooltip b {
+            color: #38bdf8;
+            font-weight: 700;
         }
 
         /* Thanh Công cụ Thường trực (Quick Controls - Góc trên bên phải) */
@@ -891,10 +900,10 @@
             <button class="top-ctrl-btn" id="toggle-toolbar-btn" data-tip="<b>Ẩn / Hiện thanh công cụ dọc</b>" onclick="toggleToolbar()">
                 <svg class="svg-ic" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
-            <button class="top-ctrl-btn secondary" id="open-toolbar-settings-btn" data-tip="<b>Cài đặt công cụ:</b> Chọn công cụ thường trực, Ẩn/Hiện & Sắp xếp thanh công cụ" onclick="openToolbarSettingsModal()">
-                <svg class="svg-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <button class="top-ctrl-btn secondary" id="open-toolbar-settings-btn" data-tip="<b>Cài đặt công cụ:</b> Ghim, Ẩn/Hiện & Sắp xếp công cụ" onclick="openToolbarSettingsModal()">
+                <svg class="svg-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </button>
-            <button class="top-ctrl-btn secondary" id="open-style-size-btn" data-tip="<b>Kích thước Điểm & Độ dày Đường:</b> Điều chỉnh cỡ điểm và độ đậm nét vẽ" onclick="toggleStyleSizePopover()">
+            <button class="top-ctrl-btn secondary" id="open-style-size-btn" data-tip="<b>Cỡ Điểm & Nét vẽ:</b> Chỉnh kích thước điểm và độ dày đường" onclick="toggleStyleSizePopover()">
                 <svg class="svg-ic" viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.5" fill="currentColor"/><line x1="12" y1="7" x2="21" y2="7" stroke-width="1.8"/><circle cx="6" cy="17" r="4.2" fill="currentColor"/><line x1="13" y1="17" x2="21" y2="17" stroke-width="3.6"/></svg>
             </button>
         </div>
@@ -1387,24 +1396,24 @@
             'view': {
                 vi: {
                     name: 'Góc nhìn & Kéo điểm (Tự động theo chuột)',
-                    tip: '<b>Góc nhìn & Kéo điểm (Tự động theo chuột):</b> Kéo điểm để di chuyển điểm, kéo khoảng trống để xoay 3D, chuột phải để trượt, lăn chuột lên/xuống để phóng to/thu nhỏ',
+                    tip: '<b>Góc nhìn & Kéo điểm:</b> Kéo điểm để di chuyển, kéo nền trống để xoay 3D, lăn chuột để thu phóng',
                     guide: 'Chế độ: Xoay góc nhìn & Kéo điểm tự động (Kéo Điểm để di chuyển, kéo khoảng trống để xoay 3D, lăn chuột để Zoom, Double-click Điểm để đổi tên)'
                 },
                 en: {
                     name: 'View & Drag Point (Auto by Mouse)',
-                    tip: '<b>View & Drag Point (Auto by Mouse):</b> Drag a point to move it, drag empty space to rotate 3D view, right-drag to pan, scroll up/down to zoom in/out',
+                    tip: '<b>View & Drag Point:</b> Drag points to move, drag empty space to rotate 3D, scroll to zoom',
                     guide: 'Mode: Auto View & Drag Point (Drag any Point to move, drag empty space to rotate 3D, scroll wheel to Zoom, Double-click Point to rename)'
                 }
             },
             'move': {
                 vi: {
                     name: 'Kéo Điểm & Xoay Góc nhìn',
-                    tip: '<b>Kéo Điểm & Xoay Góc nhìn:</b> Kéo thả điểm thay đổi vị trí (Giữ Shift để nâng/hạ điểm 3D), kéo khoảng trống để xoay góc nhìn',
+                    tip: '<b>Kéo Điểm & Góc nhìn:</b> Kéo điểm để di chuyển (giữ Shift đổi độ cao $h$), kéo nền để xoay 3D',
                     guide: 'Kéo Điểm & Góc nhìn: Nhấn giữ chuột trái vào Điểm để kéo (Giữ phím Shift khi kéo điểm 3D để thay đổi riêng độ cao $h$), kéo khoảng trống để xoay 3D'
                 },
                 en: {
                     name: 'Drag Point & Rotate View',
-                    tip: '<b>Drag Point & Rotate View:</b> Drag points while preserving geometric constraints (Hold Shift to change 3D height), drag empty space to rotate view',
+                    tip: '<b>Drag Point & View:</b> Drag points to move (hold Shift for 3D height $h$), drag space to rotate',
                     guide: 'Drag Point & View: Left-drag a Point to move it (Hold Shift while dragging a 3D point to adjust height $h$), drag empty space to rotate 3D'
                 }
             },
@@ -1417,412 +1426,412 @@
                 en: { name: 'Reset Standard Camera View', tip: '<b>Reset Standard Camera View</b>' }
             },
             'toggle-face-tint': {
-                vi: { name: 'Bật / Tắt tô màu nhẹ bề mặt', tip: '<b>Bật / Tắt tô màu nhẹ bề mặt đa giác & khối tròn xoay</b>' },
-                en: { name: 'Toggle Surface Color Tint', tip: '<b>Toggle light color tint on polygon faces & solids of revolution</b>' }
+                vi: { name: 'Bật / Tắt tô màu nhẹ bề mặt', tip: '<b>Bật / Tắt tô màu bề mặt</b> (Đa giác & Khối tròn xoay)' },
+                en: { name: 'Toggle Surface Color Tint', tip: '<b>Toggle Surface Tint</b> (Polygons & Solids)' }
             },
             'style-size': {
-                vi: { name: 'Điều chỉnh kích thước Điểm / Đường', tip: '<b>Kích thước Điểm & Độ dày Đường:</b> Tùy chỉnh kích thước chấm điểm và độ đậm nhạt của đường vẽ' },
-                en: { name: 'Adjust Point Size & Line Width', tip: '<b>Point Size & Line Width:</b> Customize vertex dot size and stroke thickness' }
+                vi: { name: 'Điều chỉnh kích thước Điểm / Đường', tip: '<b>Cỡ Điểm & Nét vẽ:</b> Chỉnh kích thước điểm và độ dày đường' },
+                en: { name: 'Adjust Point Size & Line Width', tip: '<b>Point & Line Size:</b> Adjust vertex size and stroke width' }
             },
             'point2d': {
                 vi: {
                     name: 'Tạo Điểm (Bắt dính thông minh)',
-                    tip: '<b>Tạo Điểm:</b> Bắt dính Giao điểm, thuộc Cạnh, Đường tròn, Bề mặt tròn xoay (Nón, Trụ, Cầu), Mặt đa giác hoặc Mặt nền $(P)$',
+                    tip: '<b>Tạo Điểm:</b> Tự bắt dính giao điểm, cạnh, đường tròn, mặt đa giác & khối tròn xoay',
                     guide: 'Tạo điểm: Tự động <b>bắt dính Giao điểm</b>, thuộc cạnh, đường tròn, <b>bề mặt tròn xoay (Nón, Trụ, Nón cụt, Mặt cầu)</b>, mặt đa giác hoặc mặt nền $(P)$'
                 },
                 en: {
                     name: 'Create Point (Smart Snap)',
-                    tip: '<b>Create Point:</b> Auto-snap to Intersections, Edges, Circles, Surfaces of Revolution (Cone, Cylinder, Sphere), Faces, or Base Plane $(P)$',
+                    tip: '<b>Create Point:</b> Auto-snaps to intersections, edges, circles, faces & solids',
                     guide: 'Create Point: Auto-snaps to <b>Intersections</b>, edges, circles, <b>surfaces of revolution (Cone, Cylinder, Frustum, Sphere)</b>, polygon faces, or base plane $(P)$'
                 }
             },
             'point3d': {
                 vi: {
                     name: 'Tạo Điểm 3D ngoài mặt nền',
-                    tip: '<b>Tạo Điểm 3D:</b> Click chọn chân hình chiếu rồi kéo chuột lên/xuống để chọn độ cao (hoặc click trực tiếp lên Mặt nón, Mặt trụ, Mặt cầu)',
+                    tip: '<b>Tạo Điểm 3D:</b> Click chân hình chiếu rồi kéo lên/xuống để chọn độ cao $h$',
                     guide: 'Tạo điểm 3D: Click chọn chân hình chiếu và <b>giữ kéo chuột lên/xuống</b> để chọn độ cao (hoặc click trực tiếp lên <b>bề mặt Nón, Trụ, Cầu</b>)'
                 },
                 en: {
                     name: 'Create 3D Point Above/Below Plane',
-                    tip: '<b>Create 3D Point:</b> Click projection foot on plane and drag up/down to set height (or click directly on a Cone, Cylinder, or Sphere surface)',
+                    tip: '<b>Create 3D Point:</b> Click projection foot and drag up/down to set height $h$',
                     guide: 'Create 3D Point: Click projection foot and <b>hold & drag mouse up/down</b> to set altitude $h$ (or click directly on a <b>Cone, Cylinder, or Sphere surface</b>)'
                 }
             },
             'translate': {
                 vi: {
                     name: 'Phép tịnh tiến',
-                    tip: '<b>Phép tịnh tiến:</b> Chọn $M$, rồi chọn $A, B \\Rightarrow$ tạo $M\'$ sao cho $\\overrightarrow{MM\'} = \\overrightarrow{AB}$',
+                    tip: '<b>Phép tịnh tiến:</b> Chọn điểm $M$, rồi chọn $A, B$ ($\\overrightarrow{MM\'} = \\overrightarrow{AB}$)',
                     guide: 'Phép tịnh tiến: Chọn lần lượt Điểm gốc $M \\to$ Điểm $A \\to$ Điểm $B$ (Tạo $M\'$ phụ thuộc động thỏa $\\overrightarrow{MM\'} = \\overrightarrow{AB}$)'
                 },
                 en: {
                     name: 'Translation',
-                    tip: '<b>Translation:</b> Select $M$, then $A, B \\Rightarrow$ creates $M\'$ such that $\\overrightarrow{MM\'} = \\overrightarrow{AB}$',
+                    tip: '<b>Translation:</b> Select point $M$, then $A, B$ ($\\overrightarrow{MM\'} = \\overrightarrow{AB}$)',
                     guide: 'Translation: Select source point $M \\to$ point $A \\to$ point $B$ (Creates dynamic $M\'$ satisfying $\\overrightarrow{MM\'} = \\overrightarrow{AB}$)'
                 }
             },
             'homothety': {
                 vi: {
                     name: 'Phép vị tự',
-                    tip: '<b>Phép vị tự:</b> Chọn $A, B$ và nhập tỉ số $k \\Rightarrow$ tạo $M$ sao cho $\\overrightarrow{AM} = k\\overrightarrow{AB}$',
+                    tip: '<b>Phép vị tự:</b> Chọn tâm $A$, điểm $B$ và nhập tỉ số $k$ ($\\overrightarrow{AM} = k\\overrightarrow{AB}$)',
                     guide: 'Phép vị tự: Chọn tâm $A \\to$ Chọn điểm $B \\to$ Nhập tỉ số $k$ (Tạo $M$ phụ thuộc động thỏa $\\overrightarrow{AM} = k \\cdot \\overrightarrow{AB}$)'
                 },
                 en: {
                     name: 'Homothety (Dilation)',
-                    tip: '<b>Homothety:</b> Select center $A$, point $B$ and ratio $k \\Rightarrow$ creates $M$ with $\\overrightarrow{AM} = k\\overrightarrow{AB}$',
+                    tip: '<b>Homothety:</b> Select center $A$, point $B$ and ratio $k$ ($\\overrightarrow{AM} = k\\overrightarrow{AB}$)',
                     guide: 'Homothety: Select center $A \\to$ point $B \\to$ Enter ratio $k$ (Creates dynamic $M$ satisfying $\\overrightarrow{AM} = k \\cdot \\overrightarrow{AB}$)'
                 }
             },
             'rotate': {
                 vi: {
                     name: 'Phép quay',
-                    tip: '<b>Phép quay:</b> Chọn tâm $I$, điểm $A$, góc $\\alpha$, mặt quay $(P) \\Rightarrow \\widehat{AIM} = \\alpha$',
+                    tip: '<b>Phép quay:</b> Chọn tâm $I$, điểm $A$, góc $\\alpha$ và mặt quay $(P)$',
                     guide: 'Phép quay: Chọn tâm quay $I \\to$ Chọn điểm $A \\to$ Nhập góc quay $\\alpha$ và mặt phẳng quay $(P)$ ($\\widehat{AIM} = \\alpha$)'
                 },
                 en: {
                     name: 'Rotation',
-                    tip: '<b>Rotation:</b> Select center $I$, point $A$, angle $\\alpha$, rotation plane $(P) \\Rightarrow \\widehat{AIM} = \\alpha$',
+                    tip: '<b>Rotation:</b> Select center $I$, point $A$, angle $\\alpha$ and rotation plane $(P)$',
                     guide: 'Rotation: Select center $I \\to$ point $A \\to$ Enter angle $\\alpha$ and rotation plane $(P)$ ($\\widehat{AIM} = \\alpha$)'
                 }
             },
             'segment': {
                 vi: {
                     name: 'Đoạn thẳng',
-                    tip: '<b>Đoạn thẳng:</b> Chọn 2 điểm (Khép kín tự động tạo bề mặt đa giác)',
+                    tip: '<b>Đoạn thẳng:</b> Chọn 2 điểm (khép kín tự tạo mặt đa giác)',
                     guide: 'Đoạn thẳng: Chọn 2 điểm (Khi các đoạn thẳng khép kín sẽ tự động tạo bề mặt đa giác)'
                 },
                 en: {
                     name: 'Segment',
-                    tip: '<b>Segment:</b> Select 2 points (Closed coplanar loops automatically form polygon faces)',
+                    tip: '<b>Segment:</b> Select 2 points (closed loops auto-create faces)',
                     guide: 'Segment: Select 2 points (Closed coplanar loops automatically create polygon faces)'
                 }
             },
             'line': {
                 vi: {
                     name: 'Đường thẳng',
-                    tip: '<b>Đường thẳng:</b> Chọn 2 điểm để vẽ đường thẳng đi qua 2 điểm',
+                    tip: '<b>Đường thẳng:</b> Chọn 2 điểm để vẽ đường thẳng đi qua chúng',
                     guide: 'Đường thẳng: Chọn 2 điểm để vẽ đường thẳng đi qua 2 điểm đó'
                 },
                 en: {
                     name: 'Infinite Line',
-                    tip: '<b>Line:</b> Select 2 points to draw an infinite line passing through them',
+                    tip: '<b>Line:</b> Select 2 points to draw an infinite line',
                     guide: 'Line: Select 2 points to construct the line passing through them'
                 }
             },
             'parallel': {
                 vi: {
                     name: 'Đường thẳng song song',
-                    tip: '<b>Đường thẳng song song ($d\' \\parallel d$):</b> Chọn 1 điểm $M$ rồi click vào 1 đoạn/đường thẳng (hoặc chọn 2 điểm $A, B$)',
+                    tip: '<b>Đường song song ($d\' \\parallel d$):</b> Chọn điểm $M$ rồi chọn đường/đoạn mẫu',
                     guide: 'Đường thẳng song song ($d\' \\parallel d$): Chọn điểm $M \\to$ Click vào <b>Đoạn/Đường thẳng mẫu</b> (hoặc chọn tiếp 2 điểm $A, B$)'
                 },
                 en: {
                     name: 'Parallel Line',
-                    tip: '<b>Parallel Line ($d\' \\parallel d$):</b> Select point $M$ then click a Segment/Line (or select 2 points $A, B$)',
+                    tip: '<b>Parallel Line ($d\' \\parallel d$):</b> Select point $M$ then click a reference line/segment',
                     guide: 'Parallel Line ($d\' \\parallel d$): Select point $M \\to$ Click a <b>reference Segment/Line</b> (or select 2 points $A, B$)'
                 }
             },
             'perp': {
                 vi: {
                     name: 'Đường thẳng vuông góc',
-                    tip: '<b>Đường thẳng vuông góc ($d\' \\perp d$ hoặc $d\' \\perp (P)$):</b> Chọn điểm $M$ rồi click vào Đoạn/Đường thẳng hoặc Bề mặt đa giác',
+                    tip: '<b>Đường vuông góc ($d\' \\perp d, (P)$):</b> Chọn điểm $M$ rồi chọn đường hoặc mặt phẳng',
                     guide: 'Đường thẳng vuông góc ($d\' \\perp d$ hoặc $d\' \\perp (P)$): Chọn điểm $M \\to$ Click vào <b>Đoạn/Đường thẳng</b> hoặc <b>Bề mặt đa giác</b> (tự dựng chân đường cao $H$)'
                 },
                 en: {
                     name: 'Perpendicular Line',
-                    tip: '<b>Perpendicular Line ($d\' \\perp d$ or $d\' \\perp (P)$):</b> Select point $M$ then click a Segment/Line or Polygon Face',
+                    tip: '<b>Perpendicular Line ($d\' \\perp d, (P)$):</b> Select point $M$ then click a line or face',
                     guide: 'Perpendicular Line ($d\' \\perp d$ or $d\' \\perp (P)$): Select point $M \\to$ Click a <b>Segment/Line</b> or <b>Polygon Face</b> (auto-constructs foot $H$)'
                 }
             },
             'intersect-surfaces': {
                 vi: {
                     name: 'Giao tuyến của 2 mặt (Mặt phẳng / Mặt tròn xoay)',
-                    tip: '<b>Giao tuyến của 2 mặt:</b> Click chọn <b>Mặt thứ 1</b> rồi click <b>Mặt thứ 2</b> (Hỗ trợ Mặt phẳng đa giác, Mặt nền $(P)$, Hình tròn, Mặt cầu, Hình nón, Hình trụ / Nón cụt)',
-                    guide: 'Giao tuyến của 2 mặt: Click chọn <b>Mặt thứ nhất</b> (Mặt phẳng đa giác, Mặt nền $(P)$, Hình tròn, Mặt cầu, Mặt nón, Mặt trụ) $\\to$ Click chọn <b>Mặt thứ hai</b>'
+                    tip: '<b>Giao tuyến 2 mặt:</b> Chọn Mặt 1 rồi Mặt 2 (click bề mặt, hoặc chọn 3 điểm / 1 điểm + 1 đường / 2 đường)',
+                    guide: 'Giao tuyến 2 mặt: Xác định <b>Mặt thứ nhất</b> (Click bề mặt / khối tròn xoay, hoặc chọn <b>3 điểm</b>, hoặc <b>1 điểm + 1 đường</b>, hoặc <b>2 đường đồng phẳng</b>) $\\to$ Xác định <b>Mặt thứ hai</b>'
                 },
                 en: {
                     name: 'Intersection of 2 Surfaces (Planes / Solids)',
-                    tip: '<b>Intersection of 2 Surfaces:</b> Click <b>Surface 1</b> then <b>Surface 2</b> (Supports Polygon Faces, Base Plane $(P)$, Disks, Spheres, Cones, Cylinders / Frustums)',
-                    guide: 'Intersection of 2 Surfaces: Click <b>First Surface</b> (Polygon Face, Base Plane $(P)$, Disk, Sphere, Cone, Cylinder) $\\to$ Click <b>Second Surface</b>'
+                    tip: '<b>Intersection of 2 Surfaces:</b> Select Surface 1 then Surface 2 (click surface, or pick 3 pts / pt + line / 2 lines)',
+                    guide: 'Intersection of 2 Surfaces: Define <b>First Surface</b> (Click surface/solid, or select <b>3 points</b>, <b>1 point + 1 line</b>, or <b>2 coplanar lines</b>) $\\to$ Define <b>Second Surface</b>'
                 }
             },
             'poly-tri-special': {
                 vi: {
                     name: 'Vẽ Tam giác đặc biệt',
-                    tip: '<b>Vẽ Tam giác đặc biệt:</b> Chọn 2 đỉnh cạnh đáy $A, B \\Rightarrow$ Chọn Tam giác Đều, Vuông cân, Cân hoặc Vuông',
+                    tip: '<b>Tam giác đặc biệt:</b> Chọn 2 đỉnh đáy $A, B \\to$ chọn loại (Đều, Vuông, Cân)',
                     guide: 'Tam giác đặc biệt: Chọn 2 đỉnh cạnh đáy $A, B \\to$ Chọn <b>Tam giác đều, Vuông cân, Cân hoặc Vuông</b> (Mặc định tạo bề mặt)'
                 },
                 en: {
                     name: 'Special Triangle',
-                    tip: '<b>Special Triangle:</b> Select 2 base vertices $A, B \\Rightarrow$ Choose Equilateral, Right Isosceles, Isosceles, or Right Triangle',
+                    tip: '<b>Special Triangle:</b> Select base vertices $A, B \\to$ choose Equilateral, Right, or Isosceles',
                     guide: 'Special Triangle: Select 2 base vertices $A, B \\to$ Choose <b>Equilateral, Right Isosceles, Isosceles, or Right Triangle</b>'
                 }
             },
             'poly-square': {
                 vi: {
                     name: 'Hình vuông',
-                    tip: '<b>Hình vuông:</b> Chọn 2 điểm cạnh đáy trên nền ($C, D$ tự động phụ thuộc vào $A, B$)',
+                    tip: '<b>Hình vuông:</b> Chọn 2 đỉnh cạnh đáy $A, B$ (tự dựng $C, D$)',
                     guide: 'Hình vuông: Chọn 2 điểm cạnh đáy $A, B \\Rightarrow$ Tự dựng $C, D$ luôn bảo toàn tính chất Hình vuông khi kéo $A, B$'
                 },
                 en: {
                     name: 'Square',
-                    tip: '<b>Square:</b> Select 2 base vertices $A, B$ ($C, D$ dynamically depend on $A, B$)',
+                    tip: '<b>Square:</b> Select 2 base vertices $A, B$ (auto-constructs $C, D$)',
                     guide: 'Square: Select 2 base vertices $A, B \\Rightarrow$ Auto-constructs $C, D$ preserving Square properties when dragging $A, B$'
                 }
             },
             'poly-rect': {
                 vi: {
                     name: 'Hình chữ nhật',
-                    tip: '<b>Hình chữ nhật:</b> Chọn 2 điểm cạnh đáy $A, B$ và 1 điểm định chiều rộng',
+                    tip: '<b>Hình chữ nhật:</b> Chọn 2 đỉnh đáy $A, B$ và 1 điểm định chiều rộng',
                     guide: 'Hình chữ nhật: Chọn 2 điểm cạnh đáy $A, B$ và 1 điểm định độ rộng $\\Rightarrow$ Luôn bảo toàn tính chất Hình chữ nhật'
                 },
                 en: {
                     name: 'Rectangle',
-                    tip: '<b>Rectangle:</b> Select 2 base vertices $A, B$ and 1 point defining width',
+                    tip: '<b>Rectangle:</b> Select 2 base vertices $A, B$ and 1 point for width',
                     guide: 'Rectangle: Select 2 base vertices $A, B$ and 1 width point $\\Rightarrow$ Preserves Rectangle properties dynamically'
                 }
             },
             'poly-para': {
                 vi: {
                     name: 'Hình bình hành',
-                    tip: '<b>Hình bình hành:</b> Chọn 3 đỉnh $A, B, C \\Rightarrow$ tự dựng $D$ phụ thuộc vào $A, B, C$',
+                    tip: '<b>Hình bình hành:</b> Chọn 3 đỉnh $A, B, C$ (tự dựng đỉnh $D$)',
                     guide: 'Hình bình hành: Chọn 3 đỉnh $A, B, C \\Rightarrow$ Tự dựng $D$ luôn bảo toàn tính chất Hình bình hành khi kéo $A, B, C$'
                 },
                 en: {
                     name: 'Parallelogram',
-                    tip: '<b>Parallelogram:</b> Select 3 vertices $A, B, C \\Rightarrow$ auto-constructs $D$ dependent on $A, B, C$',
+                    tip: '<b>Parallelogram:</b> Select 3 vertices $A, B, C$ (auto-constructs $D$)',
                     guide: 'Parallelogram: Select 3 vertices $A, B, C \\Rightarrow$ Auto-constructs $D$ preserving Parallelogram properties'
                 }
             },
             'poly-trap': {
                 vi: {
                     name: 'Hình thang',
-                    tip: '<b>Hình thang:</b> Chọn 3 đỉnh $A, B, C$ và tỉ số đáy $\\Rightarrow$ tự dựng $D$ song song $AB$',
+                    tip: '<b>Hình thang:</b> Chọn 3 đỉnh $A, B, C$ và nhập tỉ số hai đáy',
                     guide: 'Hình thang: Chọn 3 đỉnh $A, B, C \\Rightarrow$ Nhập tỉ số đáy để dựng đỉnh $D$ luôn song song $AB$'
                 },
                 en: {
                     name: 'Trapezoid',
-                    tip: '<b>Trapezoid:</b> Select 3 vertices $A, B, C$ and base ratio $\\Rightarrow$ auto-constructs $D$ parallel to $AB$',
+                    tip: '<b>Trapezoid:</b> Select 3 vertices $A, B, C$ and enter base ratio',
                     guide: 'Trapezoid: Select 3 vertices $A, B, C \\Rightarrow$ Enter base ratio to construct $D$ parallel to $AB$'
                 }
             },
             'poly-free': {
                 vi: {
                     name: 'Đa giác N đỉnh (Tam giác thường)',
-                    tip: '<b>Đa giác $N$ đỉnh (hoặc Tam giác thường):</b> Chọn các đỉnh liên tiếp, click lại đỉnh đầu để đóng kín',
+                    tip: '<b>Đa giác $N$ đỉnh / Tam giác:</b> Chọn các đỉnh liên tiếp, click lại đỉnh đầu để khép kín',
                     guide: 'Đa giác $N$ đỉnh (hoặc Tam giác thường): Chọn liên tiếp các đỉnh, sau đó <b>click lại đỉnh đầu tiên</b> để khép kín'
                 },
                 en: {
                     name: 'N-gon (General Polygon / Triangle)',
-                    tip: '<b>N-gon / Triangle:</b> Select vertices in order, then click the first vertex again to close the polygon',
+                    tip: '<b>N-gon / Triangle:</b> Select vertices in order, click the first vertex again to close',
                     guide: 'N-gon / Triangle: Select consecutive vertices, then <b>click the first vertex again</b> to close the face'
                 }
             },
             'circle-center': {
                 vi: {
                     name: 'Đường tròn (Tâm & Điểm / Bán kính)',
-                    tip: '<b>Đường tròn (Tâm & Điểm / Bán kính):</b> Chọn tâm $O$ rồi chọn điểm $A$ đi qua (hoặc chọn mặt phẳng & bán kính)',
+                    tip: '<b>Đường tròn (Tâm & Bán kính):</b> Chọn tâm $O$ rồi chọn điểm đi qua (hoặc mặt phẳng & $R$)',
                     guide: 'Đường tròn (Tâm & Điểm / Bán kính): Chọn tâm $O \\to$ Chọn <b>điểm $A$ trên đường tròn</b> (hoặc click vào mặt phẳng để nhập bán kính $R$)'
                 },
                 en: {
                     name: 'Circle (Center & Point / Radius)',
-                    tip: '<b>Circle (Center & Point / Radius):</b> Select center $O$ then point $A$ on circle (or click a plane to enter radius $R$)',
+                    tip: '<b>Circle (Center & Radius):</b> Select center $O$ then a point on circle (or plane & $R$)',
                     guide: 'Circle (Center & Point / Radius): Select center $O \\to$ Select <b>point $A$ on circle</b> (or click a plane to enter radius $R$)'
                 }
             },
             'circle-3pts': {
                 vi: {
                     name: 'Đường tròn ngoại tiếp qua 3 điểm',
-                    tip: '<b>Đường tròn đi qua 3 điểm:</b> Chọn 3 điểm không thẳng hàng $A, B, C$ để dựng đường tròn ngoại tiếp',
+                    tip: '<b>Đường tròn qua 3 điểm:</b> Chọn 3 điểm $A, B, C$ không thẳng hàng',
                     guide: 'Đường tròn ngoại tiếp: Chọn lần lượt <b>3 điểm không thẳng hàng $A, B, C$</b> $\\Rightarrow$ Tự dựng đường tròn $(ABC)$ và tâm $O$'
                 },
                 en: {
                     name: 'Circumcircle Through 3 Points',
-                    tip: '<b>Circumcircle (3 Points):</b> Select 3 non-collinear points $A, B, C$ to construct circumcircle and center $O$',
+                    tip: '<b>Circumcircle (3 Points):</b> Select 3 non-collinear points $A, B, C$',
                     guide: 'Circumcircle: Select <b>3 non-collinear points $A, B, C$</b> $\\Rightarrow$ Auto-constructs circle $(ABC)$ and center $O$'
                 }
             },
             'solid-cone': {
                 vi: {
                     name: 'Hình nón tròn xoay (Đường tròn & Điểm)',
-                    tip: '<b>Hình nón tròn xoay:</b> Chọn <b>1 Đường tròn đáy $(C)$</b> và <b>1 Điểm đỉnh $S$</b> (hoặc ngược lại) để tạo Hình nón có đường sinh biên & khuất nét tự động',
+                    tip: '<b>Hình nón tròn xoay:</b> Chọn đường tròn đáy $(C)$ và đỉnh $S$ (hoặc 3 điểm $O, A, S$)',
                     guide: 'Hình nón tròn xoay: Chọn <b>1 Đường tròn đáy $(C)$</b> và <b>1 Điểm đỉnh $S$</b> (hoặc chọn 3 điểm $O, A, S$) $\\Rightarrow$ Tự dựng Hình nón có đường sinh biên & khuất nét'
                 },
                 en: {
                     name: 'Cone of Revolution (Circle & Apex)',
-                    tip: '<b>Cone:</b> Select <b>base Circle $(C)$</b> and <b>Apex point $S$</b> (or 3 points $O, A, S$) to construct a Cone with dynamic silhouette generators',
+                    tip: '<b>Cone of Revolution:</b> Select base circle $(C)$ and apex $S$ (or 3 points $O, A, S$)',
                     guide: 'Cone of Revolution: Select <b>1 base Circle $(C)$</b> and <b>1 Apex point $S$</b> (or 3 points $O, A, S$) $\\Rightarrow$ Auto-renders silhouette & hidden lines'
                 }
             },
             'solid-cylinder': {
                 vi: {
                     name: 'Hình trụ / Nón cụt (Chọn 2 Đường tròn)',
-                    tip: '<b>Hình trụ / Hình nón cụt:</b> Chọn <b>2 Đường tròn đáy $(C_1), (C_2)$</b> (hoặc chọn 1 Đường tròn & 1 Điểm tâm đáy thứ 2 $O\'$) để tạo Hình trụ / Nón cụt',
+                    tip: '<b>Hình trụ / Nón cụt:</b> Chọn 2 đường tròn đáy (hoặc 1 đường tròn & tâm đáy thứ hai $O\'$)',
                     guide: 'Hình trụ / Hình nón cụt: Chọn <b>2 Đường tròn đáy $(C_1), (C_2)$</b> (hoặc chọn 1 Đường tròn & 1 Điểm tâm đáy thứ hai $O\'$) $\\Rightarrow$ Tự dựng Hình trụ / Nón cụt'
                 },
                 en: {
                     name: 'Cylinder / Frustum (2 Circles)',
-                    tip: '<b>Cylinder / Frustum:</b> Select <b>2 base Circles $(C_1), (C_2)$</b> (or 1 Circle & second center $O\'$) to construct Cylinder or Frustum',
+                    tip: '<b>Cylinder / Frustum:</b> Select 2 base circles (or 1 circle & second center $O\'$)',
                     guide: 'Cylinder / Frustum: Select <b>2 base Circles $(C_1), (C_2)$</b> (or 1 Circle & second center point $O\'$) $\\Rightarrow$ Auto-constructs Cylinder / Frustum'
                 }
             },
             'solid-sphere': {
                 vi: {
                     name: 'Mặt cầu (Chọn Tâm & Bán kính / Điểm)',
-                    tip: '<b>Mặt cầu $S(I; R)$:</b> Chọn <b>Tâm $I$</b> rồi chọn <b>Điểm $A$ trên mặt cầu</b> (hoặc click vào mặt nền / khoảng trống để nhập bán kính $R$, hoặc click vào Đường tròn lớn)',
+                    tip: '<b>Mặt cầu $S(I; R)$:</b> Chọn tâm $I$ rồi chọn điểm đi qua (hoặc nhập bán kính $R$)',
                     guide: 'Mặt cầu $S(I; R)$: Chọn <b>Tâm $I$</b> rồi chọn <b>Điểm $A$ trên mặt cầu</b> (hoặc click vào mặt nền để nhập bán kính $R$, hoặc click vào Đường tròn lớn)'
                 },
                 en: {
                     name: 'Sphere (Center & Radius / Point)',
-                    tip: '<b>Sphere $S(I; R)$:</b> Select <b>Center $I$</b> then <b>Point $A$ on sphere</b> (or click plane to enter radius $R$, or click a Great Circle)',
+                    tip: '<b>Sphere $S(I; R)$:</b> Select center $I$ then a surface point (or enter radius $R$)',
                     guide: 'Sphere $S(I; R)$: Select <b>Center $I$</b> then <b>Point $A$ on sphere</b> (or click base plane to enter radius $R$, or click a Great Circle)'
                 }
             },
             'measure-scale': {
                 vi: {
                     name: 'Quy định độ dài chuẩn (VD: AB = 5)',
-                    tip: '<b>Quy định độ dài chuẩn (VD: $AB = 5$):</b> Chọn <b>1 Đoạn thẳng</b> (hoặc <b>2 Điểm $A, B$</b>) để gán độ dài làm quy chuẩn cho mọi phép đo',
+                    tip: '<b>Quy chuẩn độ dài (VD: $AB = 5$):</b> Chọn 1 đoạn thẳng hoặc 2 điểm để đặt chuẩn đo',
                     guide: 'Quy chuẩn độ dài (VD: $AB = 5$): Click vào <b>1 Đoạn thẳng</b> (hoặc chọn <b>2 Điểm $A, B$</b>) để đặt độ dài quy chuẩn cho toàn bộ phép đo'
                 },
                 en: {
                     name: 'Set Reference Length Scale (e.g. AB = 5)',
-                    tip: '<b>Set Reference Scale (e.g. $AB = 5$):</b> Click <b>1 Segment</b> (or <b>2 Points $A, B$</b>) to calibrate the reference length for all measurements',
+                    tip: '<b>Reference Scale (e.g. $AB = 5$):</b> Select 1 segment or 2 points to calibrate measurements',
                     guide: 'Reference Scale (e.g. $AB = 5$): Click <b>1 Segment</b> (or select <b>2 Points $A, B$</b>) to set the reference length for all measurements'
                 }
             },
             'set-seg-length': {
                 vi: {
                     name: 'Điều chỉnh độ dài đoạn thẳng (theo quy chuẩn)',
-                    tip: '<b>Điều chỉnh độ dài đoạn thẳng (theo quy chuẩn):</b> Chọn <b>Điểm thứ nhất $A$</b> rồi chọn <b>Điểm thứ 2 $B$</b>, nhập độ dài cần set (hỗ trợ cả số vô tỉ như $\\sqrt{2}, 2\\sqrt{3}$) $\\Rightarrow$ Điểm $B$ dịch chuyển theo hướng $\\overrightarrow{AB}$',
+                    tip: '<b>Đặt độ dài đoạn thẳng:</b> Chọn điểm gốc $A$, điểm đích $B$ rồi nhập độ dài (hỗ trợ $\\sqrt{2}, 2\\sqrt{3}$)',
                     guide: 'Điều chỉnh độ dài đoạn thẳng: Chọn <b>Điểm thứ nhất $A$ (cố định)</b> $\\to$ Chọn <b>Điểm thứ 2 $B$ (dịch chuyển theo hướng $\\overrightarrow{AB}$)</b> $\\to$ Nhập độ dài (hỗ trợ cả số vô tỉ $\\sqrt{2}, 2\\sqrt{3}, \\dots$)'
                 },
                 en: {
                     name: 'Adjust Segment Length (Calibrated)',
-                    tip: '<b>Adjust Segment Length (Calibrated):</b> Select <b>Point 1 ($A$)</b> then <b>Point 2 ($B$)</b>, enter target length (supports irrationals like $\\sqrt{2}, 2\\sqrt{3}$) $\\Rightarrow$ Point $B$ moves along ray $\\overrightarrow{AB}$',
+                    tip: '<b>Set Segment Length:</b> Select fixed point $A$, target point $B$, and enter length (e.g. $\\sqrt{2}$)',
                     guide: 'Adjust Segment Length: Select <b>Point 1 $A$ (fixed)</b> $\\to$ Select <b>Point 2 $B$ (moves along ray $\\overrightarrow{AB}$)</b> $\\to$ Enter target length (supports $\\sqrt{2}, 2\\sqrt{3}, \\dots$)'
                 }
             },
             'measure-dist': {
                 vi: {
                     name: 'Đo khoảng cách (Điểm, Đường, Mặt)',
-                    tip: '<b>Đo khoảng cách theo quy chuẩn:</b> Click <b>1 Đoạn thẳng</b>, <b>2 Điểm</b>, <b>Điểm & Đường thẳng</b> $d(M, \\Delta)$, hoặc <b>Điểm & Mặt phẳng</b> $d(M, (P))$',
+                    tip: '<b>Đo khoảng cách:</b> Chọn 2 điểm, điểm & đường, điểm & mặt, hoặc 2 đường thẳng',
                     guide: 'Đo khoảng cách (theo quy chuẩn): Chọn <b>2 Điểm</b>, hoặc <b>Điểm & Đường thẳng</b> $d(M, \\Delta)$, hoặc <b>Điểm & Mặt phẳng</b> $d(M, (P))$, hoặc <b>2 Đường thẳng</b> $d(\\Delta_1, \\Delta_2)$'
                 },
                 en: {
                     name: 'Measure Distance (Point, Line, Plane)',
-                    tip: '<b>Measure Calibrated Distance:</b> Select <b>2 Points</b>, <b>Point & Line</b> $d(M, \\Delta)$, <b>Point & Plane</b> $d(M, (P))$, or <b>2 Lines</b>',
+                    tip: '<b>Measure Distance:</b> Select 2 points, point & line, point & plane, or 2 lines',
                     guide: 'Measure Distance (calibrated): Select <b>2 Points</b>, or <b>Point & Line</b> $d(M, \\Delta)$, or <b>Point & Plane</b> $d(M, (P))$, or <b>2 Lines</b> $d(\\Delta_1, \\Delta_2)$'
                 }
             },
             'measure-angle': {
                 vi: {
                     name: 'Đo góc (3 Điểm, Đường, Mặt)',
-                    tip: '<b>Đo góc ($0^\\circ \\to 180^\\circ$):</b> Chọn <b>3 Điểm $A, B, C$</b> ($\\widehat{ABC}$), hoặc <b>2 Đường thẳng</b>, hoặc <b>Đường thẳng & Mặt phẳng</b>, hoặc <b>2 Mặt phẳng</b>',
+                    tip: '<b>Đo góc ($0^\\circ \\to 180^\\circ$):</b> Chọn 3 điểm, 2 đường, đường & mặt, hoặc 2 mặt phẳng',
                     guide: 'Đo góc (Độ °): Chọn <b>3 Điểm $A, B, C$</b> ($\\widehat{ABC}$), hoặc <b>2 Đường thẳng</b> $(d_1, d_2)$, hoặc <b>Đường thẳng & Mặt phẳng</b> $(d, (P))$, hoặc <b>2 Mặt phẳng</b> $((P), (Q))$'
                 },
                 en: {
                     name: 'Measure Angle (3 Points, Line, Plane)',
-                    tip: '<b>Measure Angle ($0^\\circ \\to 180^\\circ$):</b> Select <b>3 Points $A, B, C$</b> ($\\widehat{ABC}$), <b>2 Lines</b>, <b>Line & Plane</b>, or <b>2 Planes</b>',
+                    tip: '<b>Measure Angle ($0^\\circ \\to 180^\\circ$):</b> Select 3 points, 2 lines, line & plane, or 2 planes',
                     guide: 'Measure Angle (°): Select <b>3 Points $A, B, C$</b> ($\\widehat{ABC}$), or <b>2 Lines</b> $(d_1, d_2)$, or <b>Line & Plane</b> $(d, (P))$, or <b>2 Planes</b> $((P), (Q))$'
                 }
             },
             'measure-area': {
                 vi: {
                     name: 'Đo diện tích đa giác (Tam giác, Đa giác, Hình tròn)',
-                    tip: '<b>Đo diện tích theo quy chuẩn:</b> Click trực tiếp vào <b>Mặt đa giác / Hình tròn</b>, hoặc chọn liên tiếp <b>các Đỉnh ($\\ge 3$ điểm)</b> rồi click lại đỉnh đầu (hoặc bấm Tính S) để đo diện tích',
+                    tip: '<b>Đo diện tích:</b> Click bề mặt đa giác / hình tròn, hoặc chọn các đỉnh khép kín',
                     guide: 'Đo diện tích (theo quy chuẩn): Click trực tiếp vào <b>Mặt đa giác / Hình tròn</b> có sẵn, hoặc chọn liên tiếp <b>các Đỉnh ($\\ge 3$ điểm)</b> rồi click lại đỉnh đầu để tính diện tích $S$'
                 },
                 en: {
                     name: 'Measure Polygon Area (Triangle, Polygon, Circle)',
-                    tip: '<b>Measure Calibrated Area:</b> Click an existing <b>Polygon Face / Circle</b>, or select <b>consecutive Vertices ($\\ge 3$ points)</b> and click the first vertex again to measure area',
+                    tip: '<b>Measure Area:</b> Click a polygon face / circle, or select vertices of a closed loop',
                     guide: 'Measure Area (calibrated): Click a <b>Polygon Face / Circle</b> directly, or select <b>consecutive Vertices ($\\ge 3$ points)</b> then click the first vertex again to compute area $S$'
                 }
             },
             'measure-volume': {
                 vi: {
                     name: 'Đo thể tích (Khối chóp, Tứ diện, Tròn xoay)',
-                    tip: '<b>Đo thể tích theo quy chuẩn:</b> Click <b>Khối tròn xoay</b> (Nón, Trụ, Cầu), hoặc chọn <b>Mặt đáy & Đỉnh $S$</b> (Khối chóp), hoặc <b>4 Điểm</b> (Tứ diện)',
+                    tip: '<b>Đo thể tích:</b> Click khối tròn xoay, hoặc chọn mặt đáy & đỉnh $S$ (khối chóp)',
                     guide: 'Đo thể tích (theo quy chuẩn): Click vào <b>Khối tròn xoay</b> (Nón, Trụ, Cầu), hoặc chọn <b>Mặt đáy & Đỉnh $S$</b> (Khối chóp), hoặc chọn <b>4 đỉnh $A, B, C, D$</b> (Tứ diện)'
                 },
                 en: {
                     name: 'Measure Volume (Pyramid, Tetrahedron, Solid)',
-                    tip: '<b>Measure Calibrated Volume:</b> Click a <b>Solid of Revolution</b> (Cone, Cylinder, Sphere), or select <b>Base Face & Apex $S$</b> (Pyramid), or <b>4 Points</b> (Tetrahedron)',
+                    tip: '<b>Measure Volume:</b> Click a solid of revolution, or select base face & apex $S$',
                     guide: 'Measure Volume (calibrated): Click a <b>Solid of Revolution</b>, or select <b>Base Face & Apex $S$</b> (Pyramid), or select <b>4 vertices $A, B, C, D$</b> (Tetrahedron)'
                 }
             },
             'animate': {
                 vi: {
                     name: 'Chuyển động tự động trên đối tượng cha',
-                    tip: '<b>Chuyển động trên đối tượng cha:</b> Click vào điểm thuộc cạnh / đường thẳng / đường tròn / đa giác / mặt cầu để mở bảng điều khiển chuyển động',
+                    tip: '<b>Chuyển động điểm:</b> Click điểm thuộc cạnh, đường tròn, mặt phẳng hoặc mặt cầu',
                     guide: 'Chuyển động tự động: Click vào <b>Điểm thuộc cạnh / đường thẳng / đường tròn / mặt cầu / bề mặt</b> để mở thanh điều khiển Tốc độ, Chạy/Dừng'
                 },
                 en: {
                     name: 'Animate Point on Parent Object',
-                    tip: '<b>Animate on Parent Object:</b> Click a point constrained to an edge / line / circle / face / sphere to open the animation controller',
+                    tip: '<b>Animate Point:</b> Click a point constrained on an edge, circle, face, or sphere',
                     guide: 'Auto Animation: Click a <b>Point on an edge / line / circle / sphere / face</b> to open the Speed & Play/Pause control bar'
                 }
             },
             'trace': {
                 vi: {
                     name: 'Bật / Tắt Tạo vết (Trace)',
-                    tip: '<b>Bật / Tắt Tạo vết (Trace):</b> Click vào điểm hoặc đoạn thẳng để để lại vết quỹ tích khi di chuyển',
+                    tip: '<b>Tạo vết quỹ tích:</b> Click điểm hoặc đoạn thẳng để bật/tắt để lại vết khi di chuyển',
                     guide: 'Bật / Tắt Tạo vết (Trace): Click vào <b>Điểm</b> hoặc <b>Đoạn thẳng</b> để để lại vết quỹ tích khi đối tượng di chuyển'
                 },
                 en: {
                     name: 'Toggle Locus Trace',
-                    tip: '<b>Toggle Trace:</b> Click a point or segment to leave a locus trail when it moves',
+                    tip: '<b>Locus Trace:</b> Click a point or segment to toggle its movement trail',
                     guide: 'Toggle Trace: Click a <b>Point</b> or <b>Segment</b> to leave a locus trail as it moves'
                 }
             },
             'clear-traces': {
-                vi: { name: 'Xóa vết quỹ tích', tip: '<b>Xóa toàn bộ vết quỹ tích đã vẽ</b>' },
-                en: { name: 'Clear All Traces', tip: '<b>Clear all drawn locus traces</b>' }
+                vi: { name: 'Xóa vết quỹ tích', tip: '<b>Xóa toàn bộ vết quỹ tích</b>' },
+                en: { name: 'Clear All Traces', tip: '<b>Clear all locus traces</b>' }
             },
             'hide': {
                 vi: {
                     name: 'Ẩn đối tượng',
-                    tip: '<b>Ẩn đối tượng:</b> Click vào Điểm, Đoạn thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay để ẩn (Có danh sách góc phải để hiện lại)',
+                    tip: '<b>Ẩn đối tượng:</b> Click đối tượng cần ẩn (hiện lại ở bảng góc dưới phải)',
                     guide: 'Ẩn đối tượng: Click vào <b>Điểm, Đoạn thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay</b> để ẩn đi (Click danh sách góc dưới phải để hiện lại)'
                 },
                 en: {
                     name: 'Hide Object',
-                    tip: '<b>Hide Object:</b> Click any Point, Segment, Circle, Face, or Solid to hide it (Restore from bottom-right panel)',
+                    tip: '<b>Hide Object:</b> Click an object to hide it (restore from bottom-right panel)',
                     guide: 'Hide Object: Click a <b>Point, Segment, Circle, Face, or Solid</b> to hide it (Restore from the bottom-right Hidden Objects list)'
                 }
             },
             'delete-obj': {
                 vi: {
                     name: 'Xóa đối tượng (& các đối tượng con)',
-                    tip: '<b>Xóa 1 đối tượng & đối tượng con:</b> Click vào Điểm, Đoạn/Đường thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay để xóa cùng toàn bộ đối tượng con phụ thuộc',
+                    tip: '<b>Xóa đối tượng:</b> Click đối tượng để xóa cùng các thành phần phụ thuộc',
                     guide: 'Xóa đối tượng & đối tượng con: Click vào <b>Điểm, Đoạn/Đường thẳng, Đường tròn, Bề mặt hoặc Khối tròn xoay</b> để xóa cùng đối tượng con (Ctrl+Z để hoàn tác)'
                 },
                 en: {
                     name: 'Delete Object (& Dependents)',
-                    tip: '<b>Delete Object & Dependents:</b> Click any Point, Segment/Line, Circle, Face, or Solid to delete it along with dependent child objects',
+                    tip: '<b>Delete Object:</b> Click an object to delete it and its dependents',
                     guide: 'Delete Object & Dependents: Click a <b>Point, Segment/Line, Circle, Face, or Solid</b> to delete it and its dependents (Ctrl+Z to Undo)'
                 }
             },
             'undo-action': {
-                vi: { name: 'Hoàn tác (Undo)', tip: '<b>Hoàn tác (Undo - Ctrl+Z)</b>' },
+                vi: { name: 'Hoàn tác (Undo)', tip: '<b>Hoàn tác (Ctrl+Z)</b>' },
                 en: { name: 'Undo Action (Ctrl+Z)', tip: '<b>Undo (Ctrl+Z)</b>' }
             },
             'save-project': {
-                vi: { name: 'Lưu dự án (.json)', tip: '<b>Lưu dự án (.json):</b> Tải xuống toàn bộ hình vẽ 3D, quy chuẩn & phép đo để mở lại sau' },
-                en: { name: 'Save Project (.json)', tip: '<b>Save Project (.json):</b> Download the entire 3D construction, scale & measurements to reopen later' }
+                vi: { name: 'Lưu dự án (.json)', tip: '<b>Lưu dự án (.json):</b> Tải hình vẽ 3D và số đo về máy' },
+                en: { name: 'Save Project (.json)', tip: '<b>Save Project (.json):</b> Download 3D scene and measurements' }
             },
             'load-project': {
-                vi: { name: 'Tải lên dự án đã lưu (.json)', tip: '<b>Tải dự án (.json):</b> Mở lại file dự án 3D đã lưu từ máy tính' },
-                en: { name: 'Load Saved Project (.json)', tip: '<b>Load Project (.json):</b> Open a previously saved 3D project file from your device' }
+                vi: { name: 'Tải lên dự án đã lưu (.json)', tip: '<b>Tải dự án (.json):</b> Mở file dự án 3D đã lưu' },
+                en: { name: 'Load Saved Project (.json)', tip: '<b>Load Project (.json):</b> Open a saved 3D project file' }
             },
             'demo-pyramid': {
                 vi: { name: 'Tạo nhanh Hình chóp mẫu S.ABCDE', tip: '<b>Tạo nhanh Hình chóp mẫu $S.ABCDE$</b>' },
-                en: { name: 'Load Sample Pyramid S.ABCDE', tip: '<b>Quickly generate sample Pyramid $S.ABCDE$</b>' }
+                en: { name: 'Load Sample Pyramid S.ABCDE', tip: '<b>Load sample Pyramid $S.ABCDE$</b>' }
             },
             'export-png': {
-                vi: { name: 'Tải ảnh hình vẽ (.PNG)', tip: '<b>Tải ảnh PNG (.png):</b> Lưu hình vẽ 3D hiện tại (bao gồm cả tên các điểm & số đo) thành file ảnh PNG sắc nét' },
-                en: { name: 'Export Image (.PNG)', tip: '<b>Export PNG (.png):</b> Download a high-resolution PNG image of the current 3D scene with labels & measurements' }
+                vi: { name: 'Tải ảnh hình vẽ (.PNG)', tip: '<b>Xuất ảnh (.PNG):</b> Tải ảnh hình vẽ 3D kèm nhãn điểm & số đo' },
+                en: { name: 'Export Image (.PNG)', tip: '<b>Export PNG:</b> Download high-res PNG image with labels & measurements' }
             },
             'clear-all': {
                 vi: { name: 'Xóa toàn bộ hình vẽ', tip: '<b>Xóa toàn bộ hình vẽ</b>' },
-                en: { name: 'Clear Entire Scene', tip: '<b>Clear the entire 3D drawing</b>' }
+                en: { name: 'Clear Entire Scene', tip: '<b>Clear entire scene</b>' }
             }
         };
 
@@ -2292,7 +2301,7 @@
                 const btn = document.createElement('button');
                 btn.className = 'q-btn' + (tool.extraClass ? ' ' + tool.extraClass : '');
                 btn.setAttribute('data-tool-id', tool.id);
-                btn.setAttribute('data-tip', getToolTip(tool.id) + t(' <i>(Kéo thả để đổi vị trí)</i>', ' <i>(Drag to reorder)</i>'));
+                btn.setAttribute('data-tip', getToolTip(tool.id));
                 btn.draggable = true;
 
                 if (tool.type === 'mode' && (currentTool === tool.id || (tool.id === 'view' && currentTool === 'move'))) btn.classList.add('active');
@@ -2597,6 +2606,16 @@
         // =========================================================================
         // 7. THUẬT TOÁN XÓA 1 ĐỐI TƯỢNG & TOÀN BỘ ĐỐI TƯỢNG CON LIÊN QUAN (CASCADE DELETE)
         // =========================================================================
+        function isPlaneRefDependentOnDeleted(planeRef, delPoints, delFaces, delCircles) {
+            if (!planeRef) return false;
+            if (delFaces.has(planeRef) || delCircles.has(planeRef)) return true;
+            if (typeof planeRef === 'string' && planeRef.startsWith('pts:')) {
+                const pids = planeRef.slice(4).split(',');
+                return pids.some(pid => delPoints.has(pid));
+            }
+            return false;
+        }
+
         function isPointRuleDependentOn(rule, delPoints, delSegs, delCircles, delFaces, delSolids) {
             if (!rule) return false;
             const ptRefKeys = ['mId', 'aId', 'bId', 'cId', 'dId', 'iId', 'p1Id', 'p2Id', 'p3Id', 'centerId', 'ptId', 'refPtId'];
@@ -2607,10 +2626,10 @@
             if (rule.segAId && delSegs.has(rule.segAId)) return true;
             if (rule.segBId && delSegs.has(rule.segBId)) return true;
             if (rule.circleId && delCircles.has(rule.circleId)) return true;
-            if (rule.faceId && (delFaces.has(rule.faceId) || delCircles.has(rule.faceId))) return true;
-            if (rule.planeId && (delFaces.has(rule.planeId) || delCircles.has(rule.planeId))) return true;
-            if (rule.plane1Id && (delFaces.has(rule.plane1Id) || delCircles.has(rule.plane1Id))) return true;
-            if (rule.plane2Id && (delFaces.has(rule.plane2Id) || delCircles.has(rule.plane2Id))) return true;
+            if (isPlaneRefDependentOnDeleted(rule.faceId, delPoints, delFaces, delCircles)) return true;
+            if (isPlaneRefDependentOnDeleted(rule.planeId, delPoints, delFaces, delCircles)) return true;
+            if (isPlaneRefDependentOnDeleted(rule.plane1Id, delPoints, delFaces, delCircles)) return true;
+            if (isPlaneRefDependentOnDeleted(rule.plane2Id, delPoints, delFaces, delCircles)) return true;
             if (rule.solidId && delSolids && delSolids.has(rule.solidId)) return true;
             if (rule.solid1Id && delSolids && delSolids.has(rule.solid1Id)) return true;
             if (rule.solid2Id && delSolids && delSolids.has(rule.solid2Id)) return true;
@@ -2679,8 +2698,8 @@
                                     (cir.p1Id && delPoints.has(cir.p1Id)) ||
                                     (cir.p2Id && delPoints.has(cir.p2Id)) ||
                                     (cir.p3Id && delPoints.has(cir.p3Id));
-                    const depOnFace = (cir.faceId && (delFaces.has(cir.faceId) || delCircles.has(cir.faceId))) ||
-                                      (cir.planeId && (delFaces.has(cir.planeId) || delCircles.has(cir.planeId)));
+                    const depOnFace = isPlaneRefDependentOnDeleted(cir.faceId, delPoints, delFaces, delCircles) ||
+                                      isPlaneRefDependentOnDeleted(cir.planeId, delPoints, delFaces, delCircles);
                     const depOnCir = cir.baseCircleId && delCircles.has(cir.baseCircleId);
                     const depOnSol = (cir.solidId && delSolids.has(cir.solidId)) ||
                                      (cir.solid1Id && delSolids.has(cir.solid1Id)) ||
@@ -3103,6 +3122,7 @@
         let selectedPointIds = [];
         let selectedCircleIds = [];
         let selectedSurfaceItems = [];
+        let intersectPendingBuilder = { points: [], segments: [] };
         let measureSelection = { segIds: [], faceIds: [] };
         let pendingMeasureToolAfterScale = null;
         let isMeasurePanelDismissed = false;
@@ -3432,11 +3452,11 @@
             );
 
             const collapseBtn = document.getElementById('toggle-toolbar-btn');
-            if (collapseBtn) collapseBtn.setAttribute('data-tip', t('<b>Ẩn / Hiện thanh công cụ dọc</b>', '<b>Collapse / Expand vertical toolbar</b>'));
+            if (collapseBtn) collapseBtn.setAttribute('data-tip', t('<b>Ẩn / Hiện thanh công cụ dọc</b>', '<b>Show / Hide vertical toolbar</b>'));
             const styleSizeBtn = document.getElementById('open-style-size-btn');
-            if (styleSizeBtn) styleSizeBtn.setAttribute('data-tip', t('<b>Cỡ Điểm & Đường:</b> Điều chỉnh kích thước điểm và độ dày nét vẽ', '<b>Point & Line Size:</b> Adjust point size and line thickness'));
+            if (styleSizeBtn) styleSizeBtn.setAttribute('data-tip', t('<b>Cỡ Điểm & Nét vẽ:</b> Chỉnh kích thước điểm và độ dày đường', '<b>Point & Line Size:</b> Adjust vertex size and stroke width'));
             const settingsBtn = document.getElementById('open-toolbar-settings-btn');
-            if (settingsBtn) settingsBtn.setAttribute('data-tip', t('<b>Cài đặt công cụ:</b> Chọn công cụ thường trực, Ẩn/Hiện & Sắp xếp thanh công cụ', '<b>Toolbar Settings:</b> Customize pinned quick tools, visibility & order'));
+            if (settingsBtn) settingsBtn.setAttribute('data-tip', t('<b>Cài đặt công cụ:</b> Ghim, Ẩn/Hiện & Sắp xếp công cụ', '<b>Toolbar Settings:</b> Pin, Show/Hide & Reorder tools'));
 
             renderToolbar();
             if (document.getElementById('toolbar-settings-overlay')?.style.display === 'flex') {
@@ -3731,6 +3751,8 @@
                     undo();
                 } else if (e.key === 'Escape') {
                     selectedPointIds = [];
+                    selectedSurfaceItems = [];
+                    intersectPendingBuilder = { points: [], segments: [] };
                     clearHelpers();
                     closeToolbarSettingsModal();
                     updateSceneFromState();
@@ -3790,30 +3812,35 @@
 
             tooltipEl.innerHTML = tipContent;
             renderMathInElementSafe(tooltipEl);
+            tooltipEl.style.left = '0px';
+            tooltipEl.style.top = '0px';
             tooltipEl.style.display = 'block';
 
             const btnRect = btn.getBoundingClientRect();
+            const tipW = tooltipEl.offsetWidth;
+            const tipH = tooltipEl.offsetHeight;
             const isQuickBtn = btn.closest('#quick-controls') !== null;
 
             let leftPos, topPos;
             if (isQuickBtn) {
-                leftPos = btnRect.left + btnRect.width / 2 - tooltipEl.offsetWidth / 2;
+                leftPos = btnRect.left + btnRect.width / 2 - tipW / 2;
                 topPos = btnRect.bottom + 8;
             } else {
                 leftPos = btnRect.right + 10;
-                topPos = Math.max(8, btnRect.top + btnRect.height / 2 - tooltipEl.offsetHeight / 2);
+                topPos = Math.max(8, btnRect.top + btnRect.height / 2 - tipH / 2);
             }
 
-            if (leftPos + tooltipEl.offsetWidth > window.innerWidth - 12) {
-                leftPos = Math.max(12, window.innerWidth - tooltipEl.offsetWidth - 12);
+            const minLeft = isQuickBtn ? 12 : Math.min(btnRect.right + 10, Math.max(12, window.innerWidth - tipW - 12));
+            if (leftPos + tipW > window.innerWidth - 12) {
+                leftPos = Math.max(minLeft, window.innerWidth - tipW - 12);
             }
-            if (leftPos < 12) leftPos = 12;
-            if (topPos + tooltipEl.offsetHeight > window.innerHeight - 12) {
-                topPos = Math.max(8, window.innerHeight - tooltipEl.offsetHeight - 12);
+            if (leftPos < minLeft) leftPos = minLeft;
+            if (topPos + tipH > window.innerHeight - 12) {
+                topPos = Math.max(8, window.innerHeight - tipH - 12);
             }
 
-            tooltipEl.style.left = `${leftPos}px`;
-            tooltipEl.style.top = `${topPos}px`;
+            tooltipEl.style.left = `${Math.round(leftPos)}px`;
+            tooltipEl.style.top = `${Math.round(topPos)}px`;
         }
 
         function setupStaticTooltips() {
@@ -4266,8 +4293,12 @@
                         }
                     }
                     else if (r.type === 'lineFaceIntersection') {
-                        const seg = geoState.segments.find(s => s.id === r.segId);
-                        const face = geoState.faces.find(f => f.id === r.faceId);
+                        const seg = (r.segId && geoState.segments.find(s => s.id === r.segId)) ||
+                            (r.uId && r.vId ? { p1Id: r.uId, p2Id: r.vId } : null);
+                        const face = geoState.faces.find(f => f.id === r.faceId) ||
+                            (typeof r.faceId === 'string' && r.faceId.startsWith('pts:')
+                                ? { id: r.faceId, hidden: false, pointIds: r.faceId.slice(4).split(',') }
+                                : null);
                         if (seg && face) {
                             const inter = intersectLineWithFace(seg, face, true);
                             if (inter) {
@@ -4306,7 +4337,8 @@
                         }
                     }
                     else if (r.type === 'lineBasePlaneIntersection') {
-                        const seg = geoState.segments.find(s => s.id === r.segId);
+                        const seg = (r.segId && geoState.segments.find(s => s.id === r.segId)) ||
+                            (r.uId && r.vId ? { p1Id: r.uId, p2Id: r.vId } : null);
                         if (seg) {
                             const inter = intersectLineWithBasePlane(seg, true);
                             if (inter) {
@@ -5015,19 +5047,16 @@
             return inside;
         }
 
-        function intersectPointsWithPolygonFace3D(P1, P2, isLine, face, ignoreBounds = false) {
-            if (!face || face.hidden || !Array.isArray(face.pointIds) || face.pointIds.length < 3) return null;
-            const facePts = face.pointIds.map(id => geoState.points.find(p => p.id === id)).filter(Boolean);
-            if (facePts.length < 3) return null;
-
-            const v0 = new THREE.Vector3(facePts[0].x, facePts[0].y, facePts[0].z);
+        function computePointListPlaneBasis(pts) {
+            if (!pts || pts.length < 3) return null;
+            const v0 = new THREE.Vector3(pts[0].x, pts[0].y, pts[0].z);
             let normal = null;
             let e1 = null;
-            for (let i = 1; i < facePts.length - 1 && !normal; i++) {
-                const va = new THREE.Vector3(facePts[i].x, facePts[i].y, facePts[i].z).sub(v0);
+            for (let i = 1; i < pts.length - 1 && !normal; i++) {
+                const va = new THREE.Vector3(pts[i].x, pts[i].y, pts[i].z).sub(v0);
                 if (va.lengthSq() < 1e-8) continue;
-                for (let j = i + 1; j < facePts.length; j++) {
-                    const vb = new THREE.Vector3(facePts[j].x, facePts[j].y, facePts[j].z).sub(v0);
+                for (let j = i + 1; j < pts.length; j++) {
+                    const vb = new THREE.Vector3(pts[j].x, pts[j].y, pts[j].z).sub(v0);
                     const cr = new THREE.Vector3().crossVectors(va, vb);
                     if (cr.lengthSq() > 1e-8) {
                         normal = cr.normalize();
@@ -5038,6 +5067,31 @@
             }
             if (!normal || !e1) return null;
             const e2 = new THREE.Vector3().crossVectors(normal, e1).normalize();
+            const center = new THREE.Vector3();
+            pts.forEach(pt => center.add(new THREE.Vector3(pt.x, pt.y, pt.z)));
+            center.divideScalar(pts.length);
+            return { origin: v0, normal, e1, e2, center };
+        }
+
+        function isPointInsideOrOnPolygon3D(ptVec, polyPts, boundaryTol = 0.045) {
+            const basis = computePointListPlaneBasis(polyPts);
+            if (!basis) return false;
+            const { origin: v0, normal, e1, e2 } = basis;
+            if (Math.abs(new THREE.Vector3().subVectors(ptVec, v0).dot(normal)) > boundaryTol) return false;
+            const poly2D = polyPts.map(pt => {
+                const rel = new THREE.Vector3(pt.x - v0.x, pt.y - v0.y, pt.z - v0.z);
+                return { x: rel.dot(e1), y: rel.dot(e2) };
+            });
+            const relPt = new THREE.Vector3().subVectors(ptVec, v0);
+            return isPointInPolygon2D(relPt.dot(e1), relPt.dot(e2), poly2D, boundaryTol);
+        }
+
+        function intersectPointsWithPolygonFace3D(P1, P2, isLine, face, ignoreBounds = false) {
+            if (!face || face.hidden || !Array.isArray(face.pointIds) || face.pointIds.length < 3) return null;
+            const facePts = face.pointIds.map(id => geoState.points.find(p => p.id === id)).filter(Boolean);
+            const basis = computePointListPlaneBasis(facePts);
+            if (!basis) return null;
+            const { origin: v0, normal, center: centroid } = basis;
 
             const u = new THREE.Vector3().subVectors(P2, P1);
             const denom = u.dot(normal);
@@ -5050,19 +5104,11 @@
             if (!ignoreBounds && !isLine && (tVal < -1e-4 || tVal > 1 + 1e-4)) return null;
 
             const pos = P1.clone().addScaledVector(u, tVal);
-            const poly2D = facePts.map(pt => {
-                const rel = new THREE.Vector3(pt.x - v0.x, pt.y - v0.y, pt.z - v0.z);
-                return { x: rel.dot(e1), y: rel.dot(e2) };
-            });
-            const relPos = new THREE.Vector3().subVectors(pos, v0);
-            const insidePolygon = isPointInPolygon2D(relPos.dot(e1), relPos.dot(e2), poly2D, 0.045);
+            const insidePolygon = isPointInsideOrOnPolygon3D(pos, facePts, 0.045);
 
             if (!ignoreBounds && !insidePolygon) {
                 if (!isLine) return null;
                 if (Math.abs(d1) < 2e-2 || Math.abs(d2) < 2e-2) return null;
-                const centroid = new THREE.Vector3();
-                facePts.forEach(pt => centroid.add(new THREE.Vector3(pt.x, pt.y, pt.z)));
-                centroid.divideScalar(facePts.length);
                 let maxR = 1.0;
                 facePts.forEach(pt => {
                     maxR = Math.max(maxR, centroid.distanceTo(new THREE.Vector3(pt.x, pt.y, pt.z)));
@@ -5752,12 +5798,13 @@
                 geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
                 geo.computeVertexNormals();
 
-                if (showFaceTint) {
+                const isSelectedSurfFace = selectedSurfaceItems.some(s => s.faceId === face.id);
+                if (showFaceTint || isSelectedSurfFace) {
                     const tintMat = new THREE.MeshBasicMaterial({
-                        color: 0xe0f2fe,
+                        color: isSelectedSurfFace ? 0xfde68a : 0xe0f2fe,
                         side: THREE.DoubleSide,
                         transparent: true,
-                        opacity: 0.28,
+                        opacity: isSelectedSurfFace ? 0.38 : 0.28,
                         depthWrite: false
                     });
                     const tintMesh = new THREE.Mesh(geo, tintMat);
@@ -6114,7 +6161,11 @@
                     v2 = v2.clone().addScaledVector(dir, 30);
                 }
 
-                const lineColor = seg.trace ? 0x9333ea : 0x000000;
+                const isSelectedIntersectSeg = (currentTool === 'intersect-surfaces') && (
+                    (intersectPendingBuilder && intersectPendingBuilder.segments.some(s => s.id === seg.id)) ||
+                    selectedSurfaceItems.some(item => item.segIds && item.segIds.includes(seg.id))
+                );
+                const lineColor = isSelectedIntersectSeg ? 0xdc2626 : (seg.trace ? 0x9333ea : 0x000000);
                 rawVisualSegments.push({ v1, v2, lineColor });
 
                 const hitGeo = new THREE.BufferGeometry().setFromPoints([v1, v2]);
@@ -6527,7 +6578,7 @@
             mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
 
-            const isSurfacePickOnly = (currentTool === 'intersect-surfaces');
+            const isSurfacePickOnly = false;
 
             if (!isSurfacePickOnly) {
                 let closestPt = null;
@@ -6604,7 +6655,7 @@
                             type: 'circle',
                             circleId, angle,
                             pos: exactPos,
-                            label: (currentTool === 'delete-obj' || prioritizeCircle || isSurfacePickOnly || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
+                            label: (currentTool === 'delete-obj' || prioritizeCircle || currentTool === 'intersect-surfaces' || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
                         };
                     }
                 }
@@ -6641,7 +6692,7 @@
                         type: 'edge',
                         segId, p1Id, p2Id, t,
                         pos: exactPos,
-                        label: (currentTool === 'delete-obj' || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
+                        label: (currentTool === 'delete-obj' || currentTool === 'intersect-surfaces' || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
                     };
                 }
 
@@ -7137,10 +7188,30 @@
                 }
             });
 
+            findChordlessCoplanarCyclesForPair(adj, p1Id, p2Id, 600).forEach(cycleIds => {
+                addFaceIfNotExists(cycleIds);
+            });
+        }
+
+        function hasCycleChord(cycleIds, adj) {
+            const n = cycleIds.length;
+            if (n <= 3) return false;
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 2; j < n; j++) {
+                    if (i === 0 && j === n - 1) continue;
+                    const u = cycleIds[i];
+                    const v = cycleIds[j];
+                    if (adj[u] && adj[u].includes(v)) return true;
+                }
+            }
+            return false;
+        }
+
+        function findChordlessCoplanarCyclesForPair(adj, p1Id, p2Id, maxIterations = 600) {
+            if (!adj[p1Id] || !adj[p2Id]) return [];
             const queue = [[p1Id]];
             const foundCycles = [];
             let iterations = 0;
-            const maxIterations = 600;
 
             while (queue.length > 0 && iterations < maxIterations) {
                 iterations++;
@@ -7152,12 +7223,11 @@
                     if (next === p2Id) {
                         if (path.length >= 2) {
                             const cycleIds = [...path, p2Id];
-                            if (arePointsCoplanar(cycleIds)) {
+                            if (arePointsCoplanar(cycleIds) && !hasCycleChord(cycleIds, adj)) {
                                 foundCycles.push(cycleIds);
                             }
                         }
                     } else if (!path.includes(next)) {
-                        // Cắt tỉa sớm dây cung (chord) ngay trong quá trình tìm kiếm để tránh bùng nổ tổ hợp
                         let createsChord = false;
                         for (let i = 0; i < path.length - 1; i++) {
                             const prev = path[i];
@@ -7168,57 +7238,22 @@
                         }
                         if (createsChord) continue;
 
-                        // Cắt tỉa sớm nhánh không đồng phẳng trong không gian 3D
                         const candidateIds = [...path, next, p2Id];
-                        if (candidateIds.length >= 4 && !arePointsCoplanar(candidateIds)) {
-                            continue;
-                        }
-
+                        if (candidateIds.length >= 4 && !arePointsCoplanar(candidateIds)) continue;
                         queue.push([...path, next]);
                     }
                 }
             }
-
-            foundCycles.forEach(cycleIds => {
-                const n = cycleIds.length;
-                let hasChord = false;
-                if (n > 3) {
-                    for (let i = 0; i < n && !hasChord; i++) {
-                        for (let j = i + 2; j < n; j++) {
-                            if (i === 0 && j === n - 1) continue;
-                            const u = cycleIds[i];
-                            const v = cycleIds[j];
-                            if (adj[u] && adj[u].includes(v)) {
-                                hasChord = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (!hasChord) {
-                    addFaceIfNotExists(cycleIds);
-                }
-            });
+            return foundCycles;
         }
 
         function arePointsCoplanar(pointIds) {
             if (!pointIds || pointIds.length < 3) return false;
             const pts = pointIds.map(id => geoState.points.find(p => p.id === id));
             if (pts.some(p => !p)) return false;
-            const v0 = new THREE.Vector3(pts[0].x, pts[0].y, pts[0].z);
-            let normal = null;
-            for (let i = 1; i < pts.length - 1 && !normal; i++) {
-                const v1 = new THREE.Vector3(pts[i].x, pts[i].y, pts[i].z).sub(v0);
-                for (let j = i + 1; j < pts.length; j++) {
-                    const v2 = new THREE.Vector3(pts[j].x, pts[j].y, pts[j].z).sub(v0);
-                    const cross = new THREE.Vector3().crossVectors(v1, v2);
-                    if (cross.lengthSq() > 1e-5) {
-                        normal = cross.normalize();
-                        break;
-                    }
-                }
-            }
-            if (!normal) return false;
+            const basis = computePointListPlaneBasis(pts);
+            if (!basis) return false;
+            const { origin: v0, normal } = basis;
             for (let i = 1; i < pts.length; i++) {
                 const vi = new THREE.Vector3(pts[i].x, pts[i].y, pts[i].z).sub(v0);
                 if (Math.abs(vi.dot(normal)) > 0.08) return false;
@@ -7260,62 +7295,10 @@
             const newlyCreatedFaces = [];
             geoState.segments.forEach(s => {
                 if (s.hidden || s.isLine) return;
-                const p1Id = s.p1Id;
-                const p2Id = s.p2Id;
-                if (!adj[p1Id] || !adj[p2Id]) return;
-
-                const queue = [[p1Id]];
-                let iterations = 0;
-                const maxIterations = 500;
-
-                while (queue.length > 0 && iterations < maxIterations) {
-                    iterations++;
-                    const path = queue.shift();
-                    const last = path[path.length - 1];
-                    if (path.length >= 6) continue;
-
-                    for (const next of (adj[last] || [])) {
-                        if (next === p2Id) {
-                            if (path.length >= 2) {
-                                const cycleIds = [...path, p2Id];
-                                if (arePointsCoplanar(cycleIds)) {
-                                    const n = cycleIds.length;
-                                    let hasChord = false;
-                                    if (n > 3) {
-                                        for (let i = 0; i < n && !hasChord; i++) {
-                                            for (let j = i + 2; j < n; j++) {
-                                                if (i === 0 && j === n - 1) continue;
-                                                const u = cycleIds[i];
-                                                const v = cycleIds[j];
-                                                if (adj[u] && adj[u].includes(v)) {
-                                                    hasChord = true;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    if (!hasChord) {
-                                        const nf = addFaceIfNotExists(cycleIds);
-                                        if (nf) newlyCreatedFaces.push(nf);
-                                    }
-                                }
-                            }
-                        } else if (!path.includes(next)) {
-                            let createsChord = false;
-                            for (let i = 0; i < path.length - 1; i++) {
-                                const prev = path[i];
-                                if (adj[next] && adj[next].includes(prev)) {
-                                    createsChord = true;
-                                    break;
-                                }
-                            }
-                            if (createsChord) continue;
-                            const candidateIds = [...path, next, p2Id];
-                            if (candidateIds.length >= 4 && !arePointsCoplanar(candidateIds)) continue;
-                            queue.push([...path, next]);
-                        }
-                    }
-                }
+                findChordlessCoplanarCyclesForPair(adj, s.p1Id, s.p2Id, 500).forEach(cycleIds => {
+                    const nf = addFaceIfNotExists(cycleIds);
+                    if (nf) newlyCreatedFaces.push(nf);
+                });
             });
             return newlyCreatedFaces;
         }
@@ -7430,37 +7413,25 @@
                     kind: 'base'
                 };
             }
+            const buildFromPointIds = (pids, customName, kind) => {
+                const pts = pids.map(id => geoState.points.find(p => p.id === id)).filter(Boolean);
+                const basis = computePointListPlaneBasis(pts);
+                if (!basis) return null;
+                return {
+                    origin: basis.origin,
+                    normal: basis.normal,
+                    center: basis.center,
+                    pts,
+                    name: customName || `(${pts.slice(0, 3).map(p => p.name).join('')})`,
+                    kind
+                };
+            };
+            if (typeof planeId === 'string' && planeId.startsWith('pts:')) {
+                return buildFromPointIds(planeId.slice(4).split(','), null, 'customPts');
+            }
             const face = geoState.faces.find(f => f.id === planeId && !f.hidden);
             if (face && face.pointIds && face.pointIds.length >= 3) {
-                const pts = face.pointIds.map(id => geoState.points.find(p => p.id === id)).filter(Boolean);
-                if (pts.length >= 3) {
-                    const v0 = new THREE.Vector3(pts[0].x, pts[0].y, pts[0].z);
-                    let normal = null;
-                    for (let i = 1; i < pts.length - 1 && !normal; i++) {
-                        const v1 = new THREE.Vector3(pts[i].x, pts[i].y, pts[i].z).sub(v0);
-                        for (let j = i + 1; j < pts.length; j++) {
-                            const v2 = new THREE.Vector3(pts[j].x, pts[j].y, pts[j].z).sub(v0);
-                            const cross = new THREE.Vector3().crossVectors(v1, v2);
-                            if (cross.lengthSq() > 1e-6) {
-                                normal = cross.normalize();
-                                break;
-                            }
-                        }
-                    }
-                    if (normal) {
-                        const center = new THREE.Vector3();
-                        pts.forEach(p => center.add(new THREE.Vector3(p.x, p.y, p.z)));
-                        center.divideScalar(pts.length);
-                        return {
-                            origin: v0,
-                            normal,
-                            center,
-                            pts,
-                            name: face.name || `(${pts.map(p => p.name).join('')})`,
-                            kind: 'face'
-                        };
-                    }
-                }
+                return buildFromPointIds(face.pointIds, face.name, 'face');
             }
             const cir = (geoState.circles || []).find(c => c.id === planeId && !c.hidden);
             if (cir) {
@@ -11042,15 +11013,38 @@
             if (target.type === 'face' && target.faceId) {
                 const face = geoState.faces.find(f => f.id === target.faceId && !f.hidden);
                 if (!face) return null;
-                return { surfType: 'plane', key: `plane:${face.id}`, planeId: face.id, faceId: face.id, name: face.name || '(α)' };
+                return {
+                    surfType: 'plane',
+                    key: `plane:${face.id}`,
+                    planeId: face.id,
+                    faceId: face.id,
+                    pointIds: [...(face.pointIds || [])],
+                    segIds: [],
+                    name: face.name || '(α)'
+                };
             }
             if ((target.type === 'circleDisk' || target.type === 'circle') && target.circleId) {
                 const cir = (geoState.circles || []).find(c => c.id === target.circleId && !c.hidden);
                 if (!cir) return null;
-                return { surfType: 'plane', key: `plane:${cir.id}`, planeId: cir.id, circleId: cir.id, name: cir.name || '(C)' };
+                return {
+                    surfType: 'plane',
+                    key: `plane:${cir.id}`,
+                    planeId: cir.id,
+                    circleId: cir.id,
+                    pointIds: [],
+                    segIds: [],
+                    name: cir.name || '(C)'
+                };
             }
             if (target.type === 'plane') {
-                return { surfType: 'plane', key: 'plane:__base_plane__', planeId: '__base_plane__', name: '(P)' };
+                return {
+                    surfType: 'plane',
+                    key: 'plane:__base_plane__',
+                    planeId: '__base_plane__',
+                    pointIds: [],
+                    segIds: [],
+                    name: '(P)'
+                };
             }
             if ((target.type === 'solid' || ['sphere', 'cone', 'frustum'].includes(target.type)) && target.solidId) {
                 const sol = (geoState.solids || []).find(s => s.id === target.solidId && !s.hidden);
@@ -11064,6 +11058,144 @@
                 };
             }
             return null;
+        }
+
+        function resolvePlaneFromBuilderElements(points, segments, collinearTol = 0.035, coplanarTol = 0.045) {
+            const nPts = points.length;
+            const nSegs = segments.length;
+            if (nPts === 0 && nSegs === 0) return { status: 'pending' };
+
+            const buildPlaneFromCandidates = (candidates, displayName, segIds, nonCoplanarReason = 'skew-lines', collinearReason = 'collinear-points') => {
+                const uniquePts = [];
+                for (const c of candidates) {
+                    if (!uniquePts.some(u => u.id === c.id || u.pos.distanceTo(c.pos) < 1e-4)) {
+                        uniquePts.push(c);
+                    }
+                }
+                if (uniquePts.length < 3) {
+                    return { status: 'invalid', reason: collinearReason };
+                }
+                let p0 = null, p1 = null, p2 = null, normal = null;
+                for (let i = 0; i < uniquePts.length - 2 && !normal; i++) {
+                    for (let j = i + 1; j < uniquePts.length - 1 && !normal; j++) {
+                        const v1 = new THREE.Vector3().subVectors(uniquePts[j].pos, uniquePts[i].pos);
+                        const len1 = v1.length();
+                        if (len1 < 1e-5) continue;
+                        for (let k = j + 1; k < uniquePts.length; k++) {
+                            const v2 = new THREE.Vector3().subVectors(uniquePts[k].pos, uniquePts[i].pos);
+                            const len2 = v2.length();
+                            if (len2 < 1e-5) continue;
+                            const cr = new THREE.Vector3().crossVectors(v1, v2);
+                            const crLen = cr.length();
+                            const altitude = crLen / Math.max(len1, len2);
+                            if (altitude > collinearTol) {
+                                p0 = uniquePts[i];
+                                p1 = uniquePts[j];
+                                p2 = uniquePts[k];
+                                normal = cr.divideScalar(crLen);
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!normal || !p0 || !p1 || !p2) {
+                    return { status: 'invalid', reason: collinearReason };
+                }
+                for (const c of uniquePts) {
+                    const dist = Math.abs(new THREE.Vector3().subVectors(c.pos, p0.pos).dot(normal));
+                    if (dist > coplanarTol) {
+                        return { status: 'invalid', reason: nonCoplanarReason };
+                    }
+                }
+                const orderedPts = [p0, p1, p2, ...uniquePts.filter(u => u.id !== p0.id && u.id !== p1.id && u.id !== p2.id)];
+                const pointIds = orderedPts.map(p => p.id);
+                const planeId = 'pts:' + pointIds.join(',');
+                return {
+                    status: 'complete',
+                    surf: {
+                        surfType: 'plane',
+                        key: 'plane:' + [...pointIds].sort().join(','),
+                        planeId,
+                        pointIds,
+                        segIds,
+                        name: displayName
+                    }
+                };
+            };
+
+            if (nSegs === 0) {
+                if (nPts < 3) return { status: 'pending' };
+                const name = '(' + points.slice(0, 3).map(p => p.name).join('') + ')';
+                return buildPlaneFromCandidates(points, name, [], 'skew-lines', 'collinear-points');
+            }
+            if (nSegs === 1 && nPts === 0) {
+                return { status: 'pending' };
+            }
+            if (nSegs === 1 && nPts === 1) {
+                const pt = points[0];
+                const seg = segments[0];
+                const name = `(${pt.name}, ${seg.name})`;
+                return buildPlaneFromCandidates([pt, seg.p1, seg.p2], name, [seg.id], 'point-on-line', 'point-on-line');
+            }
+            if (nSegs === 1 && nPts >= 2) {
+                const seg = segments[0];
+                const name = `(${points.map(p => p.name).join('')}, ${seg.name})`;
+                return buildPlaneFromCandidates([...points, seg.p1, seg.p2], name, [seg.id], 'skew-lines', 'point-on-line');
+            }
+            if (nSegs >= 2) {
+                const s1 = segments[0];
+                const s2 = segments[1];
+                const u = new THREE.Vector3().subVectors(s1.p2.pos, s1.p1.pos);
+                const v = new THREE.Vector3().subVectors(s2.p2.pos, s2.p1.pos);
+                const uLen = u.length();
+                const vLen = v.length();
+                if (uLen < 1e-5 || vLen < 1e-5) {
+                    return { status: 'invalid', reason: 'collinear-lines' };
+                }
+                const cr = new THREE.Vector3().crossVectors(u, v);
+                const sinTheta = cr.length() / (uLen * vLen);
+                if (sinTheta > 0.02) {
+                    const unitN = cr.clone().normalize();
+                    const skewDist = Math.abs(new THREE.Vector3().subVectors(s2.p1.pos, s1.p1.pos).dot(unitN));
+                    if (skewDist > coplanarTol) {
+                        return { status: 'invalid', reason: 'skew-lines' };
+                    }
+                    const name = `(${s1.name}, ${s2.name})`;
+                    return buildPlaneFromCandidates([s1.p1, s1.p2, s2.p1, s2.p2, ...points], name, [s1.id, s2.id], 'skew-lines', 'collinear-lines');
+                } else {
+                    const parDist = new THREE.Vector3().crossVectors(new THREE.Vector3().subVectors(s2.p1.pos, s1.p1.pos), u).length() / uLen;
+                    if (parDist <= collinearTol) {
+                        return { status: 'invalid', reason: 'collinear-lines' };
+                    }
+                    const name = `(${s1.name}, ${s2.name})`;
+                    return buildPlaneFromCandidates([s1.p1, s1.p2, s2.p1, s2.p2, ...points], name, [s1.id, s2.id], 'skew-lines', 'collinear-lines');
+                }
+            }
+            return { status: 'pending' };
+        }
+
+        function syncIntersectSelectedPointsHighlight() {
+            const pIds = new Set();
+            if (intersectPendingBuilder && intersectPendingBuilder.points) {
+                intersectPendingBuilder.points.forEach(p => pIds.add(p.id));
+            }
+            selectedSurfaceItems.forEach(item => {
+                if (item.pointIds && !item.faceId) {
+                    item.pointIds.forEach(id => pIds.add(id));
+                }
+            });
+            selectedPointIds = Array.from(pIds);
+        }
+
+        function describePendingBuilderSummary() {
+            const parts = [];
+            if (intersectPendingBuilder.points.length > 0) {
+                parts.push(t('Điểm', 'Points') + ': ' + intersectPendingBuilder.points.map(p => `<b>${p.name}</b>`).join(', '));
+            }
+            if (intersectPendingBuilder.segments.length > 0) {
+                parts.push(t('Đường/Đoạn', 'Lines') + ': ' + intersectPendingBuilder.segments.map(s => `<b>${s.name}</b>`).join(', '));
+            }
+            return parts.join(' + ');
         }
 
         function findOrCreatePointNear3D(pos, preferredName, rule) {
@@ -11112,58 +11244,419 @@
             return [p1Id, p2Id];
         }
 
+        function computeBoundedPlanePlaneHits(surf1, p1, surf2, p2, dir) {
+            const lineDir = dir.clone().normalize();
+            const visiblePts = geoState.points.filter(p => !p.hidden);
+            const visibleSegs = geoState.segments.filter(s => !s.hidden);
+            const visibleFaces = geoState.faces.filter(f => !f.hidden && Array.isArray(f.pointIds) && f.pointIds.length >= 3);
+            const ptById = (id) => visiblePts.find(p => p.id === id) || null;
+            const vecOf = (p) => new THREE.Vector3(p.x, p.y, p.z);
+
+            const findExistingPtIdNear = (posVec, tol = 0.045) => {
+                for (const p of visiblePts) {
+                    if (Math.hypot(p.x - posVec.x, p.y - posVec.y, p.z - posVec.z) < tol) return p.id;
+                }
+                return null;
+            };
+
+            const resolveMatchedFaceVertices = (surf, planeData) => {
+                const nS = planeData.normal.clone().normalize();
+                if (surf.faceId) {
+                    const f = visibleFaces.find(fc => fc.id === surf.faceId);
+                    if (f && f.pointIds.length >= 3) return f.pointIds;
+                }
+                if (!surf.pointIds || surf.pointIds.length < 3) return null;
+                const defPts = surf.pointIds.map(ptById).filter(Boolean);
+                if (defPts.length < 3) return null;
+
+                let bestFace = null;
+                for (const f of visibleFaces) {
+                    const fPts = f.pointIds.map(ptById).filter(Boolean);
+                    if (fPts.length < 3) continue;
+                    const allCoplanar = fPts.every(fp => Math.abs(vecOf(fp).sub(planeData.origin).dot(nS)) < 0.035);
+                    if (!allCoplanar) continue;
+                    const allDefInside = defPts.every(dp =>
+                        f.pointIds.includes(dp.id) || isPointInsideOrOnPolygon3D(vecOf(dp), fPts, 0.045)
+                    );
+                    if (!allDefInside) continue;
+                    const fVecs = fPts.map(vecOf);
+                    let perim = 0;
+                    for (let i = 0; i < fVecs.length; i++) {
+                        perim += fVecs[(i + 1) % fVecs.length].distanceTo(fVecs[i]);
+                    }
+                    if (!bestFace || perim > bestFace.perim) {
+                        bestFace = { pointIds: f.pointIds, perim };
+                    }
+                }
+                return bestFace ? bestFace.pointIds : null;
+            };
+
+            const orderPointIdsCyclically = (pointIds, planeData) => {
+                const pts = pointIds.map(ptById).filter(Boolean);
+                if (pts.length < 3) return null;
+                if (pts.length === 3) return pts.map(p => p.id);
+                const nP = planeData.normal.clone().normalize();
+                const c = new THREE.Vector3();
+                pts.forEach(p => c.add(vecOf(p)));
+                c.divideScalar(pts.length);
+                const e1 = vecOf(pts[0]).sub(c).normalize();
+                const e2 = new THREE.Vector3().crossVectors(nP, e1).normalize();
+                return [...pts].sort((a, b) => {
+                    const ra = vecOf(a).sub(c);
+                    const rb = vecOf(b).sub(c);
+                    return Math.atan2(ra.dot(e2), ra.dot(e1)) - Math.atan2(rb.dot(e2), rb.dot(e1));
+                }).map(p => p.id);
+            };
+
+            const poly1Ids = resolveMatchedFaceVertices(surf1, p1);
+            const poly2Ids = resolveMatchedFaceVertices(surf2, p2);
+            const effectivePoly1Ids = poly1Ids ||
+                (!poly2Ids && surf1.pointIds && surf1.pointIds.length >= 3 ? orderPointIdsCyclically(surf1.pointIds, p1) : null);
+            const effectivePoly2Ids = poly2Ids ||
+                (!poly1Ids && surf2.pointIds && surf2.pointIds.length >= 3 ? orderPointIdsCyclically(surf2.pointIds, p2) : null);
+
+            const clipPolygonOrSurface = (sourceSurf, sourcePlane, polyIds, otherSurf, otherPlane) => {
+                const nS = sourcePlane.normal.clone().normalize();
+                const nT = otherPlane.normal.clone().normalize();
+                const hits = [];
+                const addHit = (hit) => {
+                    if (!hits.some(h => h.pos.distanceTo(hit.pos) < 0.04)) hits.push(hit);
+                };
+
+                const clipSegmentAgainstOtherPlane = (uId, vId, segObj, isInfiniteLine) => {
+                    const U = ptById(uId);
+                    const V = ptById(vId);
+                    if (!U || !V) return;
+                    const vU = vecOf(U);
+                    const vV = vecOf(V);
+                    const dU = new THREE.Vector3().subVectors(vU, otherPlane.origin).dot(nT);
+                    const dV = new THREE.Vector3().subVectors(vV, otherPlane.origin).dot(nT);
+
+                    const uOnTarget = Math.abs(dU) < 0.015 || Boolean(otherSurf.pointIds && otherSurf.pointIds.includes(uId));
+                    const vOnTarget = Math.abs(dV) < 0.015 || Boolean(otherSurf.pointIds && otherSurf.pointIds.includes(vId));
+                    const dUClamped = uOnTarget ? 0 : dU;
+                    const dVClamped = vOnTarget ? 0 : dV;
+
+                    if (dUClamped === 0) addHit({ pos: vU, existingPtId: uId, targetPlaneId: otherSurf.planeId });
+                    if (dVClamped === 0) addHit({ pos: vV, existingPtId: vId, targetPlaneId: otherSurf.planeId });
+                    if (dUClamped === 0 || dVClamped === 0) return;
+
+                    const crossesFinite = (dUClamped * dVClamped < 0);
+                    if ((crossesFinite || isInfiniteLine) && Math.abs(dU - dV) > 1e-6) {
+                        const tVal = dU / (dU - dV);
+                        if (!isInfiniteLine && (tVal < -1e-4 || tVal > 1 + 1e-4)) return;
+                        const hitPos = vU.clone().lerp(vV, tVal);
+                        if (hitPos.distanceTo(vU) < 0.045) {
+                            addHit({ pos: vU, existingPtId: uId, targetPlaneId: otherSurf.planeId });
+                            return;
+                        }
+                        if (hitPos.distanceTo(vV) < 0.045) {
+                            addHit({ pos: vV, existingPtId: vId, targetPlaneId: otherSurf.planeId });
+                            return;
+                        }
+                        const existingPtId = findExistingPtIdNear(hitPos, 0.045);
+                        const snappedPos = existingPtId ? vecOf(ptById(existingPtId)) : hitPos;
+                        addHit({ pos: snappedPos, existingPtId, segObj, uId, vId, targetPlaneId: otherSurf.planeId });
+                    }
+                };
+
+                if (polyIds && polyIds.length >= 3) {
+                    const polyPts = polyIds.map(ptById).filter(Boolean);
+                    const m = polyIds.length;
+                    for (let i = 0; i < m; i++) {
+                        const uId = polyIds[i];
+                        const vId = polyIds[(i + 1) % m];
+                        const seg = visibleSegs.find(s =>
+                            (s.p1Id === uId && s.p2Id === vId) || (s.p1Id === vId && s.p2Id === uId)
+                        );
+                        clipSegmentAgainstOtherPlane(uId, vId, seg, false);
+                    }
+                    for (const p of visiblePts) {
+                        const vp = vecOf(p);
+                        if (
+                            Math.abs(vp.clone().sub(sourcePlane.origin).dot(nS)) < 0.035 &&
+                            Math.abs(vp.clone().sub(otherPlane.origin).dot(nT)) < 0.035 &&
+                            isPointInsideOrOnPolygon3D(vp, polyPts, 0.045)
+                        ) {
+                            addHit({ pos: vp, existingPtId: p.id, targetPlaneId: otherSurf.planeId });
+                        }
+                    }
+                } else {
+                    for (const p of visiblePts) {
+                        const vp = vecOf(p);
+                        if (
+                            Math.abs(vp.clone().sub(sourcePlane.origin).dot(nS)) < 0.035 &&
+                            Math.abs(vp.clone().sub(otherPlane.origin).dot(nT)) < 0.035
+                        ) {
+                            addHit({ pos: vp, existingPtId: p.id, targetPlaneId: otherSurf.planeId });
+                        }
+                    }
+                    for (const seg of visibleSegs) {
+                        const U = ptById(seg.p1Id);
+                        const V = ptById(seg.p2Id);
+                        if (!U || !V) continue;
+                        const dU_S = Math.abs(vecOf(U).sub(sourcePlane.origin).dot(nS));
+                        const dV_S = Math.abs(vecOf(V).sub(sourcePlane.origin).dot(nS));
+                        if (dU_S < 0.035 && dV_S < 0.035) {
+                            clipSegmentAgainstOtherPlane(seg.p1Id, seg.p2Id, seg, Boolean(seg.isLine));
+                        }
+                    }
+                }
+
+                hits.sort((a, b) => a.pos.dot(lineDir) - b.pos.dot(lineDir));
+                return hits;
+            };
+
+            const cand1 = clipPolygonOrSurface(surf1, p1, effectivePoly1Ids, surf2, p2);
+            const cand2 = clipPolygonOrSurface(surf2, p2, effectivePoly2Ids, surf1, p1);
+            const hasChord = (cands) => cands.length >= 2 && cands[cands.length - 1].pos.distanceTo(cands[0].pos) > 0.04;
+            const chord1Valid = hasChord(cand1);
+            const chord2Valid = hasChord(cand2);
+
+            let chosenHits = [];
+            if (chord1Valid && chord2Valid && effectivePoly1Ids && effectivePoly2Ids) {
+                const startHit = cand1[0].pos.dot(lineDir) >= cand2[0].pos.dot(lineDir) ? cand1[0] : cand2[0];
+                const endHit = cand1[cand1.length - 1].pos.dot(lineDir) <= cand2[cand2.length - 1].pos.dot(lineDir)
+                    ? cand1[cand1.length - 1]
+                    : cand2[cand2.length - 1];
+                if (endHit.pos.dot(lineDir) - startHit.pos.dot(lineDir) > 0.04) {
+                    chosenHits = [startHit, endHit];
+                }
+            }
+
+            if (chosenHits.length < 2) {
+                if (poly2Ids && chord2Valid && !poly1Ids) chosenHits = [cand2[0], cand2[cand2.length - 1]];
+                else if (poly1Ids && chord1Valid && !poly2Ids) chosenHits = [cand1[0], cand1[cand1.length - 1]];
+                else if (chord2Valid) chosenHits = [cand2[0], cand2[cand2.length - 1]];
+                else if (chord1Valid) chosenHits = [cand1[0], cand1[cand1.length - 1]];
+                else {
+                    const merged = [];
+                    const poly1Pts = effectivePoly1Ids ? effectivePoly1Ids.map(ptById).filter(Boolean) : null;
+                    const poly2Pts = effectivePoly2Ids ? effectivePoly2Ids.map(ptById).filter(Boolean) : null;
+                    for (const h of [...cand1, ...cand2]) {
+                        if (poly1Pts && poly1Pts.length >= 3 && !isPointInsideOrOnPolygon3D(h.pos, poly1Pts, 0.045)) continue;
+                        if (poly2Pts && poly2Pts.length >= 3 && !isPointInsideOrOnPolygon3D(h.pos, poly2Pts, 0.045)) continue;
+                        if (!merged.some(m => m.pos.distanceTo(h.pos) < 0.04)) merged.push(h);
+                    }
+                    merged.sort((a, b) => a.pos.dot(lineDir) - b.pos.dot(lineDir));
+                    chosenHits = merged.length >= 2 ? [merged[0], merged[merged.length - 1]] : merged;
+                }
+            }
+
+            return chosenHits.map(h => {
+                if (h.existingPtId) return h.existingPtId;
+                const rule = h.targetPlaneId === '__base_plane__'
+                    ? { type: 'lineBasePlaneIntersection', segId: h.segObj ? h.segObj.id : undefined, uId: h.uId, vId: h.vId }
+                    : { type: 'lineFaceIntersection', segId: h.segObj ? h.segObj.id : undefined, uId: h.uId, vId: h.vId, faceId: h.targetPlaneId };
+                return findOrCreatePointNear3D(h.pos, null, rule);
+            });
+        }
+
+        function createPlanePlaneHelperPoint(plane1Id, plane2Id, role, refPtId = null, isHidden = false) {
+            const rule = { type: 'planePlaneLinePoint', plane1Id, plane2Id, role };
+            if (refPtId) rule.refPtId = refPtId;
+            const pid = createNewPoint(0, 0, 0, null, rule);
+            if (isHidden) {
+                const ptObj = geoState.points.find(p => p.id === pid);
+                if (ptObj) { ptObj.hidden = true; ptObj.isInternalHelper = true; }
+            }
+            return pid;
+        }
+
+        function createParallelSolidSectionCircle(sol, planeId, axisOrigin, axisVec, tVal, defaultCenterName) {
+            const C = axisOrigin.clone().addScaledVector(axisVec, tVal);
+            const cId = findOrCreatePointNear3D(C, defaultCenterName, {
+                type: 'planeSolidAxisCenter',
+                solidId: sol.id,
+                planeId
+            });
+            const cPt = geoState.points.find(p => p.id === cId);
+            const centerLabel = cPt ? cPt.name : defaultCenterName;
+            geoState.circles.push({
+                id: 'cir_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                mode: 'planeSolidParallelCircle',
+                centerId: cId,
+                solidId: sol.id,
+                planeId,
+                name: `(${centerLabel})`,
+                hidden: false
+            });
+            return centerLabel;
+        }
+
         function handleIntersectSurfacesToolClick(target) {
             const guideSpan = document.getElementById('guide-span');
-            const surf = normalizeSurfaceSelectionTarget(target);
-            if (!surf) {
-                if (guideSpan) {
-                    guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
-                        'Hãy click chọn trực tiếp vào Bề mặt đa giác, Hình tròn, Mặt nền (P) hoặc Mặt tròn xoay (Nón, Trụ, Cầu)!',
-                        'Please click directly on a Polygon Face, Circular Disk, Base Plane (P), or Surface of Revolution (Cone, Cylinder, Sphere)!'
-                    )}</span>`;
+            const setGuideHtml = (html, renderMath = false) => {
+                if (!guideSpan) return;
+                guideSpan.innerHTML = html;
+                if (renderMath) renderMathInElementSafe(guideSpan);
+            };
+            const surfStepIdx = selectedSurfaceItems.length === 0 ? 1 : 2;
+            const surfStepLabel = surfStepIdx === 1
+                ? t('Mặt thứ nhất', 'First surface')
+                : t(`Mặt thứ hai (giao với <b>${selectedSurfaceItems[0].name}</b>)`, `Second surface (intersecting <b>${selectedSurfaceItems[0].name}</b>)`);
+
+            let completedSurf = null;
+
+            // 1. Nếu người dùng click vào Điểm (hoặc giao điểm động -> tạo điểm mới rồi thêm vào builder)
+            if (target && (target.type === 'point' || target.type === 'intersection')) {
+                let ptId = target.pointId;
+                if (target.type === 'intersection' && !ptId) {
+                    saveHistory();
+                    ptId = createNewPointFromTarget(target);
                 }
+                const ptObj = geoState.points.find(p => p.id === ptId && !p.hidden);
+                if (!ptObj) return;
+
+                if (intersectPendingBuilder.points.some(p => p.id === ptObj.id)) {
+                    setGuideHtml(`<span style="color:#fbbf24;">${t(
+                        `Điểm <b>$${ptObj.name}$</b> đã được chọn cho ${surfStepLabel}. Hãy chọn điểm hoặc đường thẳng khác!`,
+                        `Point <b>$${ptObj.name}$</b> is already selected for ${surfStepLabel}. Pick another point or line!`
+                    )}</span>`, true);
+                    return;
+                }
+
+                const nextPoints = [
+                    ...intersectPendingBuilder.points,
+                    { id: ptObj.id, name: ptObj.name, pos: new THREE.Vector3(ptObj.x, ptObj.y, ptObj.z) }
+                ];
+                const evalRes = resolvePlaneFromBuilderElements(nextPoints, intersectPendingBuilder.segments);
+
+                if (evalRes.status === 'invalid') {
+                    const msg = evalRes.reason === 'point-on-line'
+                        ? t(`Điểm <b>$${ptObj.name}$</b> nằm trên đường thẳng đã chọn nên chưa xác định duy nhất mặt phẳng. Hãy chọn 1 điểm nằm ngoài đường thẳng!`, `Point <b>$${ptObj.name}$</b> lies on the selected line. Please pick a point outside the line!`)
+                        : t(`3 điểm thẳng hàng nên chưa xác định duy nhất một mặt phẳng. Hãy chọn điểm thứ 3 không thẳng hàng!`, `3 collinear points do not define a unique plane. Please pick a non-collinear point!`);
+                    setGuideHtml(`<span style="color:#fbbf24;">${msg}</span>`, true);
+                    return;
+                }
+
+                intersectPendingBuilder.points = nextPoints;
+                syncIntersectSelectedPointsHighlight();
+                updateSceneFromState();
+
+                if (evalRes.status === 'pending') {
+                    const needMore = intersectPendingBuilder.points.length === 1
+                        ? t('Hãy chọn thêm <b>2 điểm</b> hoặc <b>1 đường/đoạn thẳng</b> không đi qua điểm này', 'Select <b>2 more points</b> or <b>1 line/segment</b> not passing through this point')
+                        : t('Hãy chọn thêm <b>1 điểm thứ 3</b> không thẳng hàng', 'Select <b>1 more non-collinear point</b>');
+                    setGuideHtml(`${surfStepLabel}: ${describePendingBuilderSummary()} $\\to$ ${needMore}`, true);
+                    return;
+                }
+
+                completedSurf = evalRes.surf;
+            }
+            // 2. Nếu người dùng click vào Đoạn thẳng / Đường thẳng (edge)
+            else if (target && target.type === 'edge' && target.segId) {
+                const segObj = geoState.segments.find(s => s.id === target.segId && !s.hidden);
+                if (!segObj) return;
+                const p1 = geoState.points.find(p => p.id === segObj.p1Id);
+                const p2 = geoState.points.find(p => p.id === segObj.p2Id);
+                if (!p1 || !p2) return;
+
+                if (intersectPendingBuilder.segments.some(s => s.id === segObj.id)) {
+                    setGuideHtml(`<span style="color:#fbbf24;">${t(
+                        `Đường/đoạn <b>${p1.name}${p2.name}</b> đã được chọn. Hãy chọn thêm 1 điểm ngoài đường thẳng hoặc 1 đường đồng phẳng khác!`,
+                        `Segment/line <b>${p1.name}${p2.name}</b> is already selected. Pick a point outside it or another coplanar line!`
+                    )}</span>`);
+                    return;
+                }
+
+                const segEntry = {
+                    id: segObj.id,
+                    name: `${p1.name}${p2.name}`,
+                    p1: { id: p1.id, name: p1.name, pos: new THREE.Vector3(p1.x, p1.y, p1.z) },
+                    p2: { id: p2.id, name: p2.name, pos: new THREE.Vector3(p2.x, p2.y, p2.z) }
+                };
+                const nextSegments = [...intersectPendingBuilder.segments, segEntry];
+                const evalRes = resolvePlaneFromBuilderElements(intersectPendingBuilder.points, nextSegments);
+
+                if (evalRes.status === 'invalid') {
+                    let msg = '';
+                    if (evalRes.reason === 'skew-lines') {
+                        msg = t(
+                            `Hai đường thẳng <b>${intersectPendingBuilder.segments[0]?.name || ''}</b> và <b>${segEntry.name}</b> chéo nhau (không đồng phẳng)! Hãy chọn đường thẳng cắt/song song với nó hoặc chọn 1 điểm!`,
+                            `Lines <b>${intersectPendingBuilder.segments[0]?.name || ''}</b> and <b>${segEntry.name}</b> are skew (non-coplanar)! Pick an intersecting/parallel line or a point!`
+                        );
+                    } else if (evalRes.reason === 'point-on-line') {
+                        msg = t(
+                            `Đường thẳng <b>${segEntry.name}</b> đi qua điểm đã chọn nên chưa xác định duy nhất mặt phẳng! Hãy chọn đường thẳng khác hoặc điểm khác!`,
+                            `Line <b>${segEntry.name}</b> passes through the selected point! Pick another line or point!`
+                        );
+                    } else {
+                        msg = t(
+                            `Hai đoạn/đường thẳng trùng phương nên chưa xác định duy nhất mặt phẳng! Hãy chọn đường đồng phẳng khác hoặc 1 điểm ngoài đường thẳng!`,
+                            `Collinear lines do not define a unique plane! Pick another coplanar line or an external point!`
+                        );
+                    }
+                    setGuideHtml(`<span style="color:#fbbf24;">${msg}</span>`);
+                    return;
+                }
+
+                intersectPendingBuilder.segments = nextSegments;
+                syncIntersectSelectedPointsHighlight();
+                updateSceneFromState();
+
+                if (evalRes.status === 'pending') {
+                    setGuideHtml(`${surfStepLabel}: ${describePendingBuilderSummary()} $\\to$ ${t(
+                        'Hãy chọn thêm <b>1 đường/đoạn đồng phẳng</b> (cắt hoặc song song) hoặc <b>1 điểm ngoài đường thẳng</b>',
+                        'Select <b>1 coplanar line/segment</b> (intersecting or parallel) or <b>1 point outside the line</b>'
+                    )}`, true);
+                    return;
+                }
+
+                completedSurf = evalRes.surf;
+            }
+            // 3. Nếu người dùng click trực tiếp vào Bề mặt đa giác, Hình tròn, Mặt nền (P) hoặc Khối tròn xoay
+            else {
+                completedSurf = normalizeSurfaceSelectionTarget(target);
+            }
+
+            if (!completedSurf) {
+                setGuideHtml(`<span style="color:#fbbf24;">${t(
+                    'Để xác định 1 mặt, hãy click chọn Bề mặt / Mặt tròn xoay, hoặc lần lượt chọn 3 điểm không thẳng hàng, hoặc 1 điểm & 1 đường, hoặc 2 đường đồng phẳng!',
+                    'To define a surface, click a Face / Solid directly, or select 3 non-collinear points, 1 point + 1 line, or 2 coplanar lines!'
+                )}</span>`);
                 return;
             }
 
+            // Reset bộ thu thập đối tượng tạm thời khi đã hoàn tất 1 mặt
+            intersectPendingBuilder = { points: [], segments: [] };
+
             if (selectedSurfaceItems.length === 0) {
-                selectedSurfaceItems = [surf];
-                if (guideSpan) {
-                    guideSpan.innerHTML = t(
-                        `Đã chọn mặt thứ nhất: <b>${surf.name}</b> $\\to$ Hãy click chọn tiếp <b>Mặt thứ hai</b> để dựng giao tuyến!`,
-                        `Selected first surface: <b>${surf.name}</b> $\\to$ Click the <b>Second surface</b> to construct their intersection!`
-                    );
-                    renderMathInElementSafe(guideSpan);
-                }
+                selectedSurfaceItems = [completedSurf];
+                syncIntersectSelectedPointsHighlight();
+                updateSceneFromState();
+                setGuideHtml(t(
+                    `Đã xác định Mặt thứ nhất: <b>${completedSurf.name}</b> $\\to$ Tiếp theo hãy chọn các đối tượng xác định <b>Mặt thứ hai</b> (Bề mặt / Khối tròn xoay / 3 điểm / 1 điểm + 1 đường / 2 đường đồng phẳng)!`,
+                    `Defined First Surface: <b>${completedSurf.name}</b> $\\to$ Now select objects to define the <b>Second Surface</b> (Surface / Solid / 3 points / 1 point + 1 line / 2 coplanar lines)!`
+                ), true);
                 return;
             }
 
             const surf1 = selectedSurfaceItems[0];
-            if (surf1.key === surf.key) {
-                if (guideSpan) {
-                    guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
-                        `Bạn vừa click lại mặt <b>${surf.name}</b>. Hãy chọn một mặt thứ hai khác với mặt thứ nhất!`,
-                        `You clicked <b>${surf.name}</b> again. Please select a different second surface!`
-                    )}</span>`;
-                }
+            if (surf1.key === completedSurf.key) {
+                setGuideHtml(`<span style="color:#fbbf24;">${t(
+                    `Mặt thứ hai trùng với Mặt thứ nhất <b>${completedSurf.name}</b>. Hãy xác định một mặt thứ hai khác!`,
+                    `The second surface is identical to <b>${completedSurf.name}</b>. Please define a different second surface!`
+                )}</span>`);
                 return;
             }
 
-            const surf2 = surf;
+            const surf2 = completedSurf;
             selectedSurfaceItems = [];
+            syncIntersectSelectedPointsHighlight();
 
-            // TRƯỜNG HỢP 1: MẶT PHẲNG × MẶT PHẲNG (ĐA GIÁC, HÌNH TRÒN, MẶT NỀN (P))
+            // TRƯỜNG HỢP 1: MẶT PHẲNG × MẶT PHẲNG (ĐA GIÁC, HÌNH TRÒN, MẶT NỀN (P), MẶT PHẲNG TỪ ĐIỂM/ĐƯỜNG)
             if (surf1.surfType === 'plane' && surf2.surfType === 'plane') {
                 const p1 = getPlaneDataFromId(surf1.planeId);
                 const p2 = getPlaneDataFromId(surf2.planeId);
                 if (!p1 || !p2) return;
                 const dir = new THREE.Vector3().crossVectors(p1.normal, p2.normal);
                 if (dir.lengthSq() < 1e-6) {
-                    if (guideSpan) {
-                        guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
-                            `Hai mặt phẳng <b>${surf1.name}</b> và <b>${surf2.name}</b> song song hoặc trùng nhau nên không có giao tuyến!`,
-                            `Surfaces <b>${surf1.name}</b> and <b>${surf2.name}</b> are parallel or coincident!`
-                        )}</span>`;
-                    }
+                    updateSceneFromState();
+                    setGuideHtml(`<span style="color:#fbbf24;">${t(
+                        `Hai mặt phẳng <b>${surf1.name}</b> và <b>${surf2.name}</b> song song hoặc trùng nhau nên không có giao tuyến!`,
+                        `Surfaces <b>${surf1.name}</b> and <b>${surf2.name}</b> are parallel or coincident!`
+                    )}</span>`);
                     return;
                 }
 
@@ -11173,104 +11666,31 @@
                     if (id && !interPtIds.includes(id)) interPtIds.push(id);
                 };
 
-                // Nếu 1 trong 2 mặt là hình tròn, tìm giao điểm của mặt phẳng kia với đường tròn biên
-                if (surf1.circleId) {
-                    createPlaneCircleChordIntersection(surf1.circleId, surf2.planeId).forEach(addUniquePtId);
+                if (surf1.circleId) createPlaneCircleChordIntersection(surf1.circleId, surf2.planeId).forEach(addUniquePtId);
+                if (surf2.circleId) createPlaneCircleChordIntersection(surf2.circleId, surf1.planeId).forEach(addUniquePtId);
+                if (!surf1.circleId && !surf2.circleId) {
+                    computeBoundedPlanePlaneHits(surf1, p1, surf2, p2, dir).forEach(addUniquePtId);
                 }
-                if (surf2.circleId) {
-                    createPlaneCircleChordIntersection(surf2.circleId, surf1.planeId).forEach(addUniquePtId);
-                }
-
-                // Kiểm tra các đỉnh chung hoặc điểm đã nằm đồng thời trên cả 2 mặt phẳng
-                const n1 = p1.normal.clone().normalize();
-                const n2 = p2.normal.clone().normalize();
-                geoState.points.forEach(pt => {
-                    if (pt.hidden) return;
-                    const v = new THREE.Vector3(pt.x, pt.y, pt.z);
-                    const d1 = Math.abs(new THREE.Vector3().subVectors(v, p1.origin).dot(n1));
-                    const d2 = Math.abs(new THREE.Vector3().subVectors(v, p2.origin).dot(n2));
-                    if (d1 < 0.035 && d2 < 0.035) {
-                        addUniquePtId(pt.id);
-                    }
-                });
-
-                // Tìm giao điểm của các cạnh biên của mặt đa giác 1 với mặt phẳng 2 và ngược lại
-                const collectFaceEdgeHitsWithPlane = (faceId, targetPlaneId, targetPlane) => {
-                    const face = geoState.faces.find(f => f.id === faceId && !f.hidden);
-                    if (!face || !face.pointIds || face.pointIds.length < 3) return;
-                    const nT = targetPlane.normal.clone().normalize();
-                    const len = face.pointIds.length;
-                    for (let i = 0; i < len; i++) {
-                        const uId = face.pointIds[i];
-                        const vId = face.pointIds[(i + 1) % len];
-                        const seg = geoState.segments.find(s =>
-                            !s.hidden && ((s.p1Id === uId && s.p2Id === vId) || (s.p1Id === vId && s.p2Id === uId))
-                        );
-                        const U = geoState.points.find(p => p.id === uId);
-                        const V = geoState.points.find(p => p.id === vId);
-                        if (!U || !V) continue;
-                        const vU = new THREE.Vector3(U.x, U.y, U.z);
-                        const vV = new THREE.Vector3(V.x, V.y, V.z);
-                        const dU = new THREE.Vector3().subVectors(vU, targetPlane.origin).dot(nT);
-                        const dV = new THREE.Vector3().subVectors(vV, targetPlane.origin).dot(nT);
-                        if (Math.abs(dU) < 0.035) { addUniquePtId(uId); continue; }
-                        if (Math.abs(dV) < 0.035) { addUniquePtId(vId); continue; }
-                        if (dU * dV < 0 && Math.abs(dU - dV) > 1e-5) {
-                            const tVal = dU / (dU - dV);
-                            const hitPos = vU.clone().lerp(vV, tVal);
-                            const rule = targetPlaneId === '__base_plane__'
-                                ? (seg ? { type: 'lineBasePlaneIntersection', segId: seg.id } : null)
-                                : (seg ? { type: 'lineFaceIntersection', segId: seg.id, faceId: targetPlaneId } : null);
-                            const newId = findOrCreatePointNear3D(hitPos, null, rule);
-                            addUniquePtId(newId);
-                        }
-                    }
-                };
-
-                if (surf1.faceId) collectFaceEdgeHitsWithPlane(surf1.faceId, surf2.planeId, p2);
-                if (surf2.faceId) collectFaceEdgeHitsWithPlane(surf2.faceId, surf1.planeId, p1);
 
                 if (interPtIds.length >= 2) {
                     addSegmentAndCheckClosedLoops(interPtIds[0], interPtIds[1], false);
                     autoDetectClosedFacesFromSegments();
                 } else if (interPtIds.length === 1) {
                     const sharedId = interPtIds[0];
-                    const helperId = createNewPoint(0, 0, 0, null, {
-                        type: 'planePlaneLinePoint',
-                        plane1Id: surf1.planeId,
-                        plane2Id: surf2.planeId,
-                        refPtId: sharedId,
-                        role: 'p1'
-                    });
-                    const ptHelper = geoState.points.find(p => p.id === helperId);
-                    if (ptHelper) { ptHelper.hidden = true; ptHelper.isInternalHelper = true; }
+                    const helperId = createPlanePlaneHelperPoint(surf1.planeId, surf2.planeId, 'p1', sharedId, true);
                     addSegmentAndCheckClosedLoops(sharedId, helperId, true);
                 } else {
-                    const p1Id = createNewPoint(0, 0, 0, null, {
-                        type: 'planePlaneLinePoint',
-                        plane1Id: surf1.planeId,
-                        plane2Id: surf2.planeId,
-                        role: 'p1'
-                    });
-                    const p2Id = createNewPoint(0, 0, 0, null, {
-                        type: 'planePlaneLinePoint',
-                        plane1Id: surf1.planeId,
-                        plane2Id: surf2.planeId,
-                        role: 'p2'
-                    });
-                    const ptH2 = geoState.points.find(p => p.id === p2Id);
-                    if (ptH2) { ptH2.hidden = true; ptH2.isInternalHelper = true; }
+                    const p1Id = createPlanePlaneHelperPoint(surf1.planeId, surf2.planeId, 'p1', null, false);
+                    const p2Id = createPlanePlaneHelperPoint(surf1.planeId, surf2.planeId, 'p2', null, true);
                     addSegmentAndCheckClosedLoops(p1Id, p2Id, true);
                 }
 
                 recomputeAllDependentGeometry();
                 updateSceneFromState();
-                if (guideSpan) {
-                    guideSpan.innerHTML = t(
-                        `Đã xác định giao tuyến của hai mặt phẳng <b>${surf1.name}</b> và <b>${surf2.name}</b>!`,
-                        `Constructed intersection line of planes <b>${surf1.name}</b> and <b>${surf2.name}</b>!`
-                    );
-                }
+                setGuideHtml(t(
+                    `Đã xác định giao tuyến của hai mặt phẳng <b>${surf1.name}</b> và <b>${surf2.name}</b>!`,
+                    `Constructed intersection line of planes <b>${surf1.name}</b> and <b>${surf2.name}</b>!`
+                ));
                 return;
             }
 
@@ -11289,13 +11709,10 @@
                     const signedDist = new THREE.Vector3().subVectors(sGeom.center, plane.origin).dot(n);
                     const absD = Math.abs(signedDist);
                     if (absD > sGeom.radius + 1e-3) {
-                        if (guideSpan) {
-                            guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
-                                `Mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b> không giao nhau ($d > R$)!`,
-                                `Plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b> do not intersect ($d > R$)!`
-                            )}</span>`;
-                            renderMathInElementSafe(guideSpan);
-                        }
+                        setGuideHtml(`<span style="color:#fbbf24;">${t(
+                            `Mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b> không giao nhau ($d > R$)!`,
+                            `Plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b> do not intersect ($d > R$)!`
+                        )}</span>`, true);
                         return;
                     }
                     saveHistory();
@@ -11306,32 +11723,32 @@
                         planeId: planeSurf.planeId
                     });
                     const hPt = geoState.points.find(p => p.id === hId);
+                    const hLabel = hPt ? hPt.name : 'H';
                     if (absD < sGeom.radius - 1e-3) {
-                        const cirName = `(${hPt ? hPt.name : 'H'})`;
                         geoState.circles.push({
                             id: 'cir_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
                             mode: 'planeSphereIntersection',
                             centerId: hId,
                             solidId: sol.id,
                             planeId: planeSurf.planeId,
-                            name: cirName,
+                            name: `(${hLabel})`,
                             hidden: false
                         });
                     }
                     recomputeAllDependentGeometry();
                     updateSceneFromState();
-                    if (guideSpan) {
-                        guideSpan.innerHTML = absD < sGeom.radius - 1e-3
+                    setGuideHtml(
+                        absD < sGeom.radius - 1e-3
                             ? t(
-                                `Đã dựng <b>Đường tròn giao tuyến</b> tâm <b>$${hPt ? hPt.name : 'H'}$</b> của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
-                                `Constructed <b>Intersection Circle</b> centered at <b>$${hPt ? hPt.name : 'H'}$</b> between <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b>!`
+                                `Đã dựng <b>Đường tròn giao tuyến</b> tâm <b>$${hLabel}$</b> của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
+                                `Constructed <b>Intersection Circle</b> centered at <b>$${hLabel}$</b> between <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b>!`
                             )
                             : t(
-                                `Mặt phẳng <b>${planeSurf.name}</b> tiếp xúc với <b>${solidSurf.name}</b> tại tiếp điểm <b>$${hPt ? hPt.name : 'H'}$</b>!`,
-                                `Plane <b>${planeSurf.name}</b> is tangent to <b>${solidSurf.name}</b> at point <b>$${hPt ? hPt.name : 'H'}$</b>!`
-                            );
-                        renderMathInElementSafe(guideSpan);
-                    }
+                                `Mặt phẳng <b>${planeSurf.name}</b> tiếp xúc với <b>${solidSurf.name}</b> tại tiếp điểm <b>$${hLabel}$</b>!`,
+                                `Plane <b>${planeSurf.name}</b> is tangent to <b>${solidSurf.name}</b> at point <b>$${hLabel}$</b>!`
+                            ),
+                        true
+                    );
                     return;
                 }
 
@@ -11342,89 +11759,44 @@
                     if (!geom || !S) return;
                     const nP = plane.normal.clone().normalize();
                     const crossNormals = new THREE.Vector3().crossVectors(nP, geom.normal);
+                    const vS = new THREE.Vector3(S.x, S.y, S.z);
+                    const axis = new THREE.Vector3().subVectors(geom.center, vS);
+                    const denom = axis.dot(nP);
+                    const tVal = Math.abs(denom) > 1e-5 ? (new THREE.Vector3().subVectors(plane.origin, vS).dot(nP) / denom) : -1;
 
                     saveHistory();
                     if (crossNormals.length() < 0.08) {
-                        // Mặt phẳng song song với đáy hình nón -> Giao tuyến là đường tròn thiết diện ngang
-                        const vS = new THREE.Vector3(S.x, S.y, S.z);
-                        const axis = new THREE.Vector3().subVectors(geom.center, vS);
-                        const denom = axis.dot(nP);
-                        const tVal = Math.abs(denom) > 1e-5 ? (new THREE.Vector3().subVectors(plane.origin, vS).dot(nP) / denom) : -1;
                         if (tVal <= 0.005 || tVal > 1.05) {
-                            if (guideSpan) {
-                                guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
-                                    `Mặt phẳng <b>${planeSurf.name}</b> nằm ngoài phạm vi chiều cao của <b>${solidSurf.name}</b>!`,
-                                    `Plane <b>${planeSurf.name}</b> is outside the height range of <b>${solidSurf.name}</b>!`
-                                )}</span>`;
-                            }
+                            setGuideHtml(`<span style="color:#fbbf24;">${t(
+                                `Mặt phẳng <b>${planeSurf.name}</b> nằm ngoài phạm vi chiều cao của <b>${solidSurf.name}</b>!`,
+                                `Plane <b>${planeSurf.name}</b> is outside the height range of <b>${solidSurf.name}</b>!`
+                            )}</span>`);
                             return;
                         }
-                        const C = vS.clone().addScaledVector(axis, tVal);
-                        const cId = findOrCreatePointNear3D(C, "O'", {
-                            type: 'planeSolidAxisCenter',
-                            solidId: sol.id,
-                            planeId: planeSurf.planeId
-                        });
-                        const cPt = geoState.points.find(p => p.id === cId);
-                        geoState.circles.push({
-                            id: 'cir_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-                            mode: 'planeSolidParallelCircle',
-                            centerId: cId,
-                            solidId: sol.id,
-                            planeId: planeSurf.planeId,
-                            name: `(${cPt ? cPt.name : "O'"})`,
-                            hidden: false
-                        });
+                        const cLabel = createParallelSolidSectionCircle(sol, planeSurf.planeId, vS, axis, tVal, "O'");
                         recomputeAllDependentGeometry();
                         updateSceneFromState();
-                        if (guideSpan) {
-                            guideSpan.innerHTML = t(
-                                `Đã dựng <b>Đường tròn giao tuyến</b> tâm <b>$${cPt ? cPt.name : "O'"}$</b> của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
-                                `Constructed parallel <b>Intersection Circle</b> centered at <b>$${cPt ? cPt.name : "O'"}$</b>!`
-                            );
-                            renderMathInElementSafe(guideSpan);
-                        }
+                        setGuideHtml(t(
+                            `Đã dựng <b>Đường tròn giao tuyến</b> tâm <b>$${cLabel}$</b> của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
+                            `Constructed parallel <b>Intersection Circle</b> centered at <b>$${cLabel}$</b>!`
+                        ), true);
                         return;
                     }
 
-                    // Mặt phẳng đi qua đỉnh S hoặc cắt xiên hình nón -> Tìm giao điểm với đường tròn đáy & các đường sinh
                     const basePts = createPlaneCircleChordIntersection(sol.circleId, planeSurf.planeId);
-                    const vS = new THREE.Vector3(S.x, S.y, S.z);
                     const distS = Math.abs(new THREE.Vector3().subVectors(vS, plane.origin).dot(nP));
                     if (distS < 0.05 && basePts.length === 2) {
                         createPolygonWithSurface([S.id, basePts[0], basePts[1]]);
-                    } else {
-                        const axis = new THREE.Vector3().subVectors(geom.center, vS);
-                        const denom = axis.dot(nP);
-                        const tVal = Math.abs(denom) > 1e-5 ? (new THREE.Vector3().subVectors(plane.origin, vS).dot(nP) / denom) : -1;
-                        if (tVal > 0.02 && tVal <= 1.02) {
-                            const C = vS.clone().addScaledVector(axis, tVal);
-                            const cId = findOrCreatePointNear3D(C, "O'", {
-                                type: 'planeSolidAxisCenter',
-                                solidId: sol.id,
-                                planeId: planeSurf.planeId
-                            });
-                            const cPt = geoState.points.find(p => p.id === cId);
-                            geoState.circles.push({
-                                id: 'cir_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-                                mode: 'planeSolidParallelCircle',
-                                centerId: cId,
-                                solidId: sol.id,
-                                planeId: planeSurf.planeId,
-                                name: `(${cPt ? cPt.name : "O'"})`,
-                                hidden: false
-                            });
-                        }
+                    } else if (tVal > 0.02 && tVal <= 1.02) {
+                        createParallelSolidSectionCircle(sol, planeSurf.planeId, vS, axis, tVal, "O'");
                     }
                     recomputeAllDependentGeometry();
                     autoDetectClosedFacesFromSegments();
                     updateSceneFromState();
-                    if (guideSpan) {
-                        guideSpan.innerHTML = t(
-                            `Đã dựng giao tuyến / thiết diện của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
-                            `Constructed intersection of plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b>!`
-                        );
-                    }
+                    setGuideHtml(t(
+                        `Đã dựng giao tuyến / thiết diện của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
+                        `Constructed intersection of plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b>!`
+                    ));
                     return;
                 }
 
@@ -11436,50 +11808,29 @@
                     if (!g1 || !g2) return;
                     const nP = plane.normal.clone().normalize();
                     const crossNormals = new THREE.Vector3().crossVectors(nP, g1.normal);
+                    const axis = new THREE.Vector3().subVectors(g2.center, g1.center);
+                    const denom = axis.dot(nP);
+                    const tVal = Math.abs(denom) > 1e-5 ? (new THREE.Vector3().subVectors(plane.origin, g1.center).dot(nP) / denom) : -1;
 
                     saveHistory();
                     if (crossNormals.length() < 0.08) {
-                        const axis = new THREE.Vector3().subVectors(g2.center, g1.center);
-                        const denom = axis.dot(nP);
-                        const tVal = Math.abs(denom) > 1e-5 ? (new THREE.Vector3().subVectors(plane.origin, g1.center).dot(nP) / denom) : -1;
                         if (tVal < -0.05 || tVal > 1.05) {
-                            if (guideSpan) {
-                                guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
-                                    `Mặt phẳng <b>${planeSurf.name}</b> nằm ngoài phạm vi chiều cao của <b>${solidSurf.name}</b>!`,
-                                    `Plane <b>${planeSurf.name}</b> is outside the height range of <b>${solidSurf.name}</b>!`
-                                )}</span>`;
-                            }
+                            setGuideHtml(`<span style="color:#fbbf24;">${t(
+                                `Mặt phẳng <b>${planeSurf.name}</b> nằm ngoài phạm vi chiều cao của <b>${solidSurf.name}</b>!`,
+                                `Plane <b>${planeSurf.name}</b> is outside the height range of <b>${solidSurf.name}</b>!`
+                            )}</span>`);
                             return;
                         }
-                        const C = g1.center.clone().addScaledVector(axis, tVal);
-                        const cId = findOrCreatePointNear3D(C, "O''", {
-                            type: 'planeSolidAxisCenter',
-                            solidId: sol.id,
-                            planeId: planeSurf.planeId
-                        });
-                        const cPt = geoState.points.find(p => p.id === cId);
-                        geoState.circles.push({
-                            id: 'cir_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-                            mode: 'planeSolidParallelCircle',
-                            centerId: cId,
-                            solidId: sol.id,
-                            planeId: planeSurf.planeId,
-                            name: `(${cPt ? cPt.name : "O''"})`,
-                            hidden: false
-                        });
+                        const cLabel = createParallelSolidSectionCircle(sol, planeSurf.planeId, g1.center, axis, tVal, "O''");
                         recomputeAllDependentGeometry();
                         updateSceneFromState();
-                        if (guideSpan) {
-                            guideSpan.innerHTML = t(
-                                `Đã dựng <b>Đường tròn giao tuyến</b> tâm <b>$${cPt ? cPt.name : "O''"}$</b> của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
-                                `Constructed parallel <b>Intersection Circle</b> centered at <b>$${cPt ? cPt.name : "O''"}$</b>!`
-                            );
-                            renderMathInElementSafe(guideSpan);
-                        }
+                        setGuideHtml(t(
+                            `Đã dựng <b>Đường tròn giao tuyến</b> tâm <b>$${cLabel}$</b> của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
+                            `Constructed parallel <b>Intersection Circle</b> centered at <b>$${cLabel}$</b>!`
+                        ), true);
                         return;
                     }
 
-                    // Mặt phẳng cắt 2 đáy (thiết diện dọc theo đường sinh hoặc cắt xiên)
                     const pts1 = createPlaneCircleChordIntersection(sol.circle1Id, planeSurf.planeId);
                     const pts2 = createPlaneCircleChordIntersection(sol.circle2Id, planeSurf.planeId);
                     if (pts1.length === 2 && pts2.length === 2) {
@@ -11490,44 +11841,18 @@
                         if (P1A && P1B && P2A && P2B) {
                             const dSame = Math.hypot(P1A.x - P2A.x, P1A.y - P2A.y, P1A.z - P2A.z) + Math.hypot(P1B.x - P2B.x, P1B.y - P2B.y, P1B.z - P2B.z);
                             const dSwap = Math.hypot(P1A.x - P2B.x, P1A.y - P2B.y, P1A.z - P2B.z) + Math.hypot(P1B.x - P2A.x, P1B.y - P2A.y, P1B.z - P2A.z);
-                            if (dSame <= dSwap) {
-                                createPolygonWithSurface([pts1[0], pts1[1], pts2[1], pts2[0]]);
-                            } else {
-                                createPolygonWithSurface([pts1[0], pts1[1], pts2[0], pts2[1]]);
-                            }
+                            createPolygonWithSurface(dSame <= dSwap ? [pts1[0], pts1[1], pts2[1], pts2[0]] : [pts1[0], pts1[1], pts2[0], pts2[1]]);
                         }
-                    } else {
-                        const axis = new THREE.Vector3().subVectors(g2.center, g1.center);
-                        const denom = axis.dot(nP);
-                        const tVal = Math.abs(denom) > 1e-5 ? (new THREE.Vector3().subVectors(plane.origin, g1.center).dot(nP) / denom) : -1;
-                        if (tVal >= 0 && tVal <= 1) {
-                            const C = g1.center.clone().addScaledVector(axis, tVal);
-                            const cId = findOrCreatePointNear3D(C, "O''", {
-                                type: 'planeSolidAxisCenter',
-                                solidId: sol.id,
-                                planeId: planeSurf.planeId
-                            });
-                            const cPt = geoState.points.find(p => p.id === cId);
-                            geoState.circles.push({
-                                id: 'cir_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-                                mode: 'planeSolidParallelCircle',
-                                centerId: cId,
-                                solidId: sol.id,
-                                planeId: planeSurf.planeId,
-                                name: `(${cPt ? cPt.name : "O''"})`,
-                                hidden: false
-                            });
-                        }
+                    } else if (tVal >= 0 && tVal <= 1) {
+                        createParallelSolidSectionCircle(sol, planeSurf.planeId, g1.center, axis, tVal, "O''");
                     }
                     recomputeAllDependentGeometry();
                     autoDetectClosedFacesFromSegments();
                     updateSceneFromState();
-                    if (guideSpan) {
-                        guideSpan.innerHTML = t(
-                            `Đã dựng giao tuyến / thiết diện của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
-                            `Constructed intersection of plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b>!`
-                        );
-                    }
+                    setGuideHtml(t(
+                        `Đã dựng giao tuyến / thiết diện của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
+                        `Constructed intersection of plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b>!`
+                    ));
                     return;
                 }
             }
@@ -11545,12 +11870,10 @@
                     const v12 = new THREE.Vector3().subVectors(g2.center, g1.center);
                     const d = v12.length();
                     if (d < 1e-5 || d > g1.radius + g2.radius + 1e-3 || d < Math.abs(g1.radius - g2.radius) - 1e-3) {
-                        if (guideSpan) {
-                            guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
-                                `Hai mặt cầu <b>${surf1.name}</b> và <b>${surf2.name}</b> không cắt nhau!`,
-                                `Spheres <b>${surf1.name}</b> and <b>${surf2.name}</b> do not intersect!`
-                            )}</span>`;
-                        }
+                        setGuideHtml(`<span style="color:#fbbf24;">${t(
+                            `Hai mặt cầu <b>${surf1.name}</b> và <b>${surf2.name}</b> không cắt nhau!`,
+                            `Spheres <b>${surf1.name}</b> and <b>${surf2.name}</b> do not intersect!`
+                        )}</span>`);
                         return;
                     }
                     saveHistory();
@@ -11563,6 +11886,7 @@
                         solid2Id: sol2.id
                     });
                     const hPt = geoState.points.find(p => p.id === hId);
+                    const hLabel = hPt ? hPt.name : 'H';
                     const rSq = g1.radius * g1.radius - x * x;
                     if (rSq > 1e-5) {
                         geoState.circles.push({
@@ -11571,19 +11895,16 @@
                             centerId: hId,
                             solid1Id: sol1.id,
                             solid2Id: sol2.id,
-                            name: `(${hPt ? hPt.name : 'H'})`,
+                            name: `(${hLabel})`,
                             hidden: false
                         });
                     }
                     recomputeAllDependentGeometry();
                     updateSceneFromState();
-                    if (guideSpan) {
-                        guideSpan.innerHTML = t(
-                            `Đã dựng <b>Đường tròn giao tuyến</b> tâm <b>$${hPt ? hPt.name : 'H'}$</b> của hai mặt cầu <b>${surf1.name}</b> và <b>${surf2.name}</b>!`,
-                            `Constructed <b>Intersection Circle</b> centered at <b>$${hPt ? hPt.name : 'H'}$</b> of spheres <b>${surf1.name}</b> and <b>${surf2.name}</b>!`
-                        );
-                        renderMathInElementSafe(guideSpan);
-                    }
+                    setGuideHtml(t(
+                        `Đã dựng <b>Đường tròn giao tuyến</b> tâm <b>$${hLabel}$</b> của hai mặt cầu <b>${surf1.name}</b> và <b>${surf2.name}</b>!`,
+                        `Constructed <b>Intersection Circle</b> centered at <b>$${hLabel}$</b> of spheres <b>${surf1.name}</b> and <b>${surf2.name}</b>!`
+                    ), true);
                     return;
                 }
 
@@ -12006,6 +12327,7 @@
             selectedPointIds = [];
             selectedCircleIds = [];
             selectedSurfaceItems = [];
+            intersectPendingBuilder = { points: [], segments: [] };
             measurePendingItems = [];
             pendingPointerGesture = null;
             if (['measure-scale', 'set-seg-length', 'measure-dist', 'measure-angle', 'measure-area', 'measure-volume'].includes(tool)) {
