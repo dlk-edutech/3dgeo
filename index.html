@@ -5480,20 +5480,39 @@
             });
         }
 
-        function computeLineStrandOffsets(effectiveLw, camZoom = 1) {
+        function computeLineStrandOffsets(effectiveLw, camZoom = 1, unitDir = null) {
             const offsets = [[0, 0, 0]];
             if (effectiveLw <= 1.25) return offsets;
             const z = Math.max(0.25, Number.isFinite(camZoom) ? camZoom : 1);
             const r = ((effectiveLw - 1) * 0.0085) / z;
-            offsets.push([r, 0, 0], [-r, 0, 0], [0, r, 0], [0, -r, 0], [0, 0, r], [0, 0, -r]);
+            const rawCandidates = [
+                [r, 0, 0], [-r, 0, 0],
+                [0, r, 0], [0, -r, 0],
+                [0, 0, r], [0, 0, -r]
+            ];
             if (effectiveLw >= 2.75) {
                 const d = r * 0.72;
-                offsets.push([d, d, 0], [-d, d, 0], [0, d, d], [0, -d, d]);
+                rawCandidates.push([d, d, 0], [-d, d, 0], [0, d, d], [0, -d, d]);
             }
+            if (unitDir && (unitDir.x || unitDir.y || unitDir.z)) {
+                const ux = unitDir.x, uy = unitDir.y, uz = unitDir.z;
+                for (let i = 0; i < rawCandidates.length; i++) {
+                    const [ox, oy, oz] = rawCandidates[i];
+                    const dotU = ox * ux + oy * uy + oz * uz;
+                    const px = ox - dotU * ux;
+                    const py = oy - dotU * uy;
+                    const pz = oz - dotU * uz;
+                    if (px * px + py * py + pz * pz > 1e-8) {
+                        offsets.push([px, py, pz]);
+                    }
+                }
+                return offsets;
+            }
+            offsets.push(...rawCandidates);
             return offsets;
         }
 
-        function applyLineThicknessStrands(lineObj, extraWeight = 0) {
+        function applyLineThicknessStrands(lineObj, extraWeight = 0, unitDir = null) {
             if (!lineObj || !lineObj.material) return lineObj;
             const baseLw = visualStyle.lineWidth || 2;
             const effectiveLw = Math.max(1, Math.min(6, baseLw + extraWeight));
@@ -5503,12 +5522,14 @@
             }
             if (effectiveLw <= 1.25) return lineObj;
             const camZoom = (camera && camera.isOrthographicCamera && camera.zoom) ? camera.zoom : 1;
-            const offsets = computeLineStrandOffsets(effectiveLw, camZoom);
+            const dirVec = unitDir || (lineObj.userData && lineObj.userData.unitDir) || null;
+            const offsets = computeLineStrandOffsets(effectiveLw, camZoom, dirVec);
             const strandMat = lineObj.material.clone();
             strandMat.transparent = true;
             strandMat.opacity = effectiveLw < 2 ? 0.55 : 0.88;
             lineObj.userData = lineObj.userData || {};
             lineObj.userData.strandMat = strandMat;
+            if (dirVec) lineObj.userData.unitDir = dirVec;
             for (let i = 1; i < offsets.length; i++) {
                 const [ox, oy, oz] = offsets[i];
                 const child = new THREE.Line(lineObj.geometry, strandMat);
@@ -5519,7 +5540,138 @@
             return lineObj;
         }
 
+        function computeCanonical3DLineData(v1, v2) {
+            const diff = new THREE.Vector3().subVectors(v2, v1);
+            const len = diff.length();
+            if (len < 1e-6) return null;
+            const unitDir = diff.multiplyScalar(1 / len);
+            if (Math.abs(unitDir.x) > 1e-5) {
+                if (unitDir.x < 0) unitDir.negate();
+            } else if (Math.abs(unitDir.y) > 1e-5) {
+                if (unitDir.y < 0) unitDir.negate();
+            } else if (unitDir.z < 0) {
+                unitDir.negate();
+            }
+            const s1 = v1.dot(unitDir);
+            const s2 = v2.dot(unitDir);
+            const origin = v1.clone().addScaledVector(unitDir, -s1);
+            return {
+                origin,
+                unitDir,
+                s1,
+                s2,
+                minS: Math.min(s1, s2),
+                maxS: Math.max(s1, s2)
+            };
+        }
+
+        function setCanonicalLineDistances(lineObj, v1Ref, v2Ref, dashSize = 0.22, gapSize = 0.16) {
+            if (!lineObj || !lineObj.geometry) return;
+            const canon = computeCanonical3DLineData(v1Ref, v2Ref);
+            if (!canon) {
+                if (lineObj.computeLineDistances) lineObj.computeLineDistances();
+                return;
+            }
+            const period = Math.max(1e-4, dashSize + gapSize);
+            const shiftCycles = Math.ceil((Math.max(0, -canon.minS) + 100) / period);
+            const phaseShift = shiftCycles * period;
+            const d1 = canon.s1 + phaseShift;
+            const d2 = canon.s2 + phaseShift;
+            lineObj.geometry.setAttribute('lineDistance', new THREE.Float32BufferAttribute([d1, d2], 1));
+            lineObj.userData = lineObj.userData || {};
+            lineObj.userData.unitDir = canon.unitDir;
+        }
+
+        function mergeCollinearVisualSegments(rawSegments, dirTol = 1e-3, originTol = 1.5e-2, intervalGapTol = 1e-3) {
+            const buckets = [];
+            for (let i = 0; i < rawSegments.length; i++) {
+                const seg = rawSegments[i];
+                if (!seg || !seg.v1 || !seg.v2) continue;
+                const canon = computeCanonical3DLineData(seg.v1, seg.v2);
+                if (!canon) continue;
+                const lineColor = seg.lineColor !== undefined ? seg.lineColor : 0x000000;
+
+                let matched = null;
+                for (let j = 0; j < buckets.length; j++) {
+                    const b = buckets[j];
+                    if (b.lineColor !== lineColor) continue;
+                    const cosAng = Math.abs(b.unitDir.dot(canon.unitDir));
+                    if (cosAng < 1 - dirTol) continue;
+                    const diffOrig = new THREE.Vector3().subVectors(canon.origin, b.origin);
+                    const perpDist = new THREE.Vector3().crossVectors(diffOrig, b.unitDir).length();
+                    if (perpDist > originTol) continue;
+                    matched = b;
+                    break;
+                }
+
+                if (!matched) {
+                    matched = {
+                        origin: canon.origin.clone(),
+                        unitDir: canon.unitDir.clone(),
+                        lineColor,
+                        intervals: []
+                    };
+                    buckets.push(matched);
+                }
+
+                const rel1 = new THREE.Vector3().subVectors(seg.v1, matched.origin);
+                const rel2 = new THREE.Vector3().subVectors(seg.v2, matched.origin);
+                const t1 = rel1.dot(matched.unitDir);
+                const t2 = rel2.dot(matched.unitDir);
+                matched.intervals.push({
+                    minS: Math.min(t1, t2),
+                    maxS: Math.max(t1, t2)
+                });
+            }
+
+            const mergedList = [];
+            for (let i = 0; i < buckets.length; i++) {
+                const b = buckets[i];
+                if (b.intervals.length === 0) continue;
+                b.intervals.sort((a, c) => a.minS - c.minS);
+                const merged = [{ ...b.intervals[0] }];
+                for (let k = 1; k < b.intervals.length; k++) {
+                    const cur = merged[merged.length - 1];
+                    const next = b.intervals[k];
+                    if (next.minS <= cur.maxS + intervalGapTol) {
+                        cur.maxS = Math.max(cur.maxS, next.maxS);
+                    } else {
+                        merged.push({ ...next });
+                    }
+                }
+                for (let k = 0; k < merged.length; k++) {
+                    const iv = merged[k];
+                    const vStart = b.origin.clone().addScaledVector(b.unitDir, iv.minS);
+                    const vEnd = b.origin.clone().addScaledVector(b.unitDir, iv.maxS);
+                    mergedList.push({
+                        v1: vStart,
+                        v2: vEnd,
+                        unitDir: b.unitDir,
+                        lineColor: b.lineColor
+                    });
+                }
+            }
+            return mergedList;
+        }
+
+        function computeCanonicalCircleBasisFromNormal(normalVec) {
+            const canonN = normalVec.clone().normalize();
+            if (Math.abs(canonN.x) > 1e-5) {
+                if (canonN.x < 0) canonN.negate();
+            } else if (Math.abs(canonN.y) > 1e-5) {
+                if (canonN.y < 0) canonN.negate();
+            } else if (canonN.z < 0) {
+                canonN.negate();
+            }
+            const ref = Math.abs(canonN.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+            const canonU = new THREE.Vector3().crossVectors(ref, canonN).normalize();
+            const canonV = new THREE.Vector3().crossVectors(canonN, canonU).normalize();
+            return { canonN, canonU, canonV };
+        }
+
         function addDualDepthSegment(v1, v2, colorHex = 0x0f172a) {
+            const canon = computeCanonical3DLineData(v1, v2);
+            const unitDir = canon ? canon.unitDir : null;
             const lineGeo = new THREE.BufferGeometry().setFromPoints([v1, v2]);
             const dashedMat = new THREE.LineDashedMaterial({
                 color: colorHex,
@@ -5530,9 +5682,9 @@
                 depthWrite: false
             });
             const dashedLine = new THREE.Line(lineGeo.clone(), dashedMat);
-            dashedLine.computeLineDistances();
+            setCanonicalLineDistances(dashedLine, v1, v2, 0.22, 0.16);
             dashedLine.renderOrder = 4;
-            applyLineThicknessStrands(dashedLine, -0.3);
+            applyLineThicknessStrands(dashedLine, -0.3, unitDir);
             scene.add(dashedLine);
             solidMeshes.push(dashedLine);
 
@@ -5544,7 +5696,7 @@
             });
             const solidLine = new THREE.Line(lineGeo, solidMat);
             solidLine.renderOrder = 5;
-            applyLineThicknessStrands(solidLine, 0);
+            applyLineThicknessStrands(solidLine, 0, unitDir);
             scene.add(solidLine);
             solidMeshes.push(solidLine);
             return { dashedLine, solidLine };
@@ -5700,24 +5852,25 @@
                     const updateConeSil = (viewDir) => {
                         const [th1, th2] = computeConeSilhouetteAngles(vS, geom.center, geom.radius, geom.uAxis, geom.vAxis, viewDir);
                         const camDir = viewDir.clone().normalize();
-                        const sNudged = vS.clone().addScaledVector(camDir, 0.28);
-                        const b1 = geom.center.clone()
+                        const b1Raw = geom.center.clone()
                             .addScaledVector(geom.uAxis, geom.radius * Math.cos(th1))
-                            .addScaledVector(geom.vAxis, geom.radius * Math.sin(th1))
-                            .addScaledVector(camDir, 0.28);
-                        const b2 = geom.center.clone()
+                            .addScaledVector(geom.vAxis, geom.radius * Math.sin(th1));
+                        const b2Raw = geom.center.clone()
                             .addScaledVector(geom.uAxis, geom.radius * Math.cos(th2))
-                            .addScaledVector(geom.vAxis, geom.radius * Math.sin(th2))
-                            .addScaledVector(camDir, 0.28);
+                            .addScaledVector(geom.vAxis, geom.radius * Math.sin(th2));
+                        const sNudged = vS.clone().addScaledVector(camDir, 0.28);
+                        const b1 = b1Raw.clone().addScaledVector(camDir, 0.28);
+                        const b2 = b2Raw.clone().addScaledVector(camDir, 0.28);
 
                         [gen1.dashedLine, gen1.solidLine].forEach(line => {
                             line.geometry.setFromPoints([sNudged, b1]);
-                            if (line.computeLineDistances) line.computeLineDistances();
                         });
+                        setCanonicalLineDistances(gen1.dashedLine, vS, b1Raw, 0.22, 0.16);
+
                         [gen2.dashedLine, gen2.solidLine].forEach(line => {
                             line.geometry.setFromPoints([sNudged, b2]);
-                            if (line.computeLineDistances) line.computeLineDistances();
                         });
+                        setCanonicalLineDistances(gen2.dashedLine, vS, b2Raw, 0.22, 0.16);
                     };
                     updateConeSil(getCameraViewToEyeDir());
                     dynamicSilhouetteUpdaters.push(updateConeSil);
@@ -5788,19 +5941,24 @@
                     const updateFrustumSil = (viewDir) => {
                         const [th1, th2] = computeFrustumSilhouetteAngles(g1.center, g1.radius, g2.center, g2.radius, g1.uAxis, g1.vAxis, viewDir);
                         const camDir = viewDir.clone().normalize();
-                        const p1A = g1.center.clone().addScaledVector(g1.uAxis, g1.radius * Math.cos(th1)).addScaledVector(g1.vAxis, g1.radius * Math.sin(th1)).addScaledVector(camDir, 0.28);
-                        const p2A = g2.center.clone().addScaledVector(u2, g2.radius * Math.cos(th1)).addScaledVector(v2, g2.radius * Math.sin(th1)).addScaledVector(camDir, 0.28);
-                        const p1B = g1.center.clone().addScaledVector(g1.uAxis, g1.radius * Math.cos(th2)).addScaledVector(g1.vAxis, g1.radius * Math.sin(th2)).addScaledVector(camDir, 0.28);
-                        const p2B = g2.center.clone().addScaledVector(u2, g2.radius * Math.cos(th2)).addScaledVector(v2, g2.radius * Math.sin(th2)).addScaledVector(camDir, 0.28);
+                        const p1ARaw = g1.center.clone().addScaledVector(g1.uAxis, g1.radius * Math.cos(th1)).addScaledVector(g1.vAxis, g1.radius * Math.sin(th1));
+                        const p2ARaw = g2.center.clone().addScaledVector(u2, g2.radius * Math.cos(th1)).addScaledVector(v2, g2.radius * Math.sin(th1));
+                        const p1BRaw = g1.center.clone().addScaledVector(g1.uAxis, g1.radius * Math.cos(th2)).addScaledVector(g1.vAxis, g1.radius * Math.sin(th2));
+                        const p2BRaw = g2.center.clone().addScaledVector(u2, g2.radius * Math.cos(th2)).addScaledVector(v2, g2.radius * Math.sin(th2));
+                        const p1A = p1ARaw.clone().addScaledVector(camDir, 0.28);
+                        const p2A = p2ARaw.clone().addScaledVector(camDir, 0.28);
+                        const p1B = p1BRaw.clone().addScaledVector(camDir, 0.28);
+                        const p2B = p2BRaw.clone().addScaledVector(camDir, 0.28);
 
                         [gen1.dashedLine, gen1.solidLine].forEach(line => {
                             line.geometry.setFromPoints([p1A, p2A]);
-                            if (line.computeLineDistances) line.computeLineDistances();
                         });
+                        setCanonicalLineDistances(gen1.dashedLine, p1ARaw, p2ARaw, 0.22, 0.16);
+
                         [gen2.dashedLine, gen2.solidLine].forEach(line => {
                             line.geometry.setFromPoints([p1B, p2B]);
-                            if (line.computeLineDistances) line.computeLineDistances();
                         });
+                        setCanonicalLineDistances(gen2.dashedLine, p1BRaw, p2BRaw, 0.22, 0.16);
                     };
                     updateFrustumSil(getCameraViewToEyeDir());
                     dynamicSilhouetteUpdaters.push(updateFrustumSil);
@@ -5847,18 +6005,19 @@
                         if (sol.circleId && c.id === sol.circleId) return true;
                         const cg = computeCircleGeometry(c);
                         if (!cg) return false;
-                        return cg.center.distanceTo(sGeom.center) < 1e-2 && Math.abs(cg.radius - sGeom.radius) < 1e-2;
+                        return cg.center.distanceTo(sGeom.center) < 1.5e-2 && Math.abs(cg.radius - sGeom.radius) < 1.5e-2 && Math.abs(cg.normal.y) > 0.995;
                     });
                     // Vẽ đường tròn lớn nằm ngang (Xích đạo) nếu mặt cầu chưa gắn với đường tròn cơ sở
                     if (!hasExistingEquatorCircle) {
+                        const eqBasis = computeCanonicalCircleBasisFromNormal(new THREE.Vector3(0, 1, 0));
                         const eqPts = [];
                         for (let i = 0; i <= segs; i++) {
                             const th = (i / segs) * Math.PI * 2;
-                            eqPts.push(new THREE.Vector3(
-                                sGeom.center.x + sGeom.radius * Math.cos(th),
-                                sGeom.center.y,
-                                sGeom.center.z + sGeom.radius * Math.sin(th)
-                            ));
+                            eqPts.push(
+                                sGeom.center.clone()
+                                    .addScaledVector(eqBasis.canonU, sGeom.radius * Math.cos(th))
+                                    .addScaledVector(eqBasis.canonV, sGeom.radius * Math.sin(th))
+                            );
                         }
                         const eqGeo = new THREE.BufferGeometry().setFromPoints(eqPts);
                         const eqDashedMat = new THREE.LineDashedMaterial({
@@ -5939,6 +6098,7 @@
                 }
             });
 
+            const rawVisualSegments = [];
             geoState.segments.forEach(seg => {
                 if (seg.hidden) return;
                 const p1 = geoState.points.find(p => p.id === seg.p1Id);
@@ -5954,38 +6114,12 @@
                     v2 = v2.clone().addScaledVector(dir, 30);
                 }
 
-                const lineGeo = new THREE.BufferGeometry().setFromPoints([v1, v2]);
                 const lineColor = seg.trace ? 0x9333ea : 0x000000;
+                rawVisualSegments.push({ v1, v2, lineColor });
 
-                const dashedMat = new THREE.LineDashedMaterial({
-                    color: lineColor,
-                    dashSize: 0.22,
-                    gapSize: 0.16,
-                    depthTest: true,
-                    depthFunc: THREE.GreaterDepth,
-                    depthWrite: false
-                });
-                const dashedLine = new THREE.Line(lineGeo.clone(), dashedMat);
-                dashedLine.computeLineDistances();
-                dashedLine.renderOrder = 4;
-                applyLineThicknessStrands(dashedLine, -0.3);
-                scene.add(dashedLine);
-                edgeMeshes.push(dashedLine);
-
-                const solidMat = new THREE.LineBasicMaterial({
-                    color: lineColor,
-                    linewidth: visualStyle.lineWidth || 2,
-                    depthTest: true,
-                    depthFunc: THREE.LessEqualDepth
-                });
-                const solidLine = new THREE.Line(lineGeo, solidMat);
-                solidLine.renderOrder = 5;
-                applyLineThicknessStrands(solidLine, 0);
-                scene.add(solidLine);
-                edgeMeshes.push(solidLine);
-
+                const hitGeo = new THREE.BufferGeometry().setFromPoints([v1, v2]);
                 const hitMat = new THREE.LineBasicMaterial({ visible: false });
-                const hitLine = new THREE.Line(lineGeo.clone(), hitMat);
+                const hitLine = new THREE.Line(hitGeo, hitMat);
                 hitLine.userData = {
                     segId: seg.id,
                     p1Id: seg.p1Id,
@@ -5999,6 +6133,39 @@
                 hitEdgeMeshes.push(hitLine);
             });
 
+            // Hợp nhất các đoạn thẳng / đường thẳng đồng phẳng cùng phương bị chồng lấn và đồng bộ pha nét đứt chuẩn 3D
+            const mergedVisualSegments = mergeCollinearVisualSegments(rawVisualSegments);
+            mergedVisualSegments.forEach(mSeg => {
+                const lineGeo = new THREE.BufferGeometry().setFromPoints([mSeg.v1, mSeg.v2]);
+                const dashedMat = new THREE.LineDashedMaterial({
+                    color: mSeg.lineColor,
+                    dashSize: 0.22,
+                    gapSize: 0.16,
+                    depthTest: true,
+                    depthFunc: THREE.GreaterDepth,
+                    depthWrite: false
+                });
+                const dashedLine = new THREE.Line(lineGeo.clone(), dashedMat);
+                setCanonicalLineDistances(dashedLine, mSeg.v1, mSeg.v2, 0.22, 0.16);
+                dashedLine.renderOrder = 4;
+                applyLineThicknessStrands(dashedLine, -0.3, mSeg.unitDir);
+                scene.add(dashedLine);
+                edgeMeshes.push(dashedLine);
+
+                const solidMat = new THREE.LineBasicMaterial({
+                    color: mSeg.lineColor,
+                    linewidth: visualStyle.lineWidth || 2,
+                    depthTest: true,
+                    depthFunc: THREE.LessEqualDepth
+                });
+                const solidLine = new THREE.Line(lineGeo, solidMat);
+                solidLine.renderOrder = 5;
+                applyLineThicknessStrands(solidLine, 0, mSeg.unitDir);
+                scene.add(solidLine);
+                edgeMeshes.push(solidLine);
+            });
+
+            const renderedCoincidentCircles = [];
             (geoState.circles || []).forEach(cir => {
                 if (cir.hidden) return;
                 const geom = computeCircleGeometry(cir);
@@ -6008,17 +6175,41 @@
                 const isHoveredCir = hoveredCircleId === cir.id && ['solid-cone', 'solid-cylinder', 'solid-sphere', 'delete-obj', 'hide'].includes(currentTool);
                 const cirColor = isSelectedCir ? 0xdc2626 : (isHoveredCir ? (currentTool === 'delete-obj' ? 0xdc2626 : 0xd97706) : 0x0f172a);
 
+                const { canonU, canonV } = computeCanonicalCircleBasisFromNormal(geom.normal);
                 const segmentsCount = 128;
                 const circlePts = [];
                 for (let i = 0; i <= segmentsCount; i++) {
                     const theta = (i / segmentsCount) * Math.PI * 2;
                     const pt = geom.center.clone()
-                        .addScaledVector(geom.uAxis, geom.radius * Math.cos(theta))
-                        .addScaledVector(geom.vAxis, geom.radius * Math.sin(theta));
+                        .addScaledVector(canonU, geom.radius * Math.cos(theta))
+                        .addScaledVector(canonV, geom.radius * Math.sin(theta));
                     circlePts.push(pt);
                 }
 
                 const cirGeo = new THREE.BufferGeometry().setFromPoints(circlePts);
+
+                const hitCirMat = new THREE.LineBasicMaterial({ visible: false });
+                const hitCir = new THREE.Line(cirGeo.clone(), hitCirMat);
+                hitCir.userData = {
+                    circleId: cir.id,
+                    label: `đường tròn ${cir.name || '(C)'}`
+                };
+                scene.add(hitCir);
+                hitCircleMeshes.push(hitCir);
+
+                // Tránh vẽ chồng nhiều đường tròn trùng khít nhau trong không gian 3D làm mất nét đứt
+                const isHighlighted = isSelectedCir || isHoveredCir;
+                const alreadyRenderedCoincident = !isHighlighted && renderedCoincidentCircles.some(rc =>
+                    rc.center.distanceTo(geom.center) < 1.5e-2 &&
+                    Math.abs(rc.radius - geom.radius) < 1.5e-2 &&
+                    Math.abs(rc.normal.dot(geom.normal)) > 0.998
+                );
+                if (alreadyRenderedCoincident) return;
+                renderedCoincidentCircles.push({
+                    center: geom.center.clone(),
+                    radius: geom.radius,
+                    normal: geom.normal.clone().normalize()
+                });
 
                 // Tạo bề mặt hình tròn (miền khép kín của đường tròn) để tô màu bề mặt & xử lý che khuất chuẩn 3D
                 const diskPos = [];
@@ -6096,15 +6287,6 @@
                 applyLineThicknessStrands(solidCir, (isSelectedCir || isHoveredCir) ? 1 : 0);
                 scene.add(solidCir);
                 circleMeshes.push(solidCir);
-
-                const hitCirMat = new THREE.LineBasicMaterial({ visible: false });
-                const hitCir = new THREE.Line(cirGeo.clone(), hitCirMat);
-                hitCir.userData = {
-                    circleId: cir.id,
-                    label: `đường tròn ${cir.name || '(C)'}`
-                };
-                scene.add(hitCir);
-                hitCircleMeshes.push(hitCir);
             });
 
             const basePtSize = visualStyle.pointSize || 9;
@@ -6898,11 +7080,14 @@
 
         function addSegmentAndCheckClosedLoops(p1Id, p2Id, isLine = false) {
             if (p1Id === p2Id) return;
-            const exists = geoState.segments.some(s =>
+            const existingSeg = geoState.segments.find(s =>
                 (s.p1Id === p1Id && s.p2Id === p2Id) || (s.p1Id === p2Id && s.p2Id === p1Id)
             );
-            if (!exists) {
+            if (!existingSeg) {
                 geoState.segments.push({ id: 'seg_' + Date.now() + Math.random(), p1Id, p2Id, isLine, hidden: false, trace: false });
+            } else {
+                existingSeg.hidden = false;
+                if (isLine) existingSeg.isLine = true;
             }
 
             if (isLine) return;
@@ -8081,20 +8266,38 @@
                     if (!res) return;
 
                     if (res.helperLine && res.helperLine.length === 2 && (m.subType === 'point-line' || m.subType === 'point-plane' || m.subType === 'line-plane')) {
-                        const lineGeo = new THREE.BufferGeometry().setFromPoints(res.helperLine);
-                        const lineMat = new THREE.LineDashedMaterial({
-                            color: m.category === 'angle' ? 0x059669 : 0xd97706,
-                            dashSize: 0.14,
-                            gapSize: 0.09,
-                            depthTest: false,
-                            transparent: true,
-                            opacity: 0.85
+                        const hA = res.helperLine[0];
+                        const hB = res.helperLine[1];
+                        const hCanon = computeCanonical3DLineData(hA, hB);
+                        const coveredByExistingSeg = hCanon && (geoState.segments || []).some(s => {
+                            if (s.hidden) return false;
+                            const sp1 = geoState.points.find(p => p.id === s.p1Id);
+                            const sp2 = geoState.points.find(p => p.id === s.p2Id);
+                            if (!sp1 || !sp2) return false;
+                            const sCanon = computeCanonical3DLineData(new THREE.Vector3(sp1.x, sp1.y, sp1.z), new THREE.Vector3(sp2.x, sp2.y, sp2.z));
+                            if (!sCanon) return false;
+                            if (Math.abs(sCanon.unitDir.dot(hCanon.unitDir)) < 0.999) return false;
+                            const diffOrig = new THREE.Vector3().subVectors(sCanon.origin, hCanon.origin);
+                            if (new THREE.Vector3().crossVectors(diffOrig, hCanon.unitDir).length() > 1.5e-2) return false;
+                            if (s.isLine) return true;
+                            return sCanon.minS <= hCanon.minS + 1.5e-2 && sCanon.maxS >= hCanon.maxS - 1.5e-2;
                         });
-                        const line = new THREE.Line(lineGeo, lineMat);
-                        line.computeLineDistances();
-                        line.renderOrder = 14;
-                        scene.add(line);
-                        edgeMeshes.push(line);
+                        if (!coveredByExistingSeg) {
+                            const lineGeo = new THREE.BufferGeometry().setFromPoints(res.helperLine);
+                            const lineMat = new THREE.LineDashedMaterial({
+                                color: m.category === 'angle' ? 0x059669 : 0xd97706,
+                                dashSize: 0.22,
+                                gapSize: 0.16,
+                                depthTest: false,
+                                transparent: true,
+                                opacity: 0.85
+                            });
+                            const line = new THREE.Line(lineGeo, lineMat);
+                            setCanonicalLineDistances(line, hA, hB, 0.22, 0.16);
+                            line.renderOrder = 14;
+                            scene.add(line);
+                            edgeMeshes.push(line);
+                        }
                     }
 
                     if (res.rightAngleMarks && res.rightAngleMarks.length > 0) {
@@ -11029,7 +11232,6 @@
 
                 if (interPtIds.length >= 2) {
                     addSegmentAndCheckClosedLoops(interPtIds[0], interPtIds[1], false);
-                    addSegmentAndCheckClosedLoops(interPtIds[0], interPtIds[1], true);
                     autoDetectClosedFacesFromSegments();
                 } else if (interPtIds.length === 1) {
                     const sharedId = interPtIds[0];
