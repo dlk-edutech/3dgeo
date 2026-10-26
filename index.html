@@ -235,68 +235,88 @@
 
         /* Thanh Điều khiển Chuyển động Điểm (Animation Control Panel) */
         #anim-control-panel {
-            position: absolute; bottom: 16px; left: 50%;
+            position: absolute; bottom: 12px; left: 50%;
             transform: translateX(-50%);
             z-index: 32;
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(10px);
             color: #ffffff;
             border: 1px solid #334155;
-            border-radius: 14px;
-            padding: 10px 14px;
-            box-shadow: 0 10px 28px rgba(0,0,0,0.32);
-            display: none; flex-direction: column; gap: 8px;
-            min-width: 450px; max-width: 94vw;
+            border-radius: 11px;
+            padding: 7px 11px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.32);
+            display: none; flex-direction: column; gap: 6px;
+            min-width: 340px; max-width: 92vw;
+        }
+        #anim-control-panel.collapsed {
+            min-width: auto;
+            padding: 5px 10px;
+            gap: 0;
+        }
+        #anim-control-panel.collapsed #anim-rows-container {
+            display: none !important;
+        }
+        #anim-control-panel.collapsed .anim-panel-header {
+            border-bottom: none;
+            padding-bottom: 0;
         }
         .anim-panel-header {
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #334155; padding-bottom: 6px;
-            font-size: 12px; font-weight: 700; color: #38bdf8; gap: 12px;
+            border-bottom: 1px solid #334155; padding-bottom: 5px;
+            font-size: 11.5px; font-weight: 700; color: #38bdf8; gap: 10px;
         }
-        .anim-panel-title { display: flex; align-items: center; gap: 6px; }
+        .anim-panel-title { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
         .anim-panel-header-actions {
-            display: flex; gap: 6px; align-items: center;
+            display: flex; gap: 5px; align-items: center;
         }
         .anim-header-btn {
             background: #1e293b; border: 1px solid #475569; color: #e2e8f0;
-            border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 600;
-            cursor: pointer; display: flex; align-items: center; gap: 4px; transition: 0.15s;
+            border-radius: 6px; padding: 3px 7px; font-size: 10.5px; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; transition: 0.15s;
         }
-        .anim-header-btn svg { width: 13px; height: 13px; }
+        .anim-header-btn svg {
+            width: 13px; height: 13px;
+            stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
         .anim-header-btn:hover { background: #334155; color: #fff; }
+        .anim-header-btn.icon-only { width: 23px; height: 23px; padding: 0; }
+        .anim-header-btn.close-panel:hover { background: rgba(239, 68, 68, 0.25); border-color: #ef4444; color: #fca5a5; }
         #anim-rows-container {
-            display: flex; flex-direction: column; gap: 6px;
-            max-height: 150px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 5px;
+            max-height: 135px; overflow-y: auto;
         }
         .anim-point-row {
-            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
             background: rgba(30, 41, 59, 0.85);
-            border: 1px solid #334155; border-radius: 9px;
-            padding: 6px 10px;
+            border: 1px solid #334155; border-radius: 8px;
+            padding: 4px 8px;
         }
         .anim-pt-badge {
-            display: flex; align-items: center; gap: 7px; min-width: 105px;
+            display: flex; align-items: center; gap: 6px; min-width: 92px;
         }
         .anim-pt-name {
             background: #2563eb; color: #fff; font-weight: 700;
             font-family: 'Times New Roman', Times, serif; font-style: italic;
-            font-size: 15px; width: 26px; height: 26px; border-radius: 50%;
+            font-size: 14px; width: 23px; height: 23px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
         .anim-pt-parent {
-            font-size: 11.5px; color: #cbd5e1; white-space: nowrap;
+            font-size: 11px; color: #cbd5e1; white-space: nowrap;
         }
         .anim-controls-group {
-            display: flex; align-items: center; gap: 6px;
+            display: flex; align-items: center; gap: 5px;
         }
         .anim-ctrl-btn {
-            width: 30px; height: 30px; border-radius: 7px;
+            width: 27px; height: 27px; border-radius: 6px;
             border: 1px solid #475569; background: #0f172a; color: #f8fafc;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: all 0.15s;
+            transition: all 0.15s; padding: 0;
         }
-        .anim-ctrl-btn svg { width: 15px; height: 15px; }
+        .anim-ctrl-btn svg {
+            width: 14px; height: 14px;
+            stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+        }
         .anim-ctrl-btn:hover { background: #2563eb; border-color: #3b82f6; }
         .anim-ctrl-btn.playing { background: #16a34a; border-color: #22c55e; }
         .anim-ctrl-btn.paused { background: #d97706; border-color: #f59e0b; }
@@ -305,19 +325,19 @@
         .anim-ctrl-btn.close-row:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
 
         .anim-speed-box {
-            display: flex; align-items: center; gap: 5px;
-            background: #0f172a; padding: 3px 7px; border-radius: 7px;
+            display: flex; align-items: center; gap: 4px;
+            background: #0f172a; padding: 2px 6px; border-radius: 6px;
             border: 1px solid #334155;
         }
         .anim-speed-slider {
-            width: 75px; accent-color: #38bdf8; cursor: pointer; height: 4px;
+            width: 64px; accent-color: #38bdf8; cursor: pointer; height: 4px;
         }
         .anim-speed-val {
-            font-size: 11.5px; font-weight: 700; color: #38bdf8;
-            min-width: 34px; text-align: center;
+            font-size: 11px; font-weight: 700; color: #38bdf8;
+            min-width: 30px; text-align: center;
         }
         .anim-dir-tag {
-            font-size: 11px; font-weight: 700; padding: 2px 6px;
+            font-size: 10.5px; font-weight: 700; padding: 2px 5px;
             border-radius: 5px; background: #1e293b; color: #94a3b8;
         }
 
@@ -378,24 +398,39 @@
 
         /* Bảng Đo đạc & Quy chuẩn độ dài */
         #measurement-panel {
-            position: absolute; top: 60px; right: 12px; z-index: 27;
+            position: absolute; top: 56px; right: 12px; z-index: 27;
             background: rgba(255, 255, 255, 0.97);
             backdrop-filter: blur(8px);
-            border: 1px solid #cbd5e1; border-radius: 12px;
+            border: 1px solid #cbd5e1; border-radius: 11px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            padding: 10px 12px; width: 396px; max-height: calc(100vh - 200px);
-            display: none; flex-direction: column; gap: 8px;
+            padding: 8px 10px; width: 356px; max-height: calc(100vh - 190px);
+            display: none; flex-direction: column; gap: 6px;
+        }
+        #measurement-panel.collapsed {
+            width: auto;
+            min-width: 245px;
+            padding: 6px 10px;
+            gap: 0;
+        }
+        #measurement-panel.collapsed #measure-scale-status,
+        #measurement-panel.collapsed .measure-quick-tools,
+        #measurement-panel.collapsed #measure-rows-container {
+            display: none !important;
+        }
+        #measurement-panel.collapsed .measure-panel-header {
+            border-bottom: none;
+            padding-bottom: 0;
         }
         .measure-panel-header {
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;
-            font-size: 12px; font-weight: 800; color: #0f172a; gap: 4px;
+            border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;
+            font-size: 11.5px; font-weight: 800; color: #0f172a; gap: 4px;
         }
         .measure-panel-header > span { display: flex; align-items: center; gap: 5px; color: #0d9488; white-space: nowrap; }
         .measure-header-actions { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
         .measure-mini-btn {
             background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;
-            border-radius: 6px; padding: 3px 6px; font-size: 11px; font-weight: 700;
+            border-radius: 6px; padding: 3px 6px; font-size: 10.5px; font-weight: 700;
             cursor: pointer; transition: 0.15s; white-space: nowrap;
         }
         .measure-mini-btn:hover { background: #e2e8f0; color: #0f172a; }
@@ -403,15 +438,20 @@
         .measure-mini-btn.primary:hover { background: #0f766e; }
         .measure-close-btn {
             background: #f1f5f9; border: 1px solid #cbd5e1; color: #64748b;
-            width: 24px; height: 24px; border-radius: 6px; cursor: pointer;
+            width: 22px; height: 22px; border-radius: 6px; cursor: pointer;
             display: inline-flex; align-items: center; justify-content: center;
             transition: all 0.15s; padding: 0; flex-shrink: 0;
         }
-        .measure-close-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
+        .measure-close-btn svg {
+            width: 13px; height: 13px;
+            stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+        }
+        .measure-close-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .measure-close-btn.danger-close:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
         .measure-scale-box {
             display: flex; align-items: center; justify-content: space-between; gap: 6px;
-            background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;
-            padding: 6px 9px; font-size: 12px; color: #166534; font-weight: 700;
+            background: #f0fdf4; border: 1px solid #86efac; border-radius: 7px;
+            padding: 5px 8px; font-size: 11.5px; color: #166534; font-weight: 700;
         }
         .measure-scale-box.uncalibrated {
             background: #fffbeb; border-color: #fcd34d; color: #92400e;
@@ -421,25 +461,25 @@
         }
         .measure-qtool-btn {
             background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 7px;
-            padding: 5px 3px; font-size: 10.5px; font-weight: 700; color: #334155;
+            padding: 4px 2px; font-size: 10px; font-weight: 700; color: #334155;
             cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px;
             transition: 0.15s;
         }
-        .measure-qtool-btn svg { width: 15px; height: 15px; }
+        .measure-qtool-btn svg { width: 14px; height: 14px; }
         .measure-qtool-btn:hover { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
         .measure-qtool-btn.active { background: #2563eb; border-color: #1d4ed8; color: #ffffff; }
         #measure-rows-container {
-            display: flex; flex-direction: column; gap: 5px;
-            overflow-y: auto; max-height: 220px;
+            display: flex; flex-direction: column; gap: 4px;
+            overflow-y: auto; max-height: 190px;
         }
         .measure-row {
             display: flex; align-items: center; justify-content: space-between; gap: 6px;
-            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-            padding: 5px 8px; font-size: 12.5px;
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px;
+            padding: 4px 7px; font-size: 12px;
         }
-        .measure-row-left { display: flex; align-items: center; gap: 7px; overflow: hidden; }
+        .measure-row-left { display: flex; align-items: center; gap: 6px; overflow: hidden; }
         .measure-badge-type {
-            font-size: 10.5px; font-weight: 800; padding: 2px 5px; border-radius: 5px;
+            font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 5px;
             background: #ccfbf1; color: #0f766e; flex-shrink: 0;
         }
         .measure-badge-type.angle { background: #fef3c7; color: #b45309; }
@@ -462,34 +502,51 @@
 
         /* Danh sách Đối tượng bị ẩn */
         #hidden-objects-panel {
-            position: absolute; bottom: 14px; right: 14px; z-index: 28;
+            position: absolute; bottom: 12px; right: 12px; z-index: 28;
             background: rgba(255, 255, 255, 0.96);
             backdrop-filter: blur(8px);
             border: 1px solid #cbd5e1; border-radius: 10px;
             box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-            padding: 10px 12px; width: 240px; max-height: 220px;
+            padding: 8px 10px; width: 235px; max-height: 200px;
             display: none; flex-direction: column;
         }
-        .hidden-panel-title {
-            font-size: 12px; font-weight: 700; color: #334155;
-            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;
+        #hidden-objects-panel.collapsed {
+            width: auto;
+            min-width: 190px;
+            padding: 6px 10px;
         }
-        .hidden-panel-title span { display: flex; align-items: center; gap: 5px; }
-        .hidden-panel-title button {
-            background: none; border: none; color: #2563eb; font-size: 11px;
-            font-weight: 600; cursor: pointer; padding: 0;
+        #hidden-objects-panel.collapsed #hidden-list {
+            display: none !important;
+        }
+        #hidden-objects-panel.collapsed .hidden-panel-title {
+            margin-bottom: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .hidden-panel-title {
+            font-size: 11.5px; font-weight: 700; color: #334155;
+            margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; gap: 6px;
+        }
+        .hidden-panel-title > span { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .hidden-panel-actions { display: flex; align-items: center; gap: 4px; }
+        .hidden-panel-title button.unhide-link {
+            background: none; border: none; color: #2563eb; font-size: 10.5px;
+            font-weight: 700; cursor: pointer; padding: 0 2px; white-space: nowrap;
         }
         #hidden-list {
-            display: flex; flex-wrap: wrap; gap: 5px; overflow-y: auto;
+            display: flex; flex-wrap: wrap; gap: 4px; overflow-y: auto;
         }
         .hidden-chip {
             background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px;
-            padding: 3px 8px; font-size: 12px; font-weight: 600; color: #1e293b;
-            cursor: pointer; display: flex; align-items: center; gap: 5px;
+            padding: 2px 7px; font-size: 11.5px; font-weight: 600; color: #1e293b;
+            cursor: pointer; display: flex; align-items: center; gap: 4px;
             transition: all 0.15s;
         }
-        .hidden-chip svg { width: 13px; height: 13px; }
+        .hidden-chip svg {
+            width: 12px; height: 12px;
+            stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
         .hidden-chip:hover {
             background: #dbeafe; border-color: #60a5fa; color: #1d4ed8;
         }
@@ -891,17 +948,23 @@
         <div id="anim-control-panel">
             <div class="anim-panel-header">
                 <span class="anim-panel-title">
-                    <svg class="svg-ic" style="width:15px;height:15px;" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-                    <span id="anim-panel-title-text">ĐIỀU KHIỂN ĐIỂM DI ĐỘNG TRÊN ĐỐI TƯỢNG CHA</span>
+                    <svg class="svg-ic" style="width:14px;height:14px;" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                    <span id="anim-panel-title-text">ĐIỀU KHIỂN ĐIỂM DI ĐỘNG</span>
                 </span>
                 <div class="anim-panel-header-actions">
                     <button class="anim-header-btn" id="anim-toggle-all-btn" onclick="toggleAllActiveAnimations()" title="Chạy / Tạm dừng tất cả">
                         <svg class="svg-ic" viewBox="0 0 24 24"><polygon points="5 4 13 12 5 20 5 4" fill="currentColor"/><line x1="17" y1="5" x2="17" y2="19"/><line x1="21" y1="5" x2="21" y2="19"/></svg>
-                        <span id="anim-toggle-all-text">Chạy/Dừng tất cả</span>
+                        <span id="anim-toggle-all-text">Chạy/Dừng</span>
                     </button>
                     <button class="anim-header-btn" id="anim-reverse-all-btn" onclick="reverseAllActiveAnimations()" title="Đổi chiều tất cả">
                         <svg class="svg-ic" viewBox="0 0 24 24"><polyline points="17 2 21 6 17 10"/><line x1="3" y1="6" x2="21" y2="6"/><polyline points="7 14 3 18 7 22"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
-                        <span id="anim-reverse-all-text">Đổi chiều tất cả</span>
+                        <span id="anim-reverse-all-text">Đổi chiều</span>
+                    </button>
+                    <button class="anim-header-btn icon-only" id="anim-collapse-btn" onclick="toggleCollapseAnimPanel()" title="Thu gọn / Mở rộng bảng điều khiển" aria-label="Thu gọn bảng điều khiển">
+                        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                    <button class="anim-header-btn icon-only close-panel" id="anim-close-btn" onclick="closeAnimationControlPanel()" title="Đóng bảng điều khiển" aria-label="Đóng bảng điều khiển">
+                        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                 </div>
             </div>
@@ -912,10 +975,18 @@
         <div id="hidden-objects-panel">
             <div class="hidden-panel-title">
                 <span>
-                    <svg class="svg-ic" style="width:14px;height:14px;" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                    <span id="hidden-panel-title-text">Đối tượng đang ẩn</span>
+                    <svg class="svg-ic" style="width:13px;height:13px;" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    <span id="hidden-panel-title-text">Đối tượng ẩn</span>
                 </span>
-                <button id="unhide-all-btn" onclick="unhideAllObjects()">Hiện tất cả</button>
+                <div class="hidden-panel-actions">
+                    <button class="unhide-link" id="unhide-all-btn" onclick="unhideAllObjects()">Hiện tất cả</button>
+                    <button class="measure-close-btn" id="hidden-collapse-btn" onclick="toggleCollapseHiddenPanel()" title="Thu gọn / Mở rộng" aria-label="Thu gọn danh sách ẩn">
+                        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                    <button class="measure-close-btn danger-close" id="hidden-close-btn" onclick="closeHiddenObjectsPanel()" title="Đóng bảng đối tượng ẩn" aria-label="Đóng bảng đối tượng ẩn">
+                        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
             </div>
             <div id="hidden-list"></div>
         </div>
@@ -924,14 +995,17 @@
         <div id="measurement-panel">
             <div class="measure-panel-header">
                 <span>
-                    <svg class="svg-ic" style="width:15px;height:15px;" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>
+                    <svg class="svg-ic" style="width:14px;height:14px;" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>
                     <span id="measure-panel-title-text">ĐO ĐẠC THEO QUY CHUẨN</span>
                 </span>
                 <div class="measure-header-actions">
                     <button class="measure-mini-btn primary" id="measure-add-list-btn" onclick="openQuickMeasureBuilderModal()" title="Mở hộp thoại chọn đối tượng đo nhanh">+ Đo theo DS</button>
                     <button class="measure-mini-btn" id="measure-clear-all-btn" onclick="clearAllMeasurements()" title="Xóa tất cả kết quả đo">Xóa số đo</button>
-                    <button class="measure-close-btn" id="measure-close-btn" onclick="closeMeasurementPanel()" title="Đóng bảng đo đạc" aria-label="Đóng bảng đo đạc">
-                        <svg class="svg-ic" style="width:14px;height:14px;" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <button class="measure-close-btn" id="measure-collapse-btn" onclick="toggleCollapseMeasurementPanel()" title="Thu gọn / Mở rộng bảng đo đạc" aria-label="Thu gọn bảng đo đạc">
+                        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                    <button class="measure-close-btn danger-close" id="measure-close-btn" onclick="closeMeasurementPanel()" title="Đóng bảng đo đạc" aria-label="Đóng bảng đo đạc">
+                        <svg class="svg-ic" style="width:13px;height:13px;" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                 </div>
             </div>
@@ -1295,7 +1369,8 @@
             measureArea: `<svg viewBox="0 0 24 24"><polygon points="12 3 21 9 18 20 6 20 3 9"/><line x1="6" y1="20" x2="18" y2="9" stroke-dasharray="2 2"/><line x1="3" y1="9" x2="18" y2="20" stroke-dasharray="2 2"/></svg>`,
             measureVolume: `<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
             setSegLength: `<svg viewBox="0 0 24 24"><circle cx="4" cy="18" r="2.3" fill="currentColor"/><line x1="6" y1="16.5" x2="19" y2="6.5"/><polyline points="14 6 19.5 6 19.5 11.5"/><circle cx="19.5" cy="6" r="2" fill="currentColor"/><line x1="4" y1="22" x2="20" y2="22" stroke-dasharray="2 2"/></svg>`,
-            styleSize: `<svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.5" fill="currentColor"/><line x1="12" y1="7" x2="21" y2="7" stroke-width="1.8"/><circle cx="6" cy="17" r="4.2" fill="currentColor"/><line x1="13" y1="17" x2="21" y2="17" stroke-width="3.6"/></svg>`
+            styleSize: `<svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.5" fill="currentColor"/><line x1="12" y1="7" x2="21" y2="7" stroke-width="1.8"/><circle cx="6" cy="17" r="4.2" fill="currentColor"/><line x1="13" y1="17" x2="21" y2="17" stroke-width="3.6"/></svg>`,
+            intersectSurfaces: `<svg viewBox="0 0 24 24"><path d="M12 6L3 10v9l9-4"/><path d="M12 6l9 4v9l-9-4"/><line x1="12" y1="2.5" x2="12" y2="21.5"/><circle cx="12" cy="6" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1.8" fill="currentColor" stroke="none"/></svg>`
         };
 
         const GROUP_NAMES_I18N = {
@@ -1455,6 +1530,18 @@
                     name: 'Perpendicular Line',
                     tip: '<b>Perpendicular Line ($d\' \\perp d$ or $d\' \\perp (P)$):</b> Select point $M$ then click a Segment/Line or Polygon Face',
                     guide: 'Perpendicular Line ($d\' \\perp d$ or $d\' \\perp (P)$): Select point $M \\to$ Click a <b>Segment/Line</b> or <b>Polygon Face</b> (auto-constructs foot $H$)'
+                }
+            },
+            'intersect-surfaces': {
+                vi: {
+                    name: 'Giao tuyến của 2 mặt (Mặt phẳng / Mặt tròn xoay)',
+                    tip: '<b>Giao tuyến của 2 mặt:</b> Click chọn <b>Mặt thứ 1</b> rồi click <b>Mặt thứ 2</b> (Hỗ trợ Mặt phẳng đa giác, Mặt nền $(P)$, Hình tròn, Mặt cầu, Hình nón, Hình trụ / Nón cụt)',
+                    guide: 'Giao tuyến của 2 mặt: Click chọn <b>Mặt thứ nhất</b> (Mặt phẳng đa giác, Mặt nền $(P)$, Hình tròn, Mặt cầu, Mặt nón, Mặt trụ) $\\to$ Click chọn <b>Mặt thứ hai</b>'
+                },
+                en: {
+                    name: 'Intersection of 2 Surfaces (Planes / Solids)',
+                    tip: '<b>Intersection of 2 Surfaces:</b> Click <b>Surface 1</b> then <b>Surface 2</b> (Supports Polygon Faces, Base Plane $(P)$, Disks, Spheres, Cones, Cylinders / Frustums)',
+                    guide: 'Intersection of 2 Surfaces: Click <b>First Surface</b> (Polygon Face, Base Plane $(P)$, Disk, Sphere, Cone, Cylinder) $\\to$ Click <b>Second Surface</b>'
                 }
             },
             'poly-tri-special': {
@@ -1871,6 +1958,12 @@
                 name: 'Đường thẳng vuông góc', type: 'mode',
                 iconHtml: SVG_ICONS.perp,
                 tip: TOOL_I18N['perp'].vi.tip
+            },
+            {
+                id: 'intersect-surfaces', group: 4, groupName: 'Nhóm 4: Đường & Quan hệ',
+                name: 'Giao tuyến của 2 mặt (Mặt phẳng / Mặt tròn xoay)', type: 'mode',
+                iconHtml: SVG_ICONS.intersectSurfaces,
+                tip: TOOL_I18N['intersect-surfaces'].vi.tip
             },
 
             // NHÓM 5: Tam giác đặc biệt, Đa giác, Đường tròn 3D & Hình tròn xoay
@@ -2506,7 +2599,7 @@
         // =========================================================================
         function isPointRuleDependentOn(rule, delPoints, delSegs, delCircles, delFaces, delSolids) {
             if (!rule) return false;
-            const ptRefKeys = ['mId', 'aId', 'bId', 'cId', 'dId', 'iId', 'p1Id', 'p2Id', 'p3Id', 'centerId', 'ptId'];
+            const ptRefKeys = ['mId', 'aId', 'bId', 'cId', 'dId', 'iId', 'p1Id', 'p2Id', 'p3Id', 'centerId', 'ptId', 'refPtId'];
             for (const key of ptRefKeys) {
                 if (rule[key] && delPoints.has(rule[key])) return true;
             }
@@ -2514,8 +2607,13 @@
             if (rule.segAId && delSegs.has(rule.segAId)) return true;
             if (rule.segBId && delSegs.has(rule.segBId)) return true;
             if (rule.circleId && delCircles.has(rule.circleId)) return true;
-            if (rule.faceId && delFaces.has(rule.faceId)) return true;
+            if (rule.faceId && (delFaces.has(rule.faceId) || delCircles.has(rule.faceId))) return true;
+            if (rule.planeId && (delFaces.has(rule.planeId) || delCircles.has(rule.planeId))) return true;
+            if (rule.plane1Id && (delFaces.has(rule.plane1Id) || delCircles.has(rule.plane1Id))) return true;
+            if (rule.plane2Id && (delFaces.has(rule.plane2Id) || delCircles.has(rule.plane2Id))) return true;
             if (rule.solidId && delSolids && delSolids.has(rule.solidId)) return true;
+            if (rule.solid1Id && delSolids && delSolids.has(rule.solid1Id)) return true;
+            if (rule.solid2Id && delSolids && delSolids.has(rule.solid2Id)) return true;
             return false;
         }
 
@@ -2573,7 +2671,7 @@
                     }
                 });
 
-                // 3. Kiểm tra các Đường tròn phụ thuộc vào Tâm, Điểm đi qua, Đường tròn gốc hoặc Mặt phẳng chứa đã bị đánh dấu xóa
+                // 3. Kiểm tra các Đường tròn phụ thuộc vào Tâm, Điểm đi qua, Đường tròn gốc hoặc Mặt phẳng/Khối chứa đã bị đánh dấu xóa
                 (geoState.circles || []).forEach(cir => {
                     if (delCircles.has(cir.id)) return;
                     const depOnPt = (cir.centerId && delPoints.has(cir.centerId)) ||
@@ -2581,9 +2679,13 @@
                                     (cir.p1Id && delPoints.has(cir.p1Id)) ||
                                     (cir.p2Id && delPoints.has(cir.p2Id)) ||
                                     (cir.p3Id && delPoints.has(cir.p3Id));
-                    const depOnFace = cir.faceId && delFaces.has(cir.faceId);
+                    const depOnFace = (cir.faceId && (delFaces.has(cir.faceId) || delCircles.has(cir.faceId))) ||
+                                      (cir.planeId && (delFaces.has(cir.planeId) || delCircles.has(cir.planeId)));
                     const depOnCir = cir.baseCircleId && delCircles.has(cir.baseCircleId);
-                    if (depOnPt || depOnFace || depOnCir) {
+                    const depOnSol = (cir.solidId && delSolids.has(cir.solidId)) ||
+                                     (cir.solid1Id && delSolids.has(cir.solid1Id)) ||
+                                     (cir.solid2Id && delSolids.has(cir.solid2Id));
+                    if (depOnPt || depOnFace || depOnCir || depOnSol) {
                         delCircles.add(cir.id);
                         changed = true;
                     }
@@ -2709,7 +2811,29 @@
             if (['intersection', 'lineFaceIntersection', 'lineCircleIntersection', 'lineSolidIntersection', 'generatorFaceIntersection', 'lineBasePlaneIntersection'].includes(pt.rule.type)) {
                 return t('giao điểm đường - mặt', 'line-surface intersection');
             }
+            if (['planeSphereCenter', 'planeSolidAxisCenter', 'sphereSphereCenter', 'planeCircleIntersection', 'planePlaneLinePoint'].includes(pt.rule.type)) {
+                return t('giao tuyến 2 mặt', 'surface-surface intersection');
+            }
             return '';
+        }
+
+        let isAnimPanelDismissed = false;
+
+        function toggleCollapseAnimPanel() {
+            const panel = document.getElementById('anim-control-panel');
+            const btn = document.getElementById('anim-collapse-btn');
+            if (!panel) return;
+            const isCollapsed = panel.classList.toggle('collapsed');
+            if (btn) {
+                btn.innerHTML = isCollapsed ? SVG_ICONS.plus : SVG_ICONS.minus;
+                btn.title = isCollapsed ? t('Mở rộng bảng điều khiển', 'Expand panel') : t('Thu gọn bảng điều khiển', 'Collapse panel');
+            }
+        }
+
+        function closeAnimationControlPanel() {
+            isAnimPanelDismissed = true;
+            const panel = document.getElementById('anim-control-panel');
+            if (panel) panel.style.display = 'none';
         }
 
         function updateAnimationControlPanel() {
@@ -2721,7 +2845,7 @@
                 !pt.hidden && pt.rule && ['onEdge', 'onCircle', 'onCircleDisk', 'onFace', 'onSphere', 'onCone', 'onFrustum'].includes(pt.rule.type) && (pt.animUI || pt.animating)
             );
 
-            if (animPoints.length === 0) {
+            if (animPoints.length === 0 || isAnimPanelDismissed) {
                 panel.style.display = 'none';
                 return;
             }
@@ -2753,11 +2877,11 @@
                         </button>
                         <span class="anim-dir-tag" title="${t('Chiều hiện tại', 'Current direction')}">${dirSymbol}</span>
                         <div class="anim-speed-box">
-                            <button class="anim-ctrl-btn" style="width:24px;height:24px;" data-act="slower" title="${t('Giảm tốc độ', 'Slower')}">
+                            <button class="anim-ctrl-btn" style="width:22px;height:22px;" data-act="slower" title="${t('Giảm tốc độ', 'Slower')}">
                                 ${SVG_ICONS.minus}
                             </button>
                             <input type="range" class="anim-speed-slider" min="0.2" max="4.0" step="0.2" value="${pt.animSpeedMult}" title="${t('Kéo để chỉnh tốc độ', 'Drag to adjust speed')}">
-                            <button class="anim-ctrl-btn" style="width:24px;height:24px;" data-act="faster" title="${t('Tăng tốc độ', 'Faster')}">
+                            <button class="anim-ctrl-btn" style="width:22px;height:22px;" data-act="faster" title="${t('Tăng tốc độ', 'Faster')}">
                                 ${SVG_ICONS.plus}
                             </button>
                             <span class="anim-speed-val">${pt.animSpeedMult.toFixed(1)}x</span>
@@ -2978,9 +3102,11 @@
         let currentTool = 'view';
         let selectedPointIds = [];
         let selectedCircleIds = [];
+        let selectedSurfaceItems = [];
         let measureSelection = { segIds: [], faceIds: [] };
         let pendingMeasureToolAfterScale = null;
         let isMeasurePanelDismissed = false;
+        let isHiddenPanelDismissed = false;
         let hoveredPointId = null;
         let hoveredCircleId = null;
 
@@ -3809,6 +3935,93 @@
                     vAxis: baseGeom.vAxis.clone()
                 };
             }
+            else if (circle.mode === 'planeSphereIntersection') {
+                const sol = (geoState.solids || []).find(s => s.id === circle.solidId && !s.hidden);
+                const plane = getPlaneDataFromId(circle.planeId);
+                if (!sol || !plane) return null;
+                const sGeom = computeSphereGeometry(sol);
+                if (!sGeom) return null;
+                const n = plane.normal.clone().normalize();
+                const signedDist = new THREE.Vector3().subVectors(sGeom.center, plane.origin).dot(n);
+                const absD = Math.abs(signedDist);
+                if (absD >= sGeom.radius - 1e-4) return null;
+                const center = sGeom.center.clone().addScaledVector(n, -signedDist);
+                const radius = Math.sqrt(Math.max(0, sGeom.radius * sGeom.radius - signedDist * signedDist));
+                if (radius < 1e-4) return null;
+                const ref = Math.abs(n.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+                const uAxis = new THREE.Vector3().crossVectors(ref, n).normalize();
+                const vAxis = new THREE.Vector3().crossVectors(n, uAxis).normalize();
+                return { center, radius, normal: n, uAxis, vAxis };
+            }
+            else if (circle.mode === 'planeSolidParallelCircle') {
+                const sol = (geoState.solids || []).find(s => s.id === circle.solidId && !s.hidden);
+                const plane = getPlaneDataFromId(circle.planeId);
+                if (!sol || !plane) return null;
+                const nP = plane.normal.clone().normalize();
+                if (sol.kind === 'cone') {
+                    const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
+                    const S = geoState.points.find(p => p.id === sol.apexId);
+                    const geom = computeCircleGeometry(cir);
+                    if (!geom || !S) return null;
+                    const vS = new THREE.Vector3(S.x, S.y, S.z);
+                    const axis = new THREE.Vector3().subVectors(geom.center, vS);
+                    const denom = axis.dot(nP);
+                    if (Math.abs(denom) < 1e-5) return null;
+                    const t = new THREE.Vector3().subVectors(plane.origin, vS).dot(nP) / denom;
+                    if (t <= 0.005 || t > 1.05) return null;
+                    const center = vS.clone().addScaledVector(axis, t);
+                    const radius = geom.radius * t;
+                    if (radius < 1e-4) return null;
+                    return {
+                        center,
+                        radius,
+                        normal: geom.normal.clone(),
+                        uAxis: geom.uAxis.clone(),
+                        vAxis: geom.vAxis.clone()
+                    };
+                } else if (sol.kind === 'frustum') {
+                    const cir1 = (geoState.circles || []).find(c => c.id === sol.circle1Id);
+                    const cir2 = (geoState.circles || []).find(c => c.id === sol.circle2Id);
+                    const g1 = computeCircleGeometry(cir1);
+                    const g2 = computeCircleGeometry(cir2);
+                    if (!g1 || !g2) return null;
+                    const axis = new THREE.Vector3().subVectors(g2.center, g1.center);
+                    const denom = axis.dot(nP);
+                    if (Math.abs(denom) < 1e-5) return null;
+                    const t = new THREE.Vector3().subVectors(plane.origin, g1.center).dot(nP) / denom;
+                    if (t < -0.05 || t > 1.05) return null;
+                    const center = g1.center.clone().addScaledVector(axis, t);
+                    const radius = g1.radius + t * (g2.radius - g1.radius);
+                    if (radius < 1e-4) return null;
+                    return {
+                        center,
+                        radius,
+                        normal: g1.normal.clone(),
+                        uAxis: g1.uAxis.clone(),
+                        vAxis: g1.vAxis.clone()
+                    };
+                }
+            }
+            else if (circle.mode === 'sphereSphereIntersection') {
+                const sol1 = (geoState.solids || []).find(s => s.id === circle.solid1Id && !s.hidden);
+                const sol2 = (geoState.solids || []).find(s => s.id === circle.solid2Id && !s.hidden);
+                if (!sol1 || !sol2) return null;
+                const g1 = computeSphereGeometry(sol1);
+                const g2 = computeSphereGeometry(sol2);
+                if (!g1 || !g2) return null;
+                const v12 = new THREE.Vector3().subVectors(g2.center, g1.center);
+                const d = v12.length();
+                if (d < 1e-5 || d >= g1.radius + g2.radius - 1e-4 || d <= Math.abs(g1.radius - g2.radius) + 1e-4) return null;
+                const normal = v12.clone().divideScalar(d);
+                const x = (d * d - g2.radius * g2.radius + g1.radius * g1.radius) / (2 * d);
+                const radius = Math.sqrt(Math.max(0, g1.radius * g1.radius - x * x));
+                if (radius < 1e-4) return null;
+                const center = g1.center.clone().addScaledVector(normal, x);
+                const ref = Math.abs(normal.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+                const uAxis = new THREE.Vector3().crossVectors(ref, normal).normalize();
+                const vAxis = new THREE.Vector3().crossVectors(normal, uAxis).normalize();
+                return { center, radius, normal, uAxis, vAxis };
+            }
             return null;
         }
 
@@ -4234,6 +4447,129 @@
                                     pt.x = M.x; pt.y = 0; pt.z = M.z;
                                 } else {
                                     pt.x = M.x; pt.y = 3; pt.z = M.z;
+                                }
+                            }
+                        }
+                    }
+                    else if (r.type === 'planeSphereCenter') {
+                        const sol = (geoState.solids || []).find(s => s.id === r.solidId && !s.hidden);
+                        const plane = getPlaneDataFromId(r.planeId);
+                        if (sol && plane) {
+                            const sGeom = computeSphereGeometry(sol);
+                            if (sGeom) {
+                                const n = plane.normal.clone().normalize();
+                                const signedDist = new THREE.Vector3().subVectors(sGeom.center, plane.origin).dot(n);
+                                const H = sGeom.center.clone().addScaledVector(n, -signedDist);
+                                pt.x = H.x; pt.y = H.y; pt.z = H.z;
+                            }
+                        }
+                    }
+                    else if (r.type === 'planeSolidAxisCenter') {
+                        const sol = (geoState.solids || []).find(s => s.id === r.solidId && !s.hidden);
+                        const plane = getPlaneDataFromId(r.planeId);
+                        if (sol && plane) {
+                            const nP = plane.normal.clone().normalize();
+                            if (sol.kind === 'cone') {
+                                const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
+                                const S = geoState.points.find(p => p.id === sol.apexId);
+                                const geom = computeCircleGeometry(cir);
+                                if (geom && S) {
+                                    const vS = new THREE.Vector3(S.x, S.y, S.z);
+                                    const axis = new THREE.Vector3().subVectors(geom.center, vS);
+                                    const denom = axis.dot(nP);
+                                    if (Math.abs(denom) > 1e-5) {
+                                        const t = new THREE.Vector3().subVectors(plane.origin, vS).dot(nP) / denom;
+                                        const C = vS.clone().addScaledVector(axis, t);
+                                        pt.x = C.x; pt.y = C.y; pt.z = C.z;
+                                    }
+                                }
+                            } else if (sol.kind === 'frustum') {
+                                const cir1 = (geoState.circles || []).find(c => c.id === sol.circle1Id);
+                                const cir2 = (geoState.circles || []).find(c => c.id === sol.circle2Id);
+                                const g1 = computeCircleGeometry(cir1);
+                                const g2 = computeCircleGeometry(cir2);
+                                if (g1 && g2) {
+                                    const axis = new THREE.Vector3().subVectors(g2.center, g1.center);
+                                    const denom = axis.dot(nP);
+                                    if (Math.abs(denom) > 1e-5) {
+                                        const t = new THREE.Vector3().subVectors(plane.origin, g1.center).dot(nP) / denom;
+                                        const C = g1.center.clone().addScaledVector(axis, t);
+                                        pt.x = C.x; pt.y = C.y; pt.z = C.z;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else if (r.type === 'sphereSphereCenter') {
+                        const sol1 = (geoState.solids || []).find(s => s.id === r.solid1Id && !s.hidden);
+                        const sol2 = (geoState.solids || []).find(s => s.id === r.solid2Id && !s.hidden);
+                        if (sol1 && sol2) {
+                            const g1 = computeSphereGeometry(sol1);
+                            const g2 = computeSphereGeometry(sol2);
+                            if (g1 && g2) {
+                                const v12 = new THREE.Vector3().subVectors(g2.center, g1.center);
+                                const d = v12.length();
+                                if (d > 1e-5) {
+                                    const normal = v12.clone().divideScalar(d);
+                                    const x = (d * d - g2.radius * g2.radius + g1.radius * g1.radius) / (2 * d);
+                                    const C = g1.center.clone().addScaledVector(normal, x);
+                                    pt.x = C.x; pt.y = C.y; pt.z = C.z;
+                                }
+                            }
+                        }
+                    }
+                    else if (r.type === 'planeCircleIntersection') {
+                        const cir = (geoState.circles || []).find(c => c.id === r.circleId);
+                        const geom = computeCircleGeometry(cir);
+                        const plane = getPlaneDataFromId(r.planeId);
+                        if (geom && plane) {
+                            const nP = plane.normal.clone().normalize();
+                            const c0 = new THREE.Vector3().subVectors(geom.center, plane.origin).dot(nP);
+                            const A = geom.radius * geom.uAxis.dot(nP);
+                            const B = geom.radius * geom.vAxis.dot(nP);
+                            const amp = Math.hypot(A, B);
+                            if (amp > 1e-5 && Math.abs(c0) <= amp + 1e-3) {
+                                const phi = Math.atan2(B, A);
+                                const alpha = Math.acos(Math.max(-1, Math.min(1, -c0 / amp)));
+                                const theta = phi + ((r.branch || 1) >= 0 ? alpha : -alpha);
+                                const pos = geom.center.clone()
+                                    .addScaledVector(geom.uAxis, geom.radius * Math.cos(theta))
+                                    .addScaledVector(geom.vAxis, geom.radius * Math.sin(theta));
+                                pt.x = pos.x; pt.y = pos.y; pt.z = pos.z;
+                            }
+                        }
+                    }
+                    else if (r.type === 'planePlaneLinePoint') {
+                        const p1 = getPlaneDataFromId(r.plane1Id);
+                        const p2 = getPlaneDataFromId(r.plane2Id);
+                        if (p1 && p2) {
+                            const n1 = p1.normal.clone().normalize();
+                            const n2 = p2.normal.clone().normalize();
+                            const dir = new THREE.Vector3().crossVectors(n1, n2);
+                            if (dir.lengthSq() > 1e-7) {
+                                dir.normalize();
+                                if (r.refPtId) {
+                                    const refPt = geoState.points.find(p => p.id === r.refPtId);
+                                    if (refPt) {
+                                        const sign = r.role === 'p2' ? -1 : 1;
+                                        pt.x = refPt.x + dir.x * 3.0 * sign;
+                                        pt.y = refPt.y + dir.y * 3.0 * sign;
+                                        pt.z = refPt.z + dir.z * 3.0 * sign;
+                                    }
+                                } else {
+                                    const mid = p1.center.clone().lerp(p2.center, 0.5);
+                                    const n1n2 = n1.dot(n2);
+                                    const denom = 1 - n1n2 * n1n2;
+                                    if (Math.abs(denom) > 1e-7) {
+                                        const rhs1 = new THREE.Vector3().subVectors(p1.origin, mid).dot(n1);
+                                        const rhs2 = new THREE.Vector3().subVectors(p2.origin, mid).dot(n2);
+                                        const a = (rhs1 - n1n2 * rhs2) / denom;
+                                        const b = (rhs2 - n1n2 * rhs1) / denom;
+                                        const P0 = mid.clone().addScaledVector(n1, a).addScaledVector(n2, b);
+                                        const offset = r.role === 'p2' ? 2.5 : (r.role === 'p1' ? -2.5 : 0);
+                                        const pos = P0.addScaledVector(dir, offset);
+                                        pt.x = pos.x; pt.y = pos.y; pt.z = pos.z;
+                                    }
                                 }
                             }
                         }
@@ -5900,6 +6236,23 @@
             });
         }
 
+        function toggleCollapseHiddenPanel() {
+            const panel = document.getElementById('hidden-objects-panel');
+            const btn = document.getElementById('hidden-collapse-btn');
+            if (!panel) return;
+            const isCollapsed = panel.classList.toggle('collapsed');
+            if (btn) {
+                btn.innerHTML = isCollapsed ? SVG_ICONS.plus : SVG_ICONS.minus;
+                btn.title = isCollapsed ? t('Mở rộng bảng đối tượng ẩn', 'Expand panel') : t('Thu gọn bảng đối tượng ẩn', 'Collapse panel');
+            }
+        }
+
+        function closeHiddenObjectsPanel() {
+            isHiddenPanelDismissed = true;
+            const panel = document.getElementById('hidden-objects-panel');
+            if (panel) panel.style.display = 'none';
+        }
+
         function updateHiddenObjectsPanel() {
             const panel = document.getElementById('hidden-objects-panel');
             const listEl = document.getElementById('hidden-list');
@@ -5907,6 +6260,7 @@
 
             const hiddenItems = [];
             geoState.points.forEach(pt => {
+                if (pt.isInternalHelper) return;
                 if (pt.hidden) hiddenItems.push({ kind: 'point', id: pt.id, label: t(`Điểm ${pt.name}`, `Point ${pt.name}`), icon: SVG_ICONS.point2d });
                 else if (pt.hideLabel) hiddenItems.push({ kind: 'point-label', id: pt.id, label: t(`Tên điểm ${pt.name}`, `Label ${pt.name}`), icon: SVG_ICONS.point2d });
             });
@@ -5935,7 +6289,7 @@
                 }
             });
 
-            if (hiddenItems.length === 0) {
+            if (hiddenItems.length === 0 || isHiddenPanelDismissed) {
                 panel.style.display = 'none';
                 return;
             }
@@ -5991,55 +6345,59 @@
             mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
 
-            let closestPt = null;
-            let minScreenDist = Math.max(13, (visualStyle.pointSize || 9) + 5);
-            geoState.points.forEach(pt => {
-                if (pt.hidden) return;
-                const v = new THREE.Vector3(pt.x, pt.y, pt.z).project(camera);
-                if (v.z <= 1) {
-                    const sx = (v.x * 0.5 + 0.5) * rect.width;
-                    const sy = (-(v.y * 0.5) + 0.5) * rect.height;
-                    const d = Math.hypot(event.clientX - rect.left - sx, event.clientY - rect.top - sy);
-                    if (d < minScreenDist) {
-                        minScreenDist = d;
-                        closestPt = pt;
+            const isSurfacePickOnly = (currentTool === 'intersect-surfaces');
+
+            if (!isSurfacePickOnly) {
+                let closestPt = null;
+                let minScreenDist = Math.max(13, (visualStyle.pointSize || 9) + 5);
+                geoState.points.forEach(pt => {
+                    if (pt.hidden) return;
+                    const v = new THREE.Vector3(pt.x, pt.y, pt.z).project(camera);
+                    if (v.z <= 1) {
+                        const sx = (v.x * 0.5 + 0.5) * rect.width;
+                        const sy = (-(v.y * 0.5) + 0.5) * rect.height;
+                        const d = Math.hypot(event.clientX - rect.left - sx, event.clientY - rect.top - sy);
+                        if (d < minScreenDist) {
+                            minScreenDist = d;
+                            closestPt = pt;
+                        }
                     }
+                });
+
+                if (closestPt) {
+                    return {
+                        type: 'point',
+                        pointId: closestPt.id,
+                        pos: new THREE.Vector3(closestPt.x, closestPt.y, closestPt.z),
+                        label: `Đỉnh ${closestPt.name}`
+                    };
                 }
-            });
 
-            if (closestPt) {
-                return {
-                    type: 'point',
-                    pointId: closestPt.id,
-                    pos: new THREE.Vector3(closestPt.x, closestPt.y, closestPt.z),
-                    label: `Đỉnh ${closestPt.name}`
-                };
-            }
-
-            let closestInter = null;
-            let minInterDist = 16;
-            cachedIntersections.forEach(inter => {
-                const v = inter.pos.clone().project(camera);
-                if (v.z <= 1) {
-                    const sx = (v.x * 0.5 + 0.5) * rect.width;
-                    const sy = (-(v.y * 0.5) + 0.5) * rect.height;
-                    const d = Math.hypot(event.clientX - rect.left - sx, event.clientY - rect.top - sy);
-                    if (d < minInterDist) {
-                        minInterDist = d;
-                        closestInter = inter;
+                let closestInter = null;
+                let minInterDist = 16;
+                cachedIntersections.forEach(inter => {
+                    const v = inter.pos.clone().project(camera);
+                    if (v.z <= 1) {
+                        const sx = (v.x * 0.5 + 0.5) * rect.width;
+                        const sy = (-(v.y * 0.5) + 0.5) * rect.height;
+                        const d = Math.hypot(event.clientX - rect.left - sx, event.clientY - rect.top - sy);
+                        if (d < minInterDist) {
+                            minInterDist = d;
+                            closestInter = inter;
+                        }
                     }
-                }
-            });
+                });
 
-            if (closestInter && currentTool !== 'delete-obj') {
-                return {
-                    type: 'intersection',
-                    pos: closestInter.pos.clone(),
-                    segAId: closestInter.segAId,
-                    segBId: closestInter.segBId,
-                    rule: closestInter.rule ? { ...closestInter.rule } : { type: 'intersection', segAId: closestInter.segAId, segBId: closestInter.segBId },
-                    label: closestInter.label
-                };
+                if (closestInter && currentTool !== 'delete-obj') {
+                    return {
+                        type: 'intersection',
+                        pos: closestInter.pos.clone(),
+                        segAId: closestInter.segAId,
+                        segBId: closestInter.segBId,
+                        rule: closestInter.rule ? { ...closestInter.rule } : { type: 'intersection', segAId: closestInter.segAId, segBId: closestInter.segBId },
+                        label: closestInter.label
+                    };
+                }
             }
 
             // Khi đang ở chế độ tạo Hình nón hoặc Hình trụ/Nón cụt, ưu tiên bắt Đường tròn trước Đoạn thẳng
@@ -6064,7 +6422,7 @@
                             type: 'circle',
                             circleId, angle,
                             pos: exactPos,
-                            label: (currentTool === 'delete-obj' || prioritizeCircle || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
+                            label: (currentTool === 'delete-obj' || prioritizeCircle || isSurfacePickOnly || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
                         };
                     }
                 }
@@ -6076,42 +6434,44 @@
                 if (cirTarget) return cirTarget;
             }
 
-            const edgeHits = raycaster.intersectObjects(hitEdgeMeshes);
-            if (edgeHits.length > 0) {
-                const hit = edgeHits[0];
-                const { segId, p1Id, p2Id, isLine, v1, v2, label } = hit.object.userData;
-                const line3 = new THREE.Line3(v1, v2);
-                const exactPos = new THREE.Vector3();
-                line3.closestPointToPoint(hit.point, true, exactPos);
+            if (!isSurfacePickOnly) {
+                const edgeHits = raycaster.intersectObjects(hitEdgeMeshes);
+                if (edgeHits.length > 0) {
+                    const hit = edgeHits[0];
+                    const { segId, p1Id, p2Id, isLine, v1, v2, label } = hit.object.userData;
+                    const line3 = new THREE.Line3(v1, v2);
+                    const exactPos = new THREE.Vector3();
+                    line3.closestPointToPoint(hit.point, true, exactPos);
 
-                const p1 = geoState.points.find(p => p.id === p1Id);
-                const p2 = geoState.points.find(p => p.id === p2Id);
-                let t = 0.5;
-                if (p1 && p2) {
-                    const vecAB = new THREE.Vector3(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z);
-                    const vecAP = new THREE.Vector3(exactPos.x - p1.x, exactPos.y - p1.y, exactPos.z - p1.z);
-                    if (vecAB.lengthSq() > 1e-6) {
-                        t = vecAP.dot(vecAB) / vecAB.lengthSq();
-                        if (!isLine) t = Math.max(0.02, Math.min(0.98, t));
+                    const p1 = geoState.points.find(p => p.id === p1Id);
+                    const p2 = geoState.points.find(p => p.id === p2Id);
+                    let t = 0.5;
+                    if (p1 && p2) {
+                        const vecAB = new THREE.Vector3(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z);
+                        const vecAP = new THREE.Vector3(exactPos.x - p1.x, exactPos.y - p1.y, exactPos.z - p1.z);
+                        if (vecAB.lengthSq() > 1e-6) {
+                            t = vecAP.dot(vecAB) / vecAB.lengthSq();
+                            if (!isLine) t = Math.max(0.02, Math.min(0.98, t));
+                        }
                     }
+
+                    return {
+                        type: 'edge',
+                        segId, p1Id, p2Id, t,
+                        pos: exactPos,
+                        label: (currentTool === 'delete-obj' || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
+                    };
                 }
 
-                return {
-                    type: 'edge',
-                    segId, p1Id, p2Id, t,
-                    pos: exactPos,
-                    label: (currentTool === 'delete-obj' || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
-                };
+                const cirTargetAfter = checkCircleHit();
+                if (cirTargetAfter) return cirTargetAfter;
             }
-
-            const cirTargetAfter = checkCircleHit();
-            if (cirTargetAfter) return cirTargetAfter;
 
             const excludeSolidSurfaceHit = (
                 ['measure-scale', 'measure-dist', 'measure-angle', 'measure-area'].includes(currentTool) ||
                 (currentTool === 'perp' && selectedPointIds.length === 1)
             );
-            const isSolidObjectTool = ['delete-obj', 'hide', 'measure-volume'].includes(currentTool);
+            const isSolidObjectTool = ['delete-obj', 'hide', 'measure-volume', 'intersect-surfaces'].includes(currentTool);
             const mouseScreenX = event.clientX - rect.left;
             const mouseScreenY = event.clientY - rect.top;
 
@@ -6447,7 +6807,7 @@
                             rRatio,
                             angle,
                             pos: exactDiskPos,
-                            label: currentTool.startsWith('measure-')
+                            label: (currentTool.startsWith('measure-') || currentTool === 'intersect-surfaces')
                                 ? t(`Mặt hình tròn ${cir.name || '(C)'}`, `Circular disk ${cir.name || '(C)'}`)
                                 : t(`Trên bề mặt hình tròn ${cir.name || '(C)'}`, `On circular disk ${cir.name || '(C)'}`)
                         };
@@ -6470,11 +6830,16 @@
                         type: 'face',
                         faceId, u, v,
                         pos: topHit.point.clone(),
-                        label: (currentTool === 'delete-obj' || currentTool.startsWith('measure-'))
+                        label: (currentTool === 'delete-obj' || currentTool === 'intersect-surfaces' || currentTool.startsWith('measure-'))
                             ? t(`Mặt phẳng ${faceTitle}`, `Polygon face ${faceTitle}`)
                             : t(`Trên bề mặt ${faceTitle}`, `On face ${faceTitle}`)
                     };
                 }
+            }
+
+            if (isSurfacePickOnly) {
+                const cirFallback = checkCircleHit();
+                if (cirFallback) return cirFallback;
             }
 
             return null;
@@ -6684,13 +7049,90 @@
                     const p = geoState.points.find(pt => pt.id === id);
                     return p ? p.name : '';
                 }).join('');
-                geoState.faces.push({
+                const created = {
                     id: 'face_' + Date.now() + Math.random(),
                     pointIds: [...pointIds],
                     name: `(${name})`,
                     hidden: false
-                });
+                };
+                geoState.faces.push(created);
+                return created;
             }
+            return null;
+        }
+
+        function autoDetectClosedFacesFromSegments() {
+            const adj = {};
+            geoState.points.forEach(p => { if (!p.hidden) adj[p.id] = []; });
+            geoState.segments.forEach(s => {
+                if (s.hidden || s.isLine) return;
+                if (adj[s.p1Id] && adj[s.p2Id]) {
+                    if (!adj[s.p1Id].includes(s.p2Id)) adj[s.p1Id].push(s.p2Id);
+                    if (!adj[s.p2Id].includes(s.p1Id)) adj[s.p2Id].push(s.p1Id);
+                }
+            });
+
+            const newlyCreatedFaces = [];
+            geoState.segments.forEach(s => {
+                if (s.hidden || s.isLine) return;
+                const p1Id = s.p1Id;
+                const p2Id = s.p2Id;
+                if (!adj[p1Id] || !adj[p2Id]) return;
+
+                const queue = [[p1Id]];
+                let iterations = 0;
+                const maxIterations = 500;
+
+                while (queue.length > 0 && iterations < maxIterations) {
+                    iterations++;
+                    const path = queue.shift();
+                    const last = path[path.length - 1];
+                    if (path.length >= 6) continue;
+
+                    for (const next of (adj[last] || [])) {
+                        if (next === p2Id) {
+                            if (path.length >= 2) {
+                                const cycleIds = [...path, p2Id];
+                                if (arePointsCoplanar(cycleIds)) {
+                                    const n = cycleIds.length;
+                                    let hasChord = false;
+                                    if (n > 3) {
+                                        for (let i = 0; i < n && !hasChord; i++) {
+                                            for (let j = i + 2; j < n; j++) {
+                                                if (i === 0 && j === n - 1) continue;
+                                                const u = cycleIds[i];
+                                                const v = cycleIds[j];
+                                                if (adj[u] && adj[u].includes(v)) {
+                                                    hasChord = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (!hasChord) {
+                                        const nf = addFaceIfNotExists(cycleIds);
+                                        if (nf) newlyCreatedFaces.push(nf);
+                                    }
+                                }
+                            }
+                        } else if (!path.includes(next)) {
+                            let createsChord = false;
+                            for (let i = 0; i < path.length - 1; i++) {
+                                const prev = path[i];
+                                if (adj[next] && adj[next].includes(prev)) {
+                                    createsChord = true;
+                                    break;
+                                }
+                            }
+                            if (createsChord) continue;
+                            const candidateIds = [...path, next, p2Id];
+                            if (candidateIds.length >= 4 && !arePointsCoplanar(candidateIds)) continue;
+                            queue.push([...path, next]);
+                        }
+                    }
+                }
+            });
+            return newlyCreatedFaces;
         }
 
         function createPolygonWithSurface(pointIds) {
@@ -6705,6 +7147,17 @@
                 }
             }
             addFaceIfNotExists(pointIds);
+            const autoFaces = autoDetectClosedFacesFromSegments();
+            if (autoFaces.length > 0) {
+                const guideSpan = document.getElementById('guide-span');
+                if (guideSpan) {
+                    const names = autoFaces.map(f => `<b>${f.name}</b>`).join(', ');
+                    guideSpan.innerHTML = t(
+                        `Đã tạo mặt đa giác và tự động tạo thêm mặt khép kín từ các đường biên: ${names}`,
+                        `Created polygon face and auto-detected closed boundary face(s): ${names}`
+                    );
+                }
+            }
         }
 
         // =====================================================================
@@ -7730,6 +8183,17 @@
                     }
                 }
             });
+        }
+
+        function toggleCollapseMeasurementPanel() {
+            const panel = document.getElementById('measurement-panel');
+            const btn = document.getElementById('measure-collapse-btn');
+            if (!panel) return;
+            const isCollapsed = panel.classList.toggle('collapsed');
+            if (btn) {
+                btn.innerHTML = isCollapsed ? SVG_ICONS.plus : SVG_ICONS.minus;
+                btn.title = isCollapsed ? t('Mở rộng bảng đo đạc', 'Expand panel') : t('Thu gọn bảng đo đạc', 'Collapse panel');
+            }
         }
 
         function closeMeasurementPanel() {
@@ -9615,6 +10079,7 @@
                 if (target && target.type === 'point') {
                     const pt = geoState.points.find(p => p.id === target.pointId);
                     if (pt && pt.rule && ['onEdge', 'onFace', 'onCircle', 'onCircleDisk', 'onSphere', 'onCone', 'onFrustum'].includes(pt.rule.type)) {
+                        isAnimPanelDismissed = false;
                         pt.animating = !pt.animating;
                         pt.animUI = true;
                         if (typeof pt.animSpeedMult !== 'number') pt.animSpeedMult = 1.0;
@@ -9651,13 +10116,14 @@
             if (currentTool === 'hide') {
                 if (!target) return;
                 saveHistory();
+                isHiddenPanelDismissed = false;
                 if (target.type === 'point') {
                     const pt = geoState.points.find(p => p.id === target.pointId);
                     if (pt) pt.hidden = true;
                 } else if (target.type === 'edge') {
                     const seg = geoState.segments.find(s => s.id === target.segId);
                     if (seg) seg.hidden = true;
-                } else if (target.type === 'circle') {
+                } else if (target.type === 'circle' || target.type === 'circleDisk') {
                     const cir = (geoState.circles || []).find(c => c.id === target.circleId);
                     if (cir) cir.hidden = true;
                 } else if (target.type === 'face') {
@@ -9669,6 +10135,12 @@
                 }
                 updateSceneFromState();
                 updateAnimationControlPanel();
+                return;
+            }
+
+            // CHỨC NĂNG XÁC ĐỊNH GIAO TUYẾN CỦA 2 MẶT (HỖ TRỢ MẶT PHẲNG & MẶT TRÒN XOAY)
+            if (currentTool === 'intersect-surfaces') {
+                handleIntersectSurfacesToolClick(target);
                 return;
             }
 
@@ -9871,7 +10343,7 @@
                             { type: 'translate', mId: M.id, aId: A.id, bId: B.id }
                         );
                         const ptHelper = geoState.points.find(p => p.id === mPrimeId);
-                        if (ptHelper) ptHelper.hidden = true;
+                        if (ptHelper) { ptHelper.hidden = true; ptHelper.isInternalHelper = true; }
                         addSegmentAndCheckClosedLoops(M.id, mPrimeId, true);
                         selectedPointIds = [];
                         updateSceneFromState();
@@ -10065,7 +10537,7 @@
                     { type: 'translate', mId: M.id, aId: A.id, bId: B.id }
                 );
                 const ptHelper = geoState.points.find(p => p.id === mPrimeId);
-                if (ptHelper) ptHelper.hidden = true;
+                if (ptHelper) { ptHelper.hidden = true; ptHelper.isInternalHelper = true; }
                 addSegmentAndCheckClosedLoops(M.id, mPrimeId, true);
                 selectedPointIds = [];
                 updateSceneFromState();
@@ -10353,12 +10825,577 @@
                             type: 'perpLinePoint', mId: M.id, aId: A.id, bId: B.id, faceId
                         });
                         const ptHelper = geoState.points.find(p => p.id === hId);
-                        if (ptHelper) ptHelper.hidden = true;
+                        if (ptHelper) { ptHelper.hidden = true; ptHelper.isInternalHelper = true; }
                         addSegmentAndCheckClosedLoops(M.id, hId, true);
                         selectedPointIds = [];
                         updateSceneFromState();
                     }
                 );
+            }
+        }
+
+        function normalizeSurfaceSelectionTarget(target) {
+            if (!target) return null;
+            if (target.type === 'face' && target.faceId) {
+                const face = geoState.faces.find(f => f.id === target.faceId && !f.hidden);
+                if (!face) return null;
+                return { surfType: 'plane', key: `plane:${face.id}`, planeId: face.id, faceId: face.id, name: face.name || '(α)' };
+            }
+            if ((target.type === 'circleDisk' || target.type === 'circle') && target.circleId) {
+                const cir = (geoState.circles || []).find(c => c.id === target.circleId && !c.hidden);
+                if (!cir) return null;
+                return { surfType: 'plane', key: `plane:${cir.id}`, planeId: cir.id, circleId: cir.id, name: cir.name || '(C)' };
+            }
+            if (target.type === 'plane') {
+                return { surfType: 'plane', key: 'plane:__base_plane__', planeId: '__base_plane__', name: '(P)' };
+            }
+            if ((target.type === 'solid' || ['sphere', 'cone', 'frustum'].includes(target.type)) && target.solidId) {
+                const sol = (geoState.solids || []).find(s => s.id === target.solidId && !s.hidden);
+                if (!sol) return null;
+                return {
+                    surfType: 'solid',
+                    key: `solid:${sol.id}`,
+                    solidId: sol.id,
+                    solidKind: sol.kind,
+                    name: sol.name || (sol.kind === 'sphere' ? t('Mặt cầu', 'Sphere') : (sol.kind === 'cone' ? t('Hình nón', 'Cone') : t('Hình trụ / Nón cụt', 'Cylinder / Frustum')))
+                };
+            }
+            return null;
+        }
+
+        function findOrCreatePointNear3D(pos, preferredName, rule) {
+            for (const p of geoState.points) {
+                if (p.hidden) continue;
+                const d = Math.hypot(p.x - pos.x, p.y - pos.y, p.z - pos.z);
+                if (d < 0.045) return p.id;
+            }
+            return createNewPoint(pos.x, pos.y, pos.z, preferredName, rule);
+        }
+
+        function createPlaneCircleChordIntersection(circleId, planeId) {
+            const cir = (geoState.circles || []).find(c => c.id === circleId && !c.hidden);
+            const geom = computeCircleGeometry(cir);
+            const plane = getPlaneDataFromId(planeId);
+            if (!geom || !plane) return [];
+            const nP = plane.normal.clone().normalize();
+            const c0 = new THREE.Vector3().subVectors(geom.center, plane.origin).dot(nP);
+            const A = geom.radius * geom.uAxis.dot(nP);
+            const B = geom.radius * geom.vAxis.dot(nP);
+            const amp = Math.hypot(A, B);
+            if (amp <= 1e-5 || Math.abs(c0) > amp + 1e-3) return [];
+            const phi = Math.atan2(B, A);
+            const ratio = Math.max(-1, Math.min(1, -c0 / amp));
+            const alpha = Math.acos(ratio);
+            if (alpha < 1e-3) {
+                const pos = geom.center.clone()
+                    .addScaledVector(geom.uAxis, geom.radius * Math.cos(phi))
+                    .addScaledVector(geom.vAxis, geom.radius * Math.sin(phi));
+                const pid = findOrCreatePointNear3D(pos, null, { type: 'planeCircleIntersection', circleId, planeId, branch: 1 });
+                return [pid];
+            }
+            const t1 = phi + alpha;
+            const t2 = phi - alpha;
+            const pos1 = geom.center.clone()
+                .addScaledVector(geom.uAxis, geom.radius * Math.cos(t1))
+                .addScaledVector(geom.vAxis, geom.radius * Math.sin(t1));
+            const pos2 = geom.center.clone()
+                .addScaledVector(geom.uAxis, geom.radius * Math.cos(t2))
+                .addScaledVector(geom.vAxis, geom.radius * Math.sin(t2));
+            const p1Id = findOrCreatePointNear3D(pos1, null, { type: 'planeCircleIntersection', circleId, planeId, branch: 1 });
+            const p2Id = findOrCreatePointNear3D(pos2, null, { type: 'planeCircleIntersection', circleId, planeId, branch: -1 });
+            if (p1Id !== p2Id) {
+                addSegmentAndCheckClosedLoops(p1Id, p2Id, false);
+            }
+            return [p1Id, p2Id];
+        }
+
+        function handleIntersectSurfacesToolClick(target) {
+            const guideSpan = document.getElementById('guide-span');
+            const surf = normalizeSurfaceSelectionTarget(target);
+            if (!surf) {
+                if (guideSpan) {
+                    guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
+                        'Hãy click chọn trực tiếp vào Bề mặt đa giác, Hình tròn, Mặt nền (P) hoặc Mặt tròn xoay (Nón, Trụ, Cầu)!',
+                        'Please click directly on a Polygon Face, Circular Disk, Base Plane (P), or Surface of Revolution (Cone, Cylinder, Sphere)!'
+                    )}</span>`;
+                }
+                return;
+            }
+
+            if (selectedSurfaceItems.length === 0) {
+                selectedSurfaceItems = [surf];
+                if (guideSpan) {
+                    guideSpan.innerHTML = t(
+                        `Đã chọn mặt thứ nhất: <b>${surf.name}</b> $\\to$ Hãy click chọn tiếp <b>Mặt thứ hai</b> để dựng giao tuyến!`,
+                        `Selected first surface: <b>${surf.name}</b> $\\to$ Click the <b>Second surface</b> to construct their intersection!`
+                    );
+                    renderMathInElementSafe(guideSpan);
+                }
+                return;
+            }
+
+            const surf1 = selectedSurfaceItems[0];
+            if (surf1.key === surf.key) {
+                if (guideSpan) {
+                    guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
+                        `Bạn vừa click lại mặt <b>${surf.name}</b>. Hãy chọn một mặt thứ hai khác với mặt thứ nhất!`,
+                        `You clicked <b>${surf.name}</b> again. Please select a different second surface!`
+                    )}</span>`;
+                }
+                return;
+            }
+
+            const surf2 = surf;
+            selectedSurfaceItems = [];
+
+            // TRƯỜNG HỢP 1: MẶT PHẲNG × MẶT PHẲNG (ĐA GIÁC, HÌNH TRÒN, MẶT NỀN (P))
+            if (surf1.surfType === 'plane' && surf2.surfType === 'plane') {
+                const p1 = getPlaneDataFromId(surf1.planeId);
+                const p2 = getPlaneDataFromId(surf2.planeId);
+                if (!p1 || !p2) return;
+                const dir = new THREE.Vector3().crossVectors(p1.normal, p2.normal);
+                if (dir.lengthSq() < 1e-6) {
+                    if (guideSpan) {
+                        guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
+                            `Hai mặt phẳng <b>${surf1.name}</b> và <b>${surf2.name}</b> song song hoặc trùng nhau nên không có giao tuyến!`,
+                            `Surfaces <b>${surf1.name}</b> and <b>${surf2.name}</b> are parallel or coincident!`
+                        )}</span>`;
+                    }
+                    return;
+                }
+
+                saveHistory();
+                const interPtIds = [];
+                const addUniquePtId = (id) => {
+                    if (id && !interPtIds.includes(id)) interPtIds.push(id);
+                };
+
+                // Nếu 1 trong 2 mặt là hình tròn, tìm giao điểm của mặt phẳng kia với đường tròn biên
+                if (surf1.circleId) {
+                    createPlaneCircleChordIntersection(surf1.circleId, surf2.planeId).forEach(addUniquePtId);
+                }
+                if (surf2.circleId) {
+                    createPlaneCircleChordIntersection(surf2.circleId, surf1.planeId).forEach(addUniquePtId);
+                }
+
+                // Kiểm tra các đỉnh chung hoặc điểm đã nằm đồng thời trên cả 2 mặt phẳng
+                const n1 = p1.normal.clone().normalize();
+                const n2 = p2.normal.clone().normalize();
+                geoState.points.forEach(pt => {
+                    if (pt.hidden) return;
+                    const v = new THREE.Vector3(pt.x, pt.y, pt.z);
+                    const d1 = Math.abs(new THREE.Vector3().subVectors(v, p1.origin).dot(n1));
+                    const d2 = Math.abs(new THREE.Vector3().subVectors(v, p2.origin).dot(n2));
+                    if (d1 < 0.035 && d2 < 0.035) {
+                        addUniquePtId(pt.id);
+                    }
+                });
+
+                // Tìm giao điểm của các cạnh biên của mặt đa giác 1 với mặt phẳng 2 và ngược lại
+                const collectFaceEdgeHitsWithPlane = (faceId, targetPlaneId, targetPlane) => {
+                    const face = geoState.faces.find(f => f.id === faceId && !f.hidden);
+                    if (!face || !face.pointIds || face.pointIds.length < 3) return;
+                    const nT = targetPlane.normal.clone().normalize();
+                    const len = face.pointIds.length;
+                    for (let i = 0; i < len; i++) {
+                        const uId = face.pointIds[i];
+                        const vId = face.pointIds[(i + 1) % len];
+                        const seg = geoState.segments.find(s =>
+                            !s.hidden && ((s.p1Id === uId && s.p2Id === vId) || (s.p1Id === vId && s.p2Id === uId))
+                        );
+                        const U = geoState.points.find(p => p.id === uId);
+                        const V = geoState.points.find(p => p.id === vId);
+                        if (!U || !V) continue;
+                        const vU = new THREE.Vector3(U.x, U.y, U.z);
+                        const vV = new THREE.Vector3(V.x, V.y, V.z);
+                        const dU = new THREE.Vector3().subVectors(vU, targetPlane.origin).dot(nT);
+                        const dV = new THREE.Vector3().subVectors(vV, targetPlane.origin).dot(nT);
+                        if (Math.abs(dU) < 0.035) { addUniquePtId(uId); continue; }
+                        if (Math.abs(dV) < 0.035) { addUniquePtId(vId); continue; }
+                        if (dU * dV < 0 && Math.abs(dU - dV) > 1e-5) {
+                            const tVal = dU / (dU - dV);
+                            const hitPos = vU.clone().lerp(vV, tVal);
+                            const rule = targetPlaneId === '__base_plane__'
+                                ? (seg ? { type: 'lineBasePlaneIntersection', segId: seg.id } : null)
+                                : (seg ? { type: 'lineFaceIntersection', segId: seg.id, faceId: targetPlaneId } : null);
+                            const newId = findOrCreatePointNear3D(hitPos, null, rule);
+                            addUniquePtId(newId);
+                        }
+                    }
+                };
+
+                if (surf1.faceId) collectFaceEdgeHitsWithPlane(surf1.faceId, surf2.planeId, p2);
+                if (surf2.faceId) collectFaceEdgeHitsWithPlane(surf2.faceId, surf1.planeId, p1);
+
+                if (interPtIds.length >= 2) {
+                    addSegmentAndCheckClosedLoops(interPtIds[0], interPtIds[1], false);
+                    addSegmentAndCheckClosedLoops(interPtIds[0], interPtIds[1], true);
+                    autoDetectClosedFacesFromSegments();
+                } else if (interPtIds.length === 1) {
+                    const sharedId = interPtIds[0];
+                    const helperId = createNewPoint(0, 0, 0, null, {
+                        type: 'planePlaneLinePoint',
+                        plane1Id: surf1.planeId,
+                        plane2Id: surf2.planeId,
+                        refPtId: sharedId,
+                        role: 'p1'
+                    });
+                    const ptHelper = geoState.points.find(p => p.id === helperId);
+                    if (ptHelper) { ptHelper.hidden = true; ptHelper.isInternalHelper = true; }
+                    addSegmentAndCheckClosedLoops(sharedId, helperId, true);
+                } else {
+                    const p1Id = createNewPoint(0, 0, 0, null, {
+                        type: 'planePlaneLinePoint',
+                        plane1Id: surf1.planeId,
+                        plane2Id: surf2.planeId,
+                        role: 'p1'
+                    });
+                    const p2Id = createNewPoint(0, 0, 0, null, {
+                        type: 'planePlaneLinePoint',
+                        plane1Id: surf1.planeId,
+                        plane2Id: surf2.planeId,
+                        role: 'p2'
+                    });
+                    const ptH2 = geoState.points.find(p => p.id === p2Id);
+                    if (ptH2) { ptH2.hidden = true; ptH2.isInternalHelper = true; }
+                    addSegmentAndCheckClosedLoops(p1Id, p2Id, true);
+                }
+
+                recomputeAllDependentGeometry();
+                updateSceneFromState();
+                if (guideSpan) {
+                    guideSpan.innerHTML = t(
+                        `Đã xác định giao tuyến của hai mặt phẳng <b>${surf1.name}</b> và <b>${surf2.name}</b>!`,
+                        `Constructed intersection line of planes <b>${surf1.name}</b> and <b>${surf2.name}</b>!`
+                    );
+                }
+                return;
+            }
+
+            // TRƯỜNG HỢP 2: MẶT PHẲNG × MẶT TRÒN XOAY (MẶT CẦU, HÌNH NÓN, HÌNH TRỤ / NÓN CỤT)
+            if ((surf1.surfType === 'plane' && surf2.surfType === 'solid') || (surf1.surfType === 'solid' && surf2.surfType === 'plane')) {
+                const planeSurf = surf1.surfType === 'plane' ? surf1 : surf2;
+                const solidSurf = surf1.surfType === 'solid' ? surf1 : surf2;
+                const plane = getPlaneDataFromId(planeSurf.planeId);
+                const sol = (geoState.solids || []).find(s => s.id === solidSurf.solidId && !s.hidden);
+                if (!plane || !sol) return;
+
+                if (sol.kind === 'sphere') {
+                    const sGeom = computeSphereGeometry(sol);
+                    if (!sGeom) return;
+                    const n = plane.normal.clone().normalize();
+                    const signedDist = new THREE.Vector3().subVectors(sGeom.center, plane.origin).dot(n);
+                    const absD = Math.abs(signedDist);
+                    if (absD > sGeom.radius + 1e-3) {
+                        if (guideSpan) {
+                            guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
+                                `Mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b> không giao nhau ($d > R$)!`,
+                                `Plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b> do not intersect ($d > R$)!`
+                            )}</span>`;
+                            renderMathInElementSafe(guideSpan);
+                        }
+                        return;
+                    }
+                    saveHistory();
+                    const H = sGeom.center.clone().addScaledVector(n, -signedDist);
+                    const hId = findOrCreatePointNear3D(H, 'H', {
+                        type: 'planeSphereCenter',
+                        solidId: sol.id,
+                        planeId: planeSurf.planeId
+                    });
+                    const hPt = geoState.points.find(p => p.id === hId);
+                    if (absD < sGeom.radius - 1e-3) {
+                        const cirName = `(${hPt ? hPt.name : 'H'})`;
+                        geoState.circles.push({
+                            id: 'cir_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                            mode: 'planeSphereIntersection',
+                            centerId: hId,
+                            solidId: sol.id,
+                            planeId: planeSurf.planeId,
+                            name: cirName,
+                            hidden: false
+                        });
+                    }
+                    recomputeAllDependentGeometry();
+                    updateSceneFromState();
+                    if (guideSpan) {
+                        guideSpan.innerHTML = absD < sGeom.radius - 1e-3
+                            ? t(
+                                `Đã dựng <b>Đường tròn giao tuyến</b> tâm <b>$${hPt ? hPt.name : 'H'}$</b> của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
+                                `Constructed <b>Intersection Circle</b> centered at <b>$${hPt ? hPt.name : 'H'}$</b> between <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b>!`
+                            )
+                            : t(
+                                `Mặt phẳng <b>${planeSurf.name}</b> tiếp xúc với <b>${solidSurf.name}</b> tại tiếp điểm <b>$${hPt ? hPt.name : 'H'}$</b>!`,
+                                `Plane <b>${planeSurf.name}</b> is tangent to <b>${solidSurf.name}</b> at point <b>$${hPt ? hPt.name : 'H'}$</b>!`
+                            );
+                        renderMathInElementSafe(guideSpan);
+                    }
+                    return;
+                }
+
+                if (sol.kind === 'cone') {
+                    const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
+                    const S = geoState.points.find(p => p.id === sol.apexId);
+                    const geom = computeCircleGeometry(cir);
+                    if (!geom || !S) return;
+                    const nP = plane.normal.clone().normalize();
+                    const crossNormals = new THREE.Vector3().crossVectors(nP, geom.normal);
+
+                    saveHistory();
+                    if (crossNormals.length() < 0.08) {
+                        // Mặt phẳng song song với đáy hình nón -> Giao tuyến là đường tròn thiết diện ngang
+                        const vS = new THREE.Vector3(S.x, S.y, S.z);
+                        const axis = new THREE.Vector3().subVectors(geom.center, vS);
+                        const denom = axis.dot(nP);
+                        const tVal = Math.abs(denom) > 1e-5 ? (new THREE.Vector3().subVectors(plane.origin, vS).dot(nP) / denom) : -1;
+                        if (tVal <= 0.005 || tVal > 1.05) {
+                            if (guideSpan) {
+                                guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
+                                    `Mặt phẳng <b>${planeSurf.name}</b> nằm ngoài phạm vi chiều cao của <b>${solidSurf.name}</b>!`,
+                                    `Plane <b>${planeSurf.name}</b> is outside the height range of <b>${solidSurf.name}</b>!`
+                                )}</span>`;
+                            }
+                            return;
+                        }
+                        const C = vS.clone().addScaledVector(axis, tVal);
+                        const cId = findOrCreatePointNear3D(C, "O'", {
+                            type: 'planeSolidAxisCenter',
+                            solidId: sol.id,
+                            planeId: planeSurf.planeId
+                        });
+                        const cPt = geoState.points.find(p => p.id === cId);
+                        geoState.circles.push({
+                            id: 'cir_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                            mode: 'planeSolidParallelCircle',
+                            centerId: cId,
+                            solidId: sol.id,
+                            planeId: planeSurf.planeId,
+                            name: `(${cPt ? cPt.name : "O'"})`,
+                            hidden: false
+                        });
+                        recomputeAllDependentGeometry();
+                        updateSceneFromState();
+                        if (guideSpan) {
+                            guideSpan.innerHTML = t(
+                                `Đã dựng <b>Đường tròn giao tuyến</b> tâm <b>$${cPt ? cPt.name : "O'"}$</b> của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
+                                `Constructed parallel <b>Intersection Circle</b> centered at <b>$${cPt ? cPt.name : "O'"}$</b>!`
+                            );
+                            renderMathInElementSafe(guideSpan);
+                        }
+                        return;
+                    }
+
+                    // Mặt phẳng đi qua đỉnh S hoặc cắt xiên hình nón -> Tìm giao điểm với đường tròn đáy & các đường sinh
+                    const basePts = createPlaneCircleChordIntersection(sol.circleId, planeSurf.planeId);
+                    const vS = new THREE.Vector3(S.x, S.y, S.z);
+                    const distS = Math.abs(new THREE.Vector3().subVectors(vS, plane.origin).dot(nP));
+                    if (distS < 0.05 && basePts.length === 2) {
+                        createPolygonWithSurface([S.id, basePts[0], basePts[1]]);
+                    } else {
+                        const axis = new THREE.Vector3().subVectors(geom.center, vS);
+                        const denom = axis.dot(nP);
+                        const tVal = Math.abs(denom) > 1e-5 ? (new THREE.Vector3().subVectors(plane.origin, vS).dot(nP) / denom) : -1;
+                        if (tVal > 0.02 && tVal <= 1.02) {
+                            const C = vS.clone().addScaledVector(axis, tVal);
+                            const cId = findOrCreatePointNear3D(C, "O'", {
+                                type: 'planeSolidAxisCenter',
+                                solidId: sol.id,
+                                planeId: planeSurf.planeId
+                            });
+                            const cPt = geoState.points.find(p => p.id === cId);
+                            geoState.circles.push({
+                                id: 'cir_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                                mode: 'planeSolidParallelCircle',
+                                centerId: cId,
+                                solidId: sol.id,
+                                planeId: planeSurf.planeId,
+                                name: `(${cPt ? cPt.name : "O'"})`,
+                                hidden: false
+                            });
+                        }
+                    }
+                    recomputeAllDependentGeometry();
+                    autoDetectClosedFacesFromSegments();
+                    updateSceneFromState();
+                    if (guideSpan) {
+                        guideSpan.innerHTML = t(
+                            `Đã dựng giao tuyến / thiết diện của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
+                            `Constructed intersection of plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b>!`
+                        );
+                    }
+                    return;
+                }
+
+                if (sol.kind === 'frustum') {
+                    const cir1 = (geoState.circles || []).find(c => c.id === sol.circle1Id);
+                    const cir2 = (geoState.circles || []).find(c => c.id === sol.circle2Id);
+                    const g1 = computeCircleGeometry(cir1);
+                    const g2 = computeCircleGeometry(cir2);
+                    if (!g1 || !g2) return;
+                    const nP = plane.normal.clone().normalize();
+                    const crossNormals = new THREE.Vector3().crossVectors(nP, g1.normal);
+
+                    saveHistory();
+                    if (crossNormals.length() < 0.08) {
+                        const axis = new THREE.Vector3().subVectors(g2.center, g1.center);
+                        const denom = axis.dot(nP);
+                        const tVal = Math.abs(denom) > 1e-5 ? (new THREE.Vector3().subVectors(plane.origin, g1.center).dot(nP) / denom) : -1;
+                        if (tVal < -0.05 || tVal > 1.05) {
+                            if (guideSpan) {
+                                guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
+                                    `Mặt phẳng <b>${planeSurf.name}</b> nằm ngoài phạm vi chiều cao của <b>${solidSurf.name}</b>!`,
+                                    `Plane <b>${planeSurf.name}</b> is outside the height range of <b>${solidSurf.name}</b>!`
+                                )}</span>`;
+                            }
+                            return;
+                        }
+                        const C = g1.center.clone().addScaledVector(axis, tVal);
+                        const cId = findOrCreatePointNear3D(C, "O''", {
+                            type: 'planeSolidAxisCenter',
+                            solidId: sol.id,
+                            planeId: planeSurf.planeId
+                        });
+                        const cPt = geoState.points.find(p => p.id === cId);
+                        geoState.circles.push({
+                            id: 'cir_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                            mode: 'planeSolidParallelCircle',
+                            centerId: cId,
+                            solidId: sol.id,
+                            planeId: planeSurf.planeId,
+                            name: `(${cPt ? cPt.name : "O''"})`,
+                            hidden: false
+                        });
+                        recomputeAllDependentGeometry();
+                        updateSceneFromState();
+                        if (guideSpan) {
+                            guideSpan.innerHTML = t(
+                                `Đã dựng <b>Đường tròn giao tuyến</b> tâm <b>$${cPt ? cPt.name : "O''"}$</b> của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
+                                `Constructed parallel <b>Intersection Circle</b> centered at <b>$${cPt ? cPt.name : "O''"}$</b>!`
+                            );
+                            renderMathInElementSafe(guideSpan);
+                        }
+                        return;
+                    }
+
+                    // Mặt phẳng cắt 2 đáy (thiết diện dọc theo đường sinh hoặc cắt xiên)
+                    const pts1 = createPlaneCircleChordIntersection(sol.circle1Id, planeSurf.planeId);
+                    const pts2 = createPlaneCircleChordIntersection(sol.circle2Id, planeSurf.planeId);
+                    if (pts1.length === 2 && pts2.length === 2) {
+                        const P1A = geoState.points.find(p => p.id === pts1[0]);
+                        const P1B = geoState.points.find(p => p.id === pts1[1]);
+                        const P2A = geoState.points.find(p => p.id === pts2[0]);
+                        const P2B = geoState.points.find(p => p.id === pts2[1]);
+                        if (P1A && P1B && P2A && P2B) {
+                            const dSame = Math.hypot(P1A.x - P2A.x, P1A.y - P2A.y, P1A.z - P2A.z) + Math.hypot(P1B.x - P2B.x, P1B.y - P2B.y, P1B.z - P2B.z);
+                            const dSwap = Math.hypot(P1A.x - P2B.x, P1A.y - P2B.y, P1A.z - P2B.z) + Math.hypot(P1B.x - P2A.x, P1B.y - P2A.y, P1B.z - P2A.z);
+                            if (dSame <= dSwap) {
+                                createPolygonWithSurface([pts1[0], pts1[1], pts2[1], pts2[0]]);
+                            } else {
+                                createPolygonWithSurface([pts1[0], pts1[1], pts2[0], pts2[1]]);
+                            }
+                        }
+                    } else {
+                        const axis = new THREE.Vector3().subVectors(g2.center, g1.center);
+                        const denom = axis.dot(nP);
+                        const tVal = Math.abs(denom) > 1e-5 ? (new THREE.Vector3().subVectors(plane.origin, g1.center).dot(nP) / denom) : -1;
+                        if (tVal >= 0 && tVal <= 1) {
+                            const C = g1.center.clone().addScaledVector(axis, tVal);
+                            const cId = findOrCreatePointNear3D(C, "O''", {
+                                type: 'planeSolidAxisCenter',
+                                solidId: sol.id,
+                                planeId: planeSurf.planeId
+                            });
+                            const cPt = geoState.points.find(p => p.id === cId);
+                            geoState.circles.push({
+                                id: 'cir_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                                mode: 'planeSolidParallelCircle',
+                                centerId: cId,
+                                solidId: sol.id,
+                                planeId: planeSurf.planeId,
+                                name: `(${cPt ? cPt.name : "O''"})`,
+                                hidden: false
+                            });
+                        }
+                    }
+                    recomputeAllDependentGeometry();
+                    autoDetectClosedFacesFromSegments();
+                    updateSceneFromState();
+                    if (guideSpan) {
+                        guideSpan.innerHTML = t(
+                            `Đã dựng giao tuyến / thiết diện của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
+                            `Constructed intersection of plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b>!`
+                        );
+                    }
+                    return;
+                }
+            }
+
+            // TRƯỜNG HỢP 3: MẶT TRÒN XOAY × MẶT TRÒN XOAY (MẶT CẦU × MẶT CẦU, ...)
+            if (surf1.surfType === 'solid' && surf2.surfType === 'solid') {
+                const sol1 = (geoState.solids || []).find(s => s.id === surf1.solidId && !s.hidden);
+                const sol2 = (geoState.solids || []).find(s => s.id === surf2.solidId && !s.hidden);
+                if (!sol1 || !sol2) return;
+
+                if (sol1.kind === 'sphere' && sol2.kind === 'sphere') {
+                    const g1 = computeSphereGeometry(sol1);
+                    const g2 = computeSphereGeometry(sol2);
+                    if (!g1 || !g2) return;
+                    const v12 = new THREE.Vector3().subVectors(g2.center, g1.center);
+                    const d = v12.length();
+                    if (d < 1e-5 || d > g1.radius + g2.radius + 1e-3 || d < Math.abs(g1.radius - g2.radius) - 1e-3) {
+                        if (guideSpan) {
+                            guideSpan.innerHTML = `<span style="color:#fbbf24;">${t(
+                                `Hai mặt cầu <b>${surf1.name}</b> và <b>${surf2.name}</b> không cắt nhau!`,
+                                `Spheres <b>${surf1.name}</b> and <b>${surf2.name}</b> do not intersect!`
+                            )}</span>`;
+                        }
+                        return;
+                    }
+                    saveHistory();
+                    const normal = v12.clone().divideScalar(d);
+                    const x = (d * d - g2.radius * g2.radius + g1.radius * g1.radius) / (2 * d);
+                    const C = g1.center.clone().addScaledVector(normal, x);
+                    const hId = findOrCreatePointNear3D(C, 'H', {
+                        type: 'sphereSphereCenter',
+                        solid1Id: sol1.id,
+                        solid2Id: sol2.id
+                    });
+                    const hPt = geoState.points.find(p => p.id === hId);
+                    const rSq = g1.radius * g1.radius - x * x;
+                    if (rSq > 1e-5) {
+                        geoState.circles.push({
+                            id: 'cir_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                            mode: 'sphereSphereIntersection',
+                            centerId: hId,
+                            solid1Id: sol1.id,
+                            solid2Id: sol2.id,
+                            name: `(${hPt ? hPt.name : 'H'})`,
+                            hidden: false
+                        });
+                    }
+                    recomputeAllDependentGeometry();
+                    updateSceneFromState();
+                    if (guideSpan) {
+                        guideSpan.innerHTML = t(
+                            `Đã dựng <b>Đường tròn giao tuyến</b> tâm <b>$${hPt ? hPt.name : 'H'}$</b> của hai mặt cầu <b>${surf1.name}</b> và <b>${surf2.name}</b>!`,
+                            `Constructed <b>Intersection Circle</b> centered at <b>$${hPt ? hPt.name : 'H'}$</b> of spheres <b>${surf1.name}</b> and <b>${surf2.name}</b>!`
+                        );
+                        renderMathInElementSafe(guideSpan);
+                    }
+                    return;
+                }
+
+                // Nếu 1 trong 2 là mặt cầu và mặt kia là hình nón/trụ có đường tròn đáy -> Kiểm tra giao của mặt cầu với mặt phẳng chứa đáy
+                const sphereSol = sol1.kind === 'sphere' ? sol1 : (sol2.kind === 'sphere' ? sol2 : null);
+                const otherSol = sphereSol === sol1 ? sol2 : sol1;
+                if (sphereSol && otherSol) {
+                    const baseCircleId = otherSol.circleId || otherSol.circle1Id;
+                    if (baseCircleId) {
+                        handleIntersectSurfacesToolClick({ type: 'circle', circleId: baseCircleId });
+                        handleIntersectSurfacesToolClick({ type: 'solid', solidId: sphereSol.id });
+                        return;
+                    }
+                }
             }
         }
 
@@ -10766,6 +11803,7 @@
             currentTool = tool;
             selectedPointIds = [];
             selectedCircleIds = [];
+            selectedSurfaceItems = [];
             measurePendingItems = [];
             pendingPointerGesture = null;
             if (['measure-scale', 'set-seg-length', 'measure-dist', 'measure-angle', 'measure-area', 'measure-volume'].includes(tool)) {
