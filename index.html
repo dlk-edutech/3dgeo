@@ -54,7 +54,39 @@
             font-size: 12.5px; color: #38bdf8; font-weight: 500;
             display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; overflow: hidden;
         }
-        #guide-span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .status-bar > .svg-ic { flex-shrink: 0; }
+        .guide-marquee-viewport {
+            flex: 1; min-width: 0; overflow: hidden; position: relative;
+            display: flex; align-items: center;
+        }
+        .guide-marquee-viewport.is-scrolling-viewport {
+            -webkit-mask-image: linear-gradient(to right, transparent 0px, #000 10px, #000 calc(100% - 14px), transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0px, #000 10px, #000 calc(100% - 14px), transparent 100%);
+        }
+        .guide-marquee-track {
+            display: inline-flex; align-items: center; white-space: nowrap;
+            will-change: transform;
+        }
+        #guide-span, .guide-marquee-clone {
+            display: inline-block; white-space: nowrap; flex-shrink: 0;
+        }
+        .guide-marquee-clone, .guide-marquee-sep {
+            display: none;
+        }
+        .guide-marquee-sep {
+            padding: 0 28px; color: rgba(56, 189, 248, 0.55); flex-shrink: 0; user-select: none;
+        }
+        .guide-marquee-track.is-scrolling .guide-marquee-clone,
+        .guide-marquee-track.is-scrolling .guide-marquee-sep {
+            display: inline-block;
+        }
+        .guide-marquee-track.is-scrolling {
+            animation: guideMarqueeScroll var(--marquee-duration, 18s) linear 0.4s infinite;
+        }
+        @keyframes guideMarqueeScroll {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(calc(-1 * var(--marquee-shift, 50%)), 0, 0); }
+        }
         .status-bar .katex, .status-bar .math-fallback { font-size: 1em; color: #fff; }
         .header-right-actions {
             display: flex; align-items: center; gap: 6px; flex-shrink: 0;
@@ -874,7 +906,14 @@
         </div>
         <div class="status-bar" id="guide-text">
             <svg class="svg-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span id="guide-span">Chế độ: Xoay góc nhìn & Kéo điểm (Giữ chuột trái vào điểm để kéo, Double-click điểm để đổi tên)</span>
+            <div class="guide-marquee-viewport" id="guide-viewport">
+                <div class="guide-marquee-track" id="guide-track">
+                    <span id="guide-span">Chế độ: Xoay góc nhìn & Kéo điểm (Giữ chuột trái vào điểm để kéo, Double-click điểm để đổi tên)</span>
+                    <span class="guide-marquee-sep" aria-hidden="true">•</span>
+                    <span id="guide-span-clone" class="guide-marquee-clone" aria-hidden="true"></span>
+                    <span class="guide-marquee-sep" aria-hidden="true">•</span>
+                </div>
+            </div>
         </div>
         <div class="header-right-actions">
             <button class="header-btn" id="header-save-btn" onclick="saveProjectToFile()" title="Lưu dự án hiện tại thành file (.json)">
@@ -3764,6 +3803,7 @@
             });
 
             setupStaticTooltips();
+            setupGuideMarquee();
             applyLanguage(currentLang);
             if (restoreAutoSavedState()) {
                 selectTool('view');
@@ -3850,6 +3890,79 @@
                     tooltipEl.style.display = 'none';
                 });
             });
+        }
+
+        let guideMarqueeRafId = null;
+        let lastGuideMarqueeHtml = '';
+
+        function updateGuideMarquee(forceRestart = false) {
+            const viewport = document.getElementById('guide-viewport');
+            const track = document.getElementById('guide-track');
+            const span = document.getElementById('guide-span');
+            const clone = document.getElementById('guide-span-clone');
+            if (!viewport || !track || !span || !clone) return;
+
+            const currentHtml = span.innerHTML;
+            const htmlChanged = forceRestart || (currentHtml !== lastGuideMarqueeHtml);
+            lastGuideMarqueeHtml = currentHtml;
+
+            const viewportW = viewport.clientWidth;
+            const contentW = Math.ceil(span.getBoundingClientRect().width);
+            const shouldScroll = viewportW > 0 && contentW > viewportW + 2;
+
+            if (!shouldScroll) {
+                track.classList.remove('is-scrolling');
+                viewport.classList.remove('is-scrolling-viewport');
+                track.style.removeProperty('--marquee-shift');
+                track.style.removeProperty('--marquee-duration');
+                clone.innerHTML = '';
+                return;
+            }
+
+            if (clone.innerHTML !== currentHtml) {
+                clone.innerHTML = currentHtml;
+            }
+
+            if (htmlChanged && track.classList.contains('is-scrolling')) {
+                track.classList.remove('is-scrolling');
+                void track.offsetWidth;
+            }
+
+            track.classList.add('is-scrolling');
+            viewport.classList.add('is-scrolling-viewport');
+
+            const shiftPx = clone.offsetLeft > 0 ? clone.offsetLeft : (contentW + 64);
+            const speedPxPerSec = 38;
+            const durationSec = Math.max(8, shiftPx / speedPxPerSec);
+
+            track.style.setProperty('--marquee-shift', `${shiftPx}px`);
+            track.style.setProperty('--marquee-duration', `${durationSec.toFixed(2)}s`);
+        }
+
+        function scheduleUpdateGuideMarquee(forceRestart = false) {
+            if (guideMarqueeRafId !== null) cancelAnimationFrame(guideMarqueeRafId);
+            guideMarqueeRafId = requestAnimationFrame(() => {
+                guideMarqueeRafId = null;
+                updateGuideMarquee(forceRestart);
+            });
+        }
+
+        function setupGuideMarquee() {
+            const span = document.getElementById('guide-span');
+            const viewport = document.getElementById('guide-viewport');
+            if (span && typeof MutationObserver !== 'undefined') {
+                const obs = new MutationObserver(() => scheduleUpdateGuideMarquee(true));
+                obs.observe(span, { childList: true, subtree: true, characterData: true });
+            }
+            if (viewport && typeof ResizeObserver !== 'undefined') {
+                const ro = new ResizeObserver(() => scheduleUpdateGuideMarquee(false));
+                ro.observe(viewport);
+            }
+            window.addEventListener('resize', () => scheduleUpdateGuideMarquee(false));
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(() => scheduleUpdateGuideMarquee(false)).catch(() => {});
+            }
+            scheduleUpdateGuideMarquee(true);
         }
 
         // =========================================================================
