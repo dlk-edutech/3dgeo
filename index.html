@@ -383,8 +383,182 @@
         }
 
         /* Canvas & Labels */
-        #canvas-container { flex: 1; position: relative; width: 100%; height: 100%; cursor: crosshair; }
+        #workspace { background: #ffffff; }
+        #bg-images-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; overflow: hidden; z-index: 25;
+        }
+        .bg-image-render-item {
+            position: absolute; pointer-events: none; user-select: none;
+            overflow: hidden; opacity: 1;
+            transform-origin: top left;
+        }
+        .bg-image-render-item img {
+            position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+            display: block; pointer-events: none; user-select: none; -webkit-user-drag: none;
+        }
+        #canvas-container { flex: 1; position: relative; width: 100%; height: 100%; cursor: crosshair; z-index: 2; background: transparent; }
         #labels-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 10; }
+        #bg-images-controls-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; overflow: hidden; z-index: 26;
+        }
+        .bg-img-frame {
+            position: absolute; pointer-events: auto; cursor: move;
+            border: 1.5px solid transparent;
+            border-radius: 2px; transition: border-color 0.12s, box-shadow 0.12s;
+            user-select: none;
+        }
+        .bg-img-frame.active {
+            border: 2px solid #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.16);
+        }
+        .bg-img-edge-crop {
+            position: absolute; display: none; pointer-events: auto; z-index: 2;
+        }
+        .bg-img-frame.active .bg-img-edge-crop {
+            display: flex; align-items: center; justify-content: center;
+        }
+        .bg-img-edge-crop.n { top: -6px; left: 10px; right: 10px; height: 12px; cursor: ns-resize; }
+        .bg-img-edge-crop.s { bottom: -6px; left: 10px; right: 10px; height: 12px; cursor: ns-resize; }
+        .bg-img-edge-crop.w { left: -6px; top: 10px; bottom: 10px; width: 12px; cursor: ew-resize; }
+        .bg-img-edge-crop.e { right: -6px; top: 10px; bottom: 10px; width: 12px; cursor: ew-resize; }
+        .bg-img-edge-crop::after {
+            content: ''; background: #2563eb; border: 1.5px solid #ffffff;
+            border-radius: 999px; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+        }
+        .bg-img-edge-crop.n::after, .bg-img-edge-crop.s::after {
+            width: 24px; height: 5px;
+        }
+        .bg-img-edge-crop.w::after, .bg-img-edge-crop.e::after {
+            width: 5px; height: 24px;
+        }
+        .bg-img-corner-handle {
+            position: absolute; width: 12px; height: 12px;
+            background: #ffffff; border: 2.2px solid #2563eb; border-radius: 3px;
+            display: none; pointer-events: auto; z-index: 3;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+        }
+        .bg-img-frame.active .bg-img-corner-handle {
+            display: block;
+        }
+        .bg-img-corner-handle:hover {
+            background: #dbeafe; transform: scale(1.18);
+        }
+        .bg-img-corner-handle.nw { top: -6px; left: -6px; cursor: nwse-resize; }
+        .bg-img-corner-handle.ne { top: -6px; right: -6px; cursor: nesw-resize; }
+        .bg-img-corner-handle.sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+        .bg-img-corner-handle.se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
+        /* Floating Text & Math Boxes */
+        #floating-textboxes-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; overflow: hidden; z-index: 22;
+        }
+        .floating-text-box {
+            position: absolute; pointer-events: auto;
+            display: flex; flex-direction: column;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(8px);
+            border: 1.5px solid #94a3b8;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+            min-width: 150px; min-height: 62px;
+            overflow: hidden;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .floating-text-box.focused {
+            border-color: #2563eb;
+            box-shadow: 0 10px 28px rgba(37, 99, 235, 0.22), 0 0 0 2px rgba(37, 99, 235, 0.15);
+            z-index: 25;
+        }
+        .floating-text-box.preview-only {
+            background: rgba(255, 255, 255, 0.88);
+            border-color: rgba(148, 163, 184, 0.65);
+        }
+        .ftb-header {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 6px; padding: 4px 8px;
+            background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc; cursor: move; user-select: none;
+            font-size: 11px; font-weight: 700;
+            border-bottom: 1px solid #334155;
+        }
+        .ftb-header-left {
+            display: flex; align-items: center; gap: 5px; overflow: hidden;
+        }
+        .ftb-title-tag {
+            color: #38bdf8; font-weight: 800; letter-spacing: 0.2px; white-space: nowrap;
+        }
+        .ftb-shortcut-hint {
+            color: #94a3b8; font-size: 10px; font-weight: 500; white-space: nowrap;
+        }
+        .ftb-header-actions {
+            display: flex; align-items: center; gap: 3px; flex-shrink: 0;
+        }
+        .ftb-btn {
+            background: #1e293b; color: #e2e8f0; border: 1px solid #475569;
+            border-radius: 4px; padding: 1px 5px; font-size: 10.5px; font-weight: 700;
+            cursor: pointer; line-height: 1.3; transition: all 0.12s;
+        }
+        .ftb-btn:hover { background: #2563eb; border-color: #60a5fa; color: #fff; }
+        .ftb-btn.active { background: #0284c7; border-color: #38bdf8; color: #fff; }
+        .ftb-btn.danger:hover { background: #dc2626; border-color: #f87171; color: #fff; }
+        .ftb-fontsize-badge {
+            font-size: 10.5px; font-weight: 800; color: #fde047;
+            min-width: 30px; text-align: center; padding: 0 2px;
+        }
+        .ftb-math-bar {
+            display: flex; align-items: center; flex-wrap: wrap; gap: 3px;
+            padding: 4px 6px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0;
+        }
+        .floating-text-box.preview-only .ftb-math-bar {
+            display: none;
+        }
+        .ftb-math-chip {
+            background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1;
+            border-radius: 4px; padding: 1px 5px; font-size: 11px; font-weight: 600;
+            cursor: pointer; font-family: 'Times New Roman', Times, serif;
+            transition: all 0.12s;
+        }
+        .ftb-math-chip:hover {
+            background: #eff6ff; border-color: #3b82f6; color: #1d4ed8;
+        }
+        .ftb-body {
+            flex: 1; display: flex; flex-direction: column; position: relative;
+            min-height: 36px; overflow: hidden;
+        }
+        .ftb-textarea {
+            width: 100%; flex: 0 0 38%; min-height: 44px; resize: none; border: none; outline: none;
+            padding: 6px 9px; font-family: 'Inter', -apple-system, sans-serif;
+            color: #0f172a; background: rgba(255, 255, 255, 0.95);
+            line-height: 1.4; overflow-y: auto;
+            border-bottom: 1px dashed #cbd5e1;
+        }
+        .floating-text-box.preview-only .ftb-textarea {
+            display: none;
+        }
+        .ftb-preview {
+            flex: 1 1 62%; padding: 6px 10px; color: #0f172a;
+            line-height: 1.48; overflow-y: auto; word-break: break-word;
+            font-family: 'Inter', -apple-system, sans-serif;
+            cursor: text;
+        }
+        .floating-text-box.preview-only .ftb-preview {
+            cursor: move;
+        }
+        .ftb-resize-handle {
+            position: absolute; right: 0; bottom: 0;
+            width: 16px; height: 16px; cursor: nwse-resize;
+            z-index: 5; display: flex; align-items: flex-end; justify-content: flex-end;
+            padding: 2px; color: #64748b; user-select: none;
+        }
+        .ftb-resize-handle::after {
+            content: ''; width: 9px; height: 9px;
+            border-right: 2.2px solid #2563eb; border-bottom: 2.2px solid #2563eb;
+            border-bottom-right-radius: 2px;
+        }
+        .math-sup { font-size: 0.76em; vertical-align: super; line-height: 0; }
         .point-label {
             position: absolute; font-family: 'Times New Roman', Times, serif;
             font-size: 18px; font-style: italic; font-weight: bold;
@@ -1090,8 +1264,11 @@
             <div id="measure-rows-container"></div>
         </div>
 
+        <div id="bg-images-layer" data-testid="bg-images-layer"></div>
         <div id="canvas-container"></div>
         <div id="labels-container"></div>
+        <div id="bg-images-controls-layer" data-testid="bg-images-controls-layer"></div>
+        <div id="floating-textboxes-layer" data-testid="floating-textboxes-layer"></div>
         <div class="snap-badge" id="snap-badge"></div>
     </div>
 
@@ -1418,7 +1595,8 @@
             measureVolume: `<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
             setSegLength: `<svg viewBox="0 0 24 24"><circle cx="4" cy="18" r="2.3" fill="currentColor"/><line x1="6" y1="16.5" x2="19" y2="6.5"/><polyline points="14 6 19.5 6 19.5 11.5"/><circle cx="19.5" cy="6" r="2" fill="currentColor"/><line x1="4" y1="22" x2="20" y2="22" stroke-dasharray="2 2"/></svg>`,
             styleSize: `<svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.5" fill="currentColor"/><line x1="12" y1="7" x2="21" y2="7" stroke-width="1.8"/><circle cx="6" cy="17" r="4.2" fill="currentColor"/><line x1="13" y1="17" x2="21" y2="17" stroke-width="3.6"/></svg>`,
-            intersectSurfaces: `<svg viewBox="0 0 24 24"><path d="M12 6L3 10v9l9-4"/><path d="M12 6l9 4v9l-9-4"/><line x1="12" y1="2.5" x2="12" y2="21.5"/><circle cx="12" cy="6" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1.8" fill="currentColor" stroke="none"/></svg>`
+            intersectSurfaces: `<svg viewBox="0 0 24 24"><path d="M12 6L3 10v9l9-4"/><path d="M12 6l9 4v9l-9-4"/><line x1="12" y1="2.5" x2="12" y2="21.5"/><circle cx="12" cy="6" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1.8" fill="currentColor" stroke="none"/></svg>`,
+            textBox: `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="8 9 8 7 16 7 16 9"/><line x1="12" y1="7" x2="12" y2="17"/><line x1="10" y1="17" x2="14" y2="17"/></svg>`
         };
 
         const GROUP_NAMES_I18N = {
@@ -1471,6 +1649,16 @@
             'style-size': {
                 vi: { name: 'Điều chỉnh kích thước Điểm / Đường', tip: '<b>Cỡ Điểm & Nét vẽ:</b> Chỉnh kích thước điểm và độ dày đường' },
                 en: { name: 'Adjust Point Size & Line Width', tip: '<b>Point & Line Size:</b> Adjust vertex size and stroke width' }
+            },
+            'text-box': {
+                vi: {
+                    name: 'Thêm Ô nhập Văn bản & Công thức Toán',
+                    tip: '<b>Ô Văn bản & Toán ($\\sqrt{x}, \\dfrac{a}{b}$):</b> Kéo di chuyển, đổi cỡ, phím tắt Ctrl/Alt + [+/-] chỉnh cỡ chữ'
+                },
+                en: {
+                    name: 'Add Text & Math Formula Box',
+                    tip: '<b>Text & Math Box ($\\sqrt{x}, \\dfrac{a}{b}$):</b> Drag to move, resize, press Ctrl/Alt + [+/-] to adjust font size'
+                }
             },
             'point2d': {
                 vi: {
@@ -1947,6 +2135,13 @@
                 iconHtml: SVG_ICONS.styleSize,
                 tip: TOOL_I18N['style-size'].vi.tip
             },
+            {
+                id: 'text-box', group: 1, groupName: 'Nhóm 1: Góc nhìn & Nền',
+                name: 'Thêm Ô nhập Văn bản & Công thức Toán', type: 'action',
+                actionFn: () => createFloatingTextBox(),
+                iconHtml: SVG_ICONS.textBox,
+                tip: TOOL_I18N['text-box'].vi.tip
+            },
 
             // NHÓM 2: Tạo Điểm
             {
@@ -2200,11 +2395,11 @@
         ];
 
         const DEFAULT_PINNED_IDS = [
-            'point2d', 'point3d', 'segment', 'line', 'circle-center', 'poly-free'
+            'point2d', 'point3d', 'segment', 'line', 'circle-center', 'poly-free', 'text-box'
         ];
         const DEFAULT_HIDDEN_VERTICAL_IDS = ['move', 'reset-camera', 'toggle-face-tint'];
 
-        const TOOLBAR_STORAGE_KEY = 'ez3d_geometry_toolbar_v13';
+        const TOOLBAR_STORAGE_KEY = 'ez3d_geometry_toolbar_v15';
         let toolbarConfig = {
             sortMode: 'group',
             customOrder: MASTER_TOOLS.map(t => t.id),
@@ -2288,20 +2483,52 @@
             let s = tex
                 .replace(/\\overrightarrow\{([^}]+)\}/g, '<span class="math-vec">$1</span>')
                 .replace(/\\widehat\{([^}]+)\}/g, '<span class="math-hat">$1</span>')
+                .replace(/\\sqrt\[([^\]]+)\]\{([^}]+)\}/g, '<sup>$1</sup>√($2)')
                 .replace(/\\sqrt\{([^}]+)\}/g, (_, rad) => rad.length === 1 ? `√${rad}` : `√(${rad})`)
-                .replace(/\\dfrac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)')
-                .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)')
+                .replace(/\\d?frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
                 .replace(/\\approx/g, '≈')
+                .replace(/\\neq/g, '≠')
+                .replace(/\\leq|\\le\b/g, '≤')
+                .replace(/\\geq|\\ge\b/g, '≥')
+                .replace(/\\pm/g, '±')
+                .replace(/\\times/g, '×')
+                .replace(/\\div/g, '÷')
                 .replace(/\\pi\b/g, 'π')
+                .replace(/\\alpha\b/g, 'α')
+                .replace(/\\beta\b/g, 'β')
+                .replace(/\\gamma\b/g, 'γ')
+                .replace(/\\delta\b/g, 'δ')
+                .replace(/\\Delta\b/g, 'Δ')
+                .replace(/\\varphi\b|\\phi\b/g, 'φ')
+                .replace(/\\omega\b/g, 'ω')
+                .replace(/\\Omega\b/g, 'Ω')
+                .replace(/\\theta\b/g, 'θ')
+                .replace(/\\lambda\b/g, 'λ')
+                .replace(/\\infty\b/g, '∞')
+                .replace(/\\in\b/g, '∈')
+                .replace(/\\notin\b/g, '∉')
+                .replace(/\\subset\b/g, '⊂')
+                .replace(/\\subseteq\b/g, '⊆')
+                .replace(/\\cup\b/g, '∪')
+                .replace(/\\cap\b/g, '∩')
+                .replace(/\\forall\b/g, '∀')
+                .replace(/\\exists\b/g, '∃')
+                .replace(/\\Leftrightarrow/g, '⇔')
                 .replace(/\\Rightarrow/g, '⇒')
-                .replace(/\\to/g, '→')
+                .replace(/\\Leftarrow/g, '⇐')
+                .replace(/\\to\b|\\rightarrow\b/g, '→')
                 .replace(/\\parallel/g, '∥')
                 .replace(/\\perp/g, '⊥')
-                .replace(/\\alpha/g, 'α')
-                .replace(/\\beta/g, 'β')
+                .replace(/\\angle\b/g, '∠')
+                .replace(/\\triangle\b/g, '△')
+                .replace(/\\int\b/g, '∫')
+                .replace(/\\sum\b/g, '∑')
                 .replace(/\\cdot/g, '·')
+                .replace(/\^\{\\circ\}|\^\\circ/g, '°')
+                .replace(/\^\{([^}]+)\}/g, '<sup class="math-sup">$1</sup>')
+                .replace(/\^([0-9a-zA-Z+\-])/g, '<sup class="math-sup">$1</sup>')
                 .replace(/_\{([^}]+)\}/g, '<sub>$1</sub>')
-                .replace(/_(\d+)/g, '<sub>$1</sub>');
+                .replace(/_([0-9a-zA-Z])/g, '<sub>$1</sub>');
             return `<span class="math-fallback">${s}</span>`;
         }
 
@@ -3136,8 +3363,10 @@
         let isBasePlaneVisible = true;
         let showFaceTint = true;
 
-        let geoState = { points: [], segments: [], faces: [], circles: [], solids: [], measureScale: null, measurements: [] };
+        let geoState = { points: [], segments: [], faces: [], circles: [], solids: [], measureScale: null, measurements: [], textBoxes: [], bgImages: [] };
         let historyStack = [];
+        let activeTextBoxId = null;
+        let activeBgImageId = null;
 
         let pointSprites = [];
         let edgeMeshes = [];
@@ -3367,7 +3596,9 @@
                     circles: parsed.circles || [],
                     solids: parsed.solids || [],
                     measureScale: parsed.measureScale || null,
-                    measurements: parsed.measurements || []
+                    measurements: parsed.measurements || [],
+                    textBoxes: Array.isArray(parsed.textBoxes) ? parsed.textBoxes : [],
+                    bgImages: Array.isArray(parsed.bgImages) ? parsed.bgImages : []
                 };
                 return true;
             } catch (e) {
@@ -3607,7 +3838,9 @@
                         circles: Array.isArray(stateCandidate.circles) ? stateCandidate.circles : [],
                         solids: Array.isArray(stateCandidate.solids) ? stateCandidate.solids : [],
                         measureScale: stateCandidate.measureScale || null,
-                        measurements: Array.isArray(stateCandidate.measurements) ? stateCandidate.measurements : []
+                        measurements: Array.isArray(stateCandidate.measurements) ? stateCandidate.measurements : [],
+                        textBoxes: Array.isArray(stateCandidate.textBoxes) ? stateCandidate.textBoxes : [],
+                        bgImages: Array.isArray(stateCandidate.bgImages) ? stateCandidate.bgImages : []
                     };
 
                     if (parsed.options) {
@@ -3703,7 +3936,7 @@
             });
 
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xffffff);
+            scene.background = null;
 
             const aspect = container.clientWidth / container.clientHeight;
             const frustumSize = 12.0;
@@ -3718,7 +3951,8 @@
             camera.userData.frustumSize = frustumSize;
             camera.position.set(20, 13.5, 28);
 
-            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+            renderer.setClearColor(0x000000, 0);
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
             container.appendChild(renderer.domElement);
@@ -3784,19 +4018,61 @@
 
             window.addEventListener('resize', onWindowResize);
             window.addEventListener('beforeunload', () => saveAutoStateToStorage());
+            window.addEventListener('paste', handleGlobalClipboardPaste);
+            window.addEventListener('pointerdown', (e) => {
+                if (activeBgImageId && (!e.target || !e.target.closest('.bg-img-frame'))) {
+                    activeBgImageId = null;
+                    renderBackgroundImagesDOM();
+                }
+            }, true);
             window.addEventListener('keydown', (e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                const targetBoxId = getShortcutTargetTextBoxId();
+                if (targetBoxId) {
+                    const action = resolveTextBoxFontShortcutEvent(e);
+                    if (action === 'increase') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        adjustTextBoxFontSize(targetBoxId, 2);
+                        return;
+                    } else if (action === 'decrease') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        adjustTextBoxFontSize(targetBoxId, -2);
+                        return;
+                    } else if (action === 'reset') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setTextBoxFontSize(targetBoxId, 16);
+                        return;
+                    }
+                }
+                const activeTag = document.activeElement ? document.activeElement.tagName : '';
+                const isEditingInput = activeTag === 'TEXTAREA' || activeTag === 'INPUT' || (document.activeElement && document.activeElement.isContentEditable);
+                if (!isEditingInput && activeBgImageId && (e.key === 'Delete' || e.key === 'Backspace')) {
+                    e.preventDefault();
+                    removeBackgroundImage(activeBgImageId);
+                    return;
+                }
+                if (!isEditingInput && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
                     e.preventDefault();
                     undo();
+                } else if (!isEditingInput && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+                    setTimeout(() => {
+                        if (Date.now() - lastClipboardImagePasteAt > 400) {
+                            tryReadClipboardImageOnShortcut();
+                        }
+                    }, 60);
                 } else if (e.key === 'Escape') {
                     selectedPointIds = [];
                     selectedSurfaceItems = [];
                     intersectPendingBuilder = { points: [], segments: [] };
+                    activeBgImageId = null;
+                    renderBackgroundImagesDOM();
                     clearHelpers();
                     closeToolbarSettingsModal();
                     updateSceneFromState();
                 }
-            });
+            }, true);
 
             document.getElementById('toolbar').addEventListener('scroll', () => {
                 tooltipEl.style.display = 'none';
@@ -5025,6 +5301,8 @@
             if (!geoState.circles) geoState.circles = [];
             if (!geoState.solids) geoState.solids = [];
             if (!geoState.measurements) geoState.measurements = [];
+            if (!geoState.textBoxes) geoState.textBoxes = [];
+            if (!geoState.bgImages) geoState.bgImages = [];
             selectedPointIds = [];
             selectedCircleIds = [];
             measureSelection = { segIds: [], faceIds: [] };
@@ -5035,7 +5313,9 @@
 
         function clearAll() {
             saveHistory();
-            geoState = { points: [], segments: [], faces: [], circles: [], solids: [], measureScale: null, measurements: [] };
+            geoState = { points: [], segments: [], faces: [], circles: [], solids: [], measureScale: null, measurements: [], textBoxes: [], bgImages: [] };
+            activeTextBoxId = null;
+            activeBgImageId = null;
             selectedPointIds = [];
             selectedCircleIds = [];
             measureSelection = { segIds: [], faceIds: [] };
@@ -6485,6 +6765,8 @@
             renderMeasurement3DHelpers();
             rebuildLabelsDOM();
             updateLabels();
+            renderBackgroundImagesDOM();
+            renderFloatingTextBoxesDOM();
             updateHiddenObjectsPanel();
             updateMeasurementPanel();
             scheduleAutoSaveState();
@@ -10186,14 +10468,28 @@
             outCanvas.height = h;
             const ctx = outCanvas.getContext('2d');
 
+            const cssW = container.clientWidth || (w / dpr);
+            const cssH = container.clientHeight || (h / dpr);
+
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, w, h);
+
+            if (Array.isArray(geoState.bgImages) && geoState.bgImages.length > 0) {
+                geoState.bgImages.forEach(bg => {
+                    if (!bg || bg.hidden) return;
+                    const domImg = document.querySelector(`#bg-images-layer [data-bg-id="${bg.id}"] img`);
+                    if (domImg && domImg.complete && domImg.naturalWidth > 0) {
+                        ctx.save();
+                        ctx.globalAlpha = typeof bg.opacity === 'number' ? bg.opacity : 0.88;
+                        ctx.drawImage(domImg, bg.x * dpr, bg.y * dpr, bg.width * dpr, bg.height * dpr);
+                        ctx.restore();
+                    }
+                });
+            }
+
             ctx.drawImage(glCanvas, 0, 0, w, h);
 
             if (snapIndicator) snapIndicator.visible = prevSnapVis;
-
-            const cssW = container.clientWidth || (w / dpr);
-            const cssH = container.clientHeight || (h / dpr);
 
             const exportFontMain = Math.max(14, Math.min(26, Math.round(18 + ((visualStyle.pointSize || 9) - 9) * 0.55)));
             const exportFontSub = Math.max(10, Math.round(exportFontMain * 0.68));
@@ -12536,11 +12832,827 @@
             updateSceneFromState();
         }
 
+        // =========================================================================
+        // 11. Ô NHẬP TEXT & CÔNG THỨC TOÁN CƠ BẢN + DÁN ẢNH NỀN CLIPBOARD (SAU MÔ HÌNH 3D)
+        // =========================================================================
+        const QUICK_MATH_SNIPPETS = [
+            { label: 'a/b', tex: '\\dfrac{a}{b}', title: 'Phân số \\dfrac{a}{b}' },
+            { label: '√x', tex: '\\sqrt{x}', title: 'Căn bậc hai \\sqrt{x}' },
+            { label: 'x²', tex: 'x^{2}', title: 'Lũy thừa x^{2}' },
+            { label: 'x₁', tex: 'x_{1}', title: 'Chỉ số dưới x_{1}' },
+            { label: '<span class="math-vec">AB</span>', tex: '\\overrightarrow{AB}', title: 'Vectơ \\overrightarrow{AB}' },
+            { label: '∠ABC', tex: '\\widehat{ABC}', title: 'Góc \\widehat{ABC}' },
+            { label: '⊥', tex: '\\perp ', title: 'Vuông góc \\perp' },
+            { label: '∥', tex: '\\parallel ', title: 'Song song \\parallel' },
+            { label: '⇒', tex: '\\Rightarrow ', title: 'Suy ra \\Rightarrow' },
+            { label: '⇔', tex: '\\Leftrightarrow ', title: 'Tương đương \\Leftrightarrow' },
+            { label: '∈', tex: '\\in ', title: 'Thuộc \\in' },
+            { label: '⊂', tex: '\\subset ', title: 'Tập con \\subset' },
+            { label: '△', tex: '\\triangle ', title: 'Tam giác \\triangle' },
+            { label: '°', tex: '^\\circ ', title: 'Độ ^\\circ' },
+            { label: 'π', tex: '\\pi ', title: 'Số Pi \\pi' },
+            { label: 'α', tex: '\\alpha ', title: 'Góc \\alpha' }
+        ];
+
+        function clampTextBoxFontSize(size, minSize = 10, maxSize = 48) {
+            const num = typeof size === 'number' && Number.isFinite(size) ? size : 16;
+            return Math.max(minSize, Math.min(maxSize, Math.round(num)));
+        }
+
+        function resolveTextBoxFontShortcutEvent(e) {
+            if (!e) return null;
+            const hasPrimaryMod = Boolean(e.ctrlKey || e.metaKey || e.altKey);
+            if (!hasPrimaryMod) return null;
+            const key = e.key || '';
+            const code = e.code || '';
+            if (key === '=' || key === '+' || code === 'Equal' || code === 'NumpadAdd') return 'increase';
+            if (key === '-' || key === '_' || code === 'Minus' || code === 'NumpadSubtract') return 'decrease';
+            if (key === ']' || code === 'BracketRight') return 'increase';
+            if (key === '[' || code === 'BracketLeft') return 'decrease';
+            if (key === 'ArrowUp' && (e.ctrlKey || e.metaKey || e.altKey)) return 'increase';
+            if (key === 'ArrowDown' && (e.ctrlKey || e.metaKey || e.altKey)) return 'decrease';
+            if ((key === '0' || code === 'Digit0') && e.altKey) return 'reset';
+            return null;
+        }
+
+        function getShortcutTargetTextBoxId() {
+            if (!Array.isArray(geoState.textBoxes) || geoState.textBoxes.length === 0) return null;
+            if (activeTextBoxId && geoState.textBoxes.some(b => b.id === activeTextBoxId)) {
+                return activeTextBoxId;
+            }
+            const focusedEl = document.activeElement ? document.activeElement.closest('.floating-text-box') : null;
+            if (focusedEl && focusedEl.getAttribute('data-tb-id')) {
+                return focusedEl.getAttribute('data-tb-id');
+            }
+            return null;
+        }
+
+        function formatTextAndMathHtml(rawText) {
+            if (!rawText) {
+                return `<span style="color:#94a3b8;font-style:italic;">${t('Nhập văn bản hoặc công thức toán trong cặp dấu $...$', 'Type text or math formulas inside $...$')}</span>`;
+            }
+            const escapeHtml = (str) => String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            return escapeHtml(rawText).replace(/\n/g, '<br>');
+        }
+
+        function updateSingleTextBoxPreview(boxObj) {
+            if (!boxObj) return;
+            const boxEl = document.querySelector(`.floating-text-box[data-tb-id="${boxObj.id}"]`);
+            if (!boxEl) return;
+            const previewEl = boxEl.querySelector('.ftb-preview');
+            const textareaEl = boxEl.querySelector('.ftb-textarea');
+            const badgeEl = boxEl.querySelector('.ftb-fontsize-badge');
+            const fSize = clampTextBoxFontSize(boxObj.fontSize || 16);
+            if (textareaEl) textareaEl.style.fontSize = `${fSize}px`;
+            if (previewEl) {
+                previewEl.style.fontSize = `${fSize}px`;
+                previewEl.innerHTML = formatTextAndMathHtml(boxObj.text || '');
+                renderMathInElementSafe(previewEl);
+            }
+            if (badgeEl) badgeEl.textContent = `${fSize}px`;
+        }
+
+        function setTextBoxFontSize(boxId, newSize) {
+            if (!Array.isArray(geoState.textBoxes)) return;
+            const box = geoState.textBoxes.find(b => b.id === boxId);
+            if (!box) return;
+            box.fontSize = clampTextBoxFontSize(newSize);
+            updateSingleTextBoxPreview(box);
+            scheduleAutoSaveState();
+            const guideSpan = document.getElementById('guide-span');
+            if (guideSpan) {
+                guideSpan.innerHTML = t(
+                    `Cỡ chữ ô văn bản: <b>${box.fontSize}px</b> (Phím tắt: <b>Ctrl/Alt + [+/-]</b> hoặc <b>Ctrl/Alt + [↑/↓]</b>)`,
+                    `Text box font size: <b>${box.fontSize}px</b> (Shortcuts: <b>Ctrl/Alt + [+/-]</b> or <b>Ctrl/Alt + [↑/↓]</b>)`
+                );
+            }
+        }
+
+        function adjustTextBoxFontSize(boxId, delta) {
+            if (!Array.isArray(geoState.textBoxes)) return;
+            const box = geoState.textBoxes.find(b => b.id === boxId);
+            if (!box) return;
+            setTextBoxFontSize(boxId, (box.fontSize || 16) + delta);
+        }
+
+        function createFloatingTextBox(initialText) {
+            if (!Array.isArray(geoState.textBoxes)) geoState.textBoxes = [];
+            saveHistory();
+            const count = geoState.textBoxes.length;
+            const wsW = container.clientWidth || 900;
+            const wsH = container.clientHeight || 600;
+            const defaultW = 365;
+            const defaultH = 225;
+            const x = Math.max(76, Math.min(wsW - defaultW - 20, 96 + (count * 28) % 220));
+            const y = Math.max(58, Math.min(wsH - defaultH - 20, 72 + (count * 28) % 180));
+            const newId = 'tb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+            const defaultContent = typeof initialText === 'string'
+                ? initialText
+                : t(
+                    'Cho hình chóp $S.ABCD$ có $SA \\perp (ABCD)$.\nThể tích: $V = \\dfrac{1}{3} S_{ABCD} \\cdot SA = \\dfrac{a^3\\sqrt{3}}{3}$',
+                    'Given pyramid $S.ABCD$ with $SA \\perp (ABCD)$.\nVolume: $V = \\dfrac{1}{3} S_{ABCD} \\cdot SA = \\dfrac{a^3\\sqrt{3}}{3}$'
+                );
+            geoState.textBoxes.push({
+                id: newId,
+                x,
+                y,
+                width: defaultW,
+                height: defaultH,
+                fontSize: 16,
+                text: defaultContent,
+                previewOnly: false
+            });
+            activeTextBoxId = newId;
+            renderFloatingTextBoxesDOM();
+            scheduleAutoSaveState();
+            setTimeout(() => {
+                const ta = document.querySelector(`.floating-text-box[data-tb-id="${newId}"] .ftb-textarea`);
+                if (ta) {
+                    ta.focus();
+                    ta.setSelectionRange(ta.value.length, ta.value.length);
+                    ta.scrollTop = 0;
+                }
+            }, 20);
+            const guideSpan = document.getElementById('guide-span');
+            if (guideSpan) {
+                guideSpan.innerHTML = t(
+                    'Đã tạo <b>Ô văn bản & Công thức Toán</b>: Kéo thanh tiêu đề để di chuyển, kéo góc dưới phải để đổi kích thước, nhấn <b>Ctrl/Alt + [+/-]</b> (hoặc <b>↑/↓</b>) để chỉnh cỡ chữ!',
+                    'Created <b>Text & Math Box</b>: Drag header to move, drag bottom-right corner to resize, press <b>Ctrl/Alt + [+/-]</b> (or <b>↑/↓</b>) to adjust font size!'
+                );
+            }
+            return newId;
+        }
+
+        function removeFloatingTextBox(boxId) {
+            if (!Array.isArray(geoState.textBoxes)) return;
+            saveHistory();
+            geoState.textBoxes = geoState.textBoxes.filter(b => b.id !== boxId);
+            if (activeTextBoxId === boxId) {
+                activeTextBoxId = geoState.textBoxes.length > 0 ? geoState.textBoxes[geoState.textBoxes.length - 1].id : null;
+            }
+            renderFloatingTextBoxesDOM();
+            scheduleAutoSaveState();
+        }
+
+        function insertMathSnippetIntoTextBox(boxId, snippetTex) {
+            if (!Array.isArray(geoState.textBoxes)) return;
+            const box = geoState.textBoxes.find(b => b.id === boxId);
+            if (!box) return;
+            if (box.previewOnly) {
+                box.previewOnly = false;
+                renderFloatingTextBoxesDOM();
+            }
+            const boxEl = document.querySelector(`.floating-text-box[data-tb-id="${boxId}"]`);
+            const ta = boxEl ? boxEl.querySelector('.ftb-textarea') : null;
+            if (!ta) return;
+
+            const start = ta.selectionStart || 0;
+            const end = ta.selectionEnd || 0;
+            const val = ta.value || '';
+            const before = val.slice(0, start);
+            const after = val.slice(end);
+            const dollarCountBefore = (before.match(/\$/g) || []).length;
+            const insideMath = (dollarCountBefore % 2) === 1;
+            const insertStr = insideMath ? snippetTex : `$${snippetTex}$`;
+
+            ta.value = before + insertStr + after;
+            box.text = ta.value;
+            updateSingleTextBoxPreview(box);
+            scheduleAutoSaveState();
+            ta.focus();
+            const newCursor = start + insertStr.length;
+            ta.setSelectionRange(newCursor, newCursor);
+        }
+
+        function renderFloatingTextBoxesDOM() {
+            const layer = document.getElementById('floating-textboxes-layer');
+            if (!layer) return;
+            if (!Array.isArray(geoState.textBoxes)) geoState.textBoxes = [];
+
+            const existingIds = new Set(geoState.textBoxes.map(b => b.id));
+            Array.from(layer.querySelectorAll('.floating-text-box')).forEach(el => {
+                if (!existingIds.has(el.getAttribute('data-tb-id'))) {
+                    el.remove();
+                }
+            });
+
+            geoState.textBoxes.forEach((box, idx) => {
+                let boxEl = layer.querySelector(`.floating-text-box[data-tb-id="${box.id}"]`);
+                const fSize = clampTextBoxFontSize(box.fontSize || 16);
+                box.fontSize = fSize;
+
+                if (!boxEl) {
+                    boxEl = document.createElement('div');
+                    boxEl.className = 'floating-text-box';
+                    boxEl.setAttribute('data-tb-id', box.id);
+                    boxEl.setAttribute('data-testid', `floating-text-box-${idx}`);
+
+                    const chipsHtml = QUICK_MATH_SNIPPETS.map(s =>
+                        `<button type="button" class="ftb-math-chip" data-tex="${s.tex.replace(/"/g, '&quot;')}" title="${s.title}">${s.label}</button>`
+                    ).join('');
+
+                    boxEl.innerHTML = `
+                        <div class="ftb-header" title="${t('Kéo để di chuyển ô văn bản', 'Drag to move text box')}">
+                            <div class="ftb-header-left">
+                                <span class="ftb-title-tag">📝 ${t('Ghi chú & Toán', 'Text & Math')}</span>
+                                <span class="ftb-shortcut-hint" title="${t('Phím tắt chỉnh cỡ chữ: Ctrl/Alt + [=/-] hoặc Ctrl/Alt + [↑/↓]', 'Font size shortcut: Ctrl/Alt + [=/-] or Ctrl/Alt + [↑/↓]')}">(Ctrl/Alt ±)</span>
+                            </div>
+                            <div class="ftb-header-actions">
+                                <button type="button" class="ftb-btn" data-act="font-dec" aria-label="${t('Giảm cỡ chữ', 'Decrease font size')}" title="${t('Giảm cỡ chữ (Ctrl/Alt + -)', 'Decrease font size (Ctrl/Alt + -)')}">A-</button>
+                                <span class="ftb-fontsize-badge">${fSize}px</span>
+                                <button type="button" class="ftb-btn" data-act="font-inc" aria-label="${t('Tăng cỡ chữ', 'Increase font size')}" title="${t('Tăng cỡ chữ (Ctrl/Alt + +)', 'Increase font size (Ctrl/Alt + +)')}">A+</button>
+                                <button type="button" class="ftb-btn" data-act="toggle-mode" aria-label="${t('Thu gọn / Sửa công thức', 'Toggle Preview / Edit')}" title="${t('Chuyển chế độ Xem gọn / Soạn thảo', 'Toggle compact view / edit mode')}">${box.previewOnly ? t('Sửa', 'Edit') : t('Thu gọn', 'Compact')}</button>
+                                <button type="button" class="ftb-btn danger" data-act="delete" aria-label="${t('Xóa ô văn bản', 'Delete text box')}" title="${t('Xóa ô văn bản này', 'Delete this text box')}">✕</button>
+                            </div>
+                        </div>
+                        <div class="ftb-math-bar">${chipsHtml}</div>
+                        <div class="ftb-body">
+                            <textarea class="ftb-textarea" aria-label="${t('Ô nhập văn bản và công thức toán', 'Text and math formula input')}" placeholder="${t('Nhập văn bản hoặc công thức toán $...$ (VD: $SA \\perp (ABCD)$, $V = \\dfrac{1}{3}Bh$)', 'Type text or math formula $...$ (e.g. $SA \\perp (ABCD)$, $V = \\dfrac{1}{3}Bh$)')}"></textarea>
+                            <div class="ftb-preview" title="${t('Nhấp đúp để sửa nhanh, hoặc kéo để di chuyển khi ở chế độ Thu gọn', 'Double-click to edit, or drag to move in Compact mode')}"></div>
+                        </div>
+                        <div class="ftb-resize-handle" title="${t('Kéo để thay đổi kích thước ô văn bản', 'Drag to resize text box')}"></div>
+                    `;
+
+                    layer.appendChild(boxEl);
+
+                    const setFocusBox = () => {
+                        activeTextBoxId = box.id;
+                        layer.querySelectorAll('.floating-text-box').forEach(el => {
+                            el.classList.toggle('focused', el.getAttribute('data-tb-id') === box.id);
+                        });
+                    };
+
+                    boxEl.addEventListener('pointerdown', (e) => {
+                        e.stopPropagation();
+                        setFocusBox();
+                    });
+
+                    const ta = boxEl.querySelector('.ftb-textarea');
+                    ta.value = box.text || '';
+                    ta.addEventListener('focus', () => setFocusBox());
+                    ta.addEventListener('input', () => {
+                        box.text = ta.value;
+                        updateSingleTextBoxPreview(box);
+                        scheduleAutoSaveState();
+                    });
+
+                    boxEl.querySelector('[data-act="font-dec"]').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        setFocusBox();
+                        adjustTextBoxFontSize(box.id, -2);
+                    });
+                    boxEl.querySelector('[data-act="font-inc"]').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        setFocusBox();
+                        adjustTextBoxFontSize(box.id, 2);
+                    });
+                    boxEl.querySelector('[data-act="toggle-mode"]').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        setFocusBox();
+                        box.previewOnly = !box.previewOnly;
+                        renderFloatingTextBoxesDOM();
+                        scheduleAutoSaveState();
+                    });
+                    boxEl.querySelector('[data-act="delete"]').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        removeFloatingTextBox(box.id);
+                    });
+
+                    boxEl.querySelectorAll('.ftb-math-chip').forEach(chip => {
+                        chip.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            setFocusBox();
+                            insertMathSnippetIntoTextBox(box.id, chip.getAttribute('data-tex') || '');
+                        });
+                    });
+
+                    const previewEl = boxEl.querySelector('.ftb-preview');
+                    previewEl.addEventListener('dblclick', (e) => {
+                        e.stopPropagation();
+                        if (box.previewOnly) {
+                            box.previewOnly = false;
+                            renderFloatingTextBoxesDOM();
+                            const editTa = boxEl.querySelector('.ftb-textarea');
+                            if (editTa) editTa.focus();
+                        }
+                    });
+
+                    const startDragBox = (e) => {
+                        if (e.button !== 0) return;
+                        if (e.target.closest('button') || e.target.closest('.ftb-resize-handle')) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFocusBox();
+                        const startX = e.clientX;
+                        const startY = e.clientY;
+                        const origX = box.x;
+                        const origY = box.y;
+                        const onMove = (ev) => {
+                            const wsW = container.clientWidth || window.innerWidth;
+                            const wsH = container.clientHeight || window.innerHeight;
+                            box.x = Math.max(4, Math.min(wsW - 60, Math.round(origX + (ev.clientX - startX))));
+                            box.y = Math.max(4, Math.min(wsH - 40, Math.round(origY + (ev.clientY - startY))));
+                            boxEl.style.left = `${box.x}px`;
+                            boxEl.style.top = `${box.y}px`;
+                        };
+                        const onUp = () => {
+                            window.removeEventListener('pointermove', onMove);
+                            window.removeEventListener('pointerup', onUp);
+                            scheduleAutoSaveState();
+                        };
+                        window.addEventListener('pointermove', onMove);
+                        window.addEventListener('pointerup', onUp);
+                    };
+
+                    boxEl.querySelector('.ftb-header').addEventListener('pointerdown', startDragBox);
+                    previewEl.addEventListener('pointerdown', (e) => {
+                        if (box.previewOnly) startDragBox(e);
+                    });
+
+                    boxEl.querySelector('.ftb-resize-handle').addEventListener('pointerdown', (e) => {
+                        if (e.button !== 0) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFocusBox();
+                        const startX = e.clientX;
+                        const startY = e.clientY;
+                        const origW = box.width;
+                        const origH = box.height;
+                        const onMove = (ev) => {
+                            const minH = box.previewOnly ? 68 : 120;
+                            box.width = Math.max(160, Math.min(900, Math.round(origW + (ev.clientX - startX))));
+                            box.height = Math.max(minH, Math.min(720, Math.round(origH + (ev.clientY - startY))));
+                            boxEl.style.width = `${box.width}px`;
+                            boxEl.style.height = `${box.height}px`;
+                        };
+                        const onUp = () => {
+                            window.removeEventListener('pointermove', onMove);
+                            window.removeEventListener('pointerup', onUp);
+                            scheduleAutoSaveState();
+                        };
+                        window.addEventListener('pointermove', onMove);
+                        window.addEventListener('pointerup', onUp);
+                    });
+                }
+
+                boxEl.style.left = `${box.x}px`;
+                boxEl.style.top = `${box.y}px`;
+                boxEl.style.width = `${box.width}px`;
+                boxEl.style.height = `${box.height}px`;
+                boxEl.classList.toggle('focused', box.id === activeTextBoxId);
+                boxEl.classList.toggle('preview-only', Boolean(box.previewOnly));
+
+                const modeBtn = boxEl.querySelector('[data-act="toggle-mode"]');
+                if (modeBtn) {
+                    modeBtn.textContent = box.previewOnly ? t('Sửa', 'Edit') : t('Thu gọn', 'Compact');
+                    modeBtn.classList.toggle('active', Boolean(box.previewOnly));
+                }
+
+                const taEl = boxEl.querySelector('.ftb-textarea');
+                if (taEl && document.activeElement !== taEl && taEl.value !== (box.text || '')) {
+                    taEl.value = box.text || '';
+                }
+                updateSingleTextBoxPreview(box);
+            });
+        }
+
+        function computeAspectLockedRect(startRect, aspectRatio, handle, dx, dy, minWidth = 60, maxWidth = 2400) {
+            const ratio = (Number.isFinite(aspectRatio) && aspectRatio > 1e-4)
+                ? aspectRatio
+                : (startRect.width / Math.max(1, startRect.height));
+            const minW = Math.max(24, minWidth);
+            const maxW = Math.max(minW, maxWidth);
+            const signX = (handle === 'se' || handle === 'ne') ? 1 : -1;
+            const signY = (handle === 'se' || handle === 'sw') ? 1 : -1;
+            const deltaWFromX = signX * dx;
+            const deltaWFromY = signY * dy * ratio;
+            const dominantDeltaW = Math.abs(deltaWFromX) >= Math.abs(deltaWFromY) ? deltaWFromX : deltaWFromY;
+            const newWidth = Math.max(minW, Math.min(maxW, startRect.width + dominantDeltaW));
+            const newHeight = newWidth / ratio;
+
+            let newX = startRect.x;
+            let newY = startRect.y;
+            if (handle === 'sw' || handle === 'nw') {
+                newX = (startRect.x + startRect.width) - newWidth;
+            }
+            if (handle === 'ne' || handle === 'nw') {
+                newY = (startRect.y + startRect.height) - newHeight;
+            }
+            return {
+                x: Math.round(newX * 10) / 10,
+                y: Math.round(newY * 10) / 10,
+                width: Math.round(newWidth * 10) / 10,
+                height: Math.round(newHeight * 10) / 10
+            };
+        }
+
+        function computeEdgeCropRectInline(startRect, startCrop, edge, dx, dy, minSize = 36) {
+            const cLeft = Math.max(0, Math.min(0.9, Number(startCrop?.cropLeft) || 0));
+            const cRight = Math.max(0, Math.min(0.9, Number(startCrop?.cropRight) || 0));
+            const cTop = Math.max(0, Math.min(0.9, Number(startCrop?.cropTop) || 0));
+            const cBottom = Math.max(0, Math.min(0.9, Number(startCrop?.cropBottom) || 0));
+
+            const fx0 = Math.max(0.05, 1 - cLeft - cRight);
+            const fy0 = Math.max(0.05, 1 - cTop - cBottom);
+            const fullW = Math.max(1, startRect.width / fx0);
+            const fullH = Math.max(1, startRect.height / fy0);
+
+            let x = startRect.x;
+            let y = startRect.y;
+            let width = startRect.width;
+            let height = startRect.height;
+            let cropLeft = cLeft;
+            let cropRight = cRight;
+            let cropTop = cTop;
+            let cropBottom = cBottom;
+
+            if (edge === 'e') {
+                const maxW = Math.max(8, (1 - cLeft) * fullW);
+                const minW = Math.min(Math.max(8, minSize), maxW);
+                width = Math.max(minW, Math.min(maxW, startRect.width + dx));
+                cropRight = Math.max(0, Math.min(0.95 - cLeft, 1 - cLeft - width / fullW));
+            } else if (edge === 'w') {
+                const rightEdge = startRect.x + startRect.width;
+                const maxW = Math.max(8, (1 - cRight) * fullW);
+                const minW = Math.min(Math.max(8, minSize), maxW);
+                width = Math.max(minW, Math.min(maxW, startRect.width - dx));
+                x = rightEdge - width;
+                cropLeft = Math.max(0, Math.min(0.95 - cRight, 1 - cRight - width / fullW));
+            } else if (edge === 's') {
+                const maxH = Math.max(8, (1 - cTop) * fullH);
+                const minH = Math.min(Math.max(8, minSize), maxH);
+                height = Math.max(minH, Math.min(maxH, startRect.height + dy));
+                cropBottom = Math.max(0, Math.min(0.95 - cTop, 1 - cTop - height / fullH));
+            } else if (edge === 'n') {
+                const bottomEdge = startRect.y + startRect.height;
+                const maxH = Math.max(8, (1 - cBottom) * fullH);
+                const minH = Math.min(Math.max(8, minSize), maxH);
+                height = Math.max(minH, Math.min(maxH, startRect.height - dy));
+                y = bottomEdge - height;
+                cropTop = Math.max(0, Math.min(0.95 - cBottom, 1 - cBottom - height / fullH));
+            }
+
+            return {
+                x: Math.round(x * 10) / 10,
+                y: Math.round(y * 10) / 10,
+                width: Math.round(width * 10) / 10,
+                height: Math.round(height * 10) / 10,
+                cropLeft: Number(cropLeft.toFixed(5)),
+                cropRight: Number(cropRight.toFixed(5)),
+                cropTop: Number(cropTop.toFixed(5)),
+                cropBottom: Number(cropBottom.toFixed(5)),
+                aspectRatio: width / Math.max(1, height)
+            };
+        }
+
+        function addBackgroundImageFromDataUrl(dataUrl, sourceLabel = 'Clipboard') {
+            if (!dataUrl || typeof dataUrl !== 'string') return;
+            const probeImg = new Image();
+            probeImg.onload = () => {
+                if (!Array.isArray(geoState.bgImages)) geoState.bgImages = [];
+                saveHistory();
+                const natW = Math.max(1, probeImg.naturalWidth || probeImg.width || 400);
+                const natH = Math.max(1, probeImg.naturalHeight || probeImg.height || 300);
+                const aspectRatio = natW / natH;
+
+                const wsW = container.clientWidth || 960;
+                const wsH = container.clientHeight || 640;
+                const maxInitW = Math.min(540, wsW * 0.56);
+                const maxInitH = Math.min(420, wsH * 0.62);
+
+                let initW = natW;
+                let initH = natH;
+                if (initW > maxInitW) {
+                    initW = maxInitW;
+                    initH = initW / aspectRatio;
+                }
+                if (initH > maxInitH) {
+                    initH = maxInitH;
+                    initW = initH * aspectRatio;
+                }
+                if (initW < 140) {
+                    initW = 140;
+                    initH = initW / aspectRatio;
+                }
+
+                const offset = (geoState.bgImages.length * 24) % 120;
+                const x = Math.round(Math.max(70, (wsW - initW) / 2 + offset));
+                const y = Math.round(Math.max(50, (wsH - initH) / 2 + offset * 0.6));
+                const id = 'bgimg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+                geoState.bgImages.push({
+                    id,
+                    dataUrl,
+                    x,
+                    y,
+                    width: Math.round(initW * 10) / 10,
+                    height: Math.round(initH * 10) / 10,
+                    aspectRatio,
+                    cropLeft: 0,
+                    cropRight: 0,
+                    cropTop: 0,
+                    cropBottom: 0,
+                    opacity: 1,
+                    locked: false,
+                    hidden: false
+                });
+                activeBgImageId = id;
+                renderBackgroundImagesDOM();
+                scheduleAutoSaveState();
+
+                const guideSpan = document.getElementById('guide-span');
+                if (guideSpan) {
+                    guideSpan.innerHTML = t(
+                        `Đã dán <b>Hình ảnh (${sourceLabel})</b>! Kéo ảnh để di chuyển, kéo 4 góc để chỉnh size, kéo 4 biên để cắt (crop), nhấn <b>Delete</b> để xóa, click ngoài ảnh để bỏ chọn.`,
+                        `Pasted <b>Image (${sourceLabel})</b>! Drag image to move, drag corners to resize, drag edges to crop, press <b>Delete</b> to remove, click outside to deselect.`
+                    );
+                }
+            };
+            probeImg.src = dataUrl;
+        }
+
+        let lastClipboardImagePasteAt = 0;
+
+        function handleGlobalClipboardPaste(event) {
+            const cd = event.clipboardData || window.clipboardData;
+            if (!cd || !cd.items) return;
+            for (let i = 0; i < cd.items.length; i++) {
+                const item = cd.items[i];
+                if (item && item.type && item.type.indexOf('image') !== -1) {
+                    const blob = item.getAsFile();
+                    if (blob) {
+                        lastClipboardImagePasteAt = Date.now();
+                        event.preventDefault();
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            if (typeof ev.target?.result === 'string') {
+                                addBackgroundImageFromDataUrl(ev.target.result, 'Clipboard Ctrl+V');
+                            }
+                        };
+                        reader.readAsDataURL(blob);
+                        return;
+                    }
+                }
+            }
+        }
+
+        async function tryReadClipboardImageOnShortcut() {
+            if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function') return;
+            try {
+                const items = await navigator.clipboard.read();
+                for (const clipItem of items) {
+                    const imgType = clipItem.types.find(tp => tp.startsWith('image/'));
+                    if (imgType) {
+                        if (Date.now() - lastClipboardImagePasteAt <= 400) return;
+                        lastClipboardImagePasteAt = Date.now();
+                        const blob = await clipItem.getType(imgType);
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            if (typeof ev.target?.result === 'string') {
+                                addBackgroundImageFromDataUrl(ev.target.result, 'Clipboard Ctrl+V');
+                            }
+                        };
+                        reader.readAsDataURL(blob);
+                        return;
+                    }
+                }
+            } catch (_) {
+                // Trình duyệt xử lý qua sự kiện paste mặc định
+            }
+        }
+
+        function removeBackgroundImage(bgId) {
+            if (!Array.isArray(geoState.bgImages)) return;
+            saveHistory();
+            geoState.bgImages = geoState.bgImages.filter(img => img.id !== bgId);
+            if (activeBgImageId === bgId) {
+                activeBgImageId = null;
+            }
+            renderBackgroundImagesDOM();
+            scheduleAutoSaveState();
+        }
+
+        function applyCroppedImageMetricsToDOM(bg, renderItem, frameEl) {
+            const cLeft = Math.max(0, Math.min(0.9, Number(bg.cropLeft) || 0));
+            const cRight = Math.max(0, Math.min(0.9, Number(bg.cropRight) || 0));
+            const cTop = Math.max(0, Math.min(0.9, Number(bg.cropTop) || 0));
+            const cBottom = Math.max(0, Math.min(0.9, Number(bg.cropBottom) || 0));
+            const fx = Math.max(0.05, 1 - cLeft - cRight);
+            const fy = Math.max(0.05, 1 - cTop - cBottom);
+            const fullW = bg.width / fx;
+            const fullH = bg.height / fy;
+
+            if (renderItem) {
+                renderItem.style.left = `${bg.x}px`;
+                renderItem.style.top = `${bg.y}px`;
+                renderItem.style.width = `${bg.width}px`;
+                renderItem.style.height = `${bg.height}px`;
+                renderItem.style.opacity = '1';
+                const imgEl = renderItem.querySelector('img');
+                if (imgEl) {
+                    imgEl.style.width = `${fullW}px`;
+                    imgEl.style.height = `${fullH}px`;
+                    imgEl.style.left = `${-cLeft * fullW}px`;
+                    imgEl.style.top = `${-cTop * fullH}px`;
+                }
+            }
+            if (frameEl) {
+                frameEl.style.left = `${bg.x}px`;
+                frameEl.style.top = `${bg.y}px`;
+                frameEl.style.width = `${bg.width}px`;
+                frameEl.style.height = `${bg.height}px`;
+            }
+        }
+
+        function renderBackgroundImagesDOM() {
+            const imgLayer = document.getElementById('bg-images-layer');
+            const ctrlLayer = document.getElementById('bg-images-controls-layer');
+            if (!imgLayer || !ctrlLayer) return;
+            if (!Array.isArray(geoState.bgImages)) geoState.bgImages = [];
+
+            const validIds = new Set(geoState.bgImages.filter(b => !b.hidden).map(b => b.id));
+            Array.from(imgLayer.querySelectorAll('.bg-image-render-item')).forEach(el => {
+                if (!validIds.has(el.getAttribute('data-bg-id'))) el.remove();
+            });
+            Array.from(ctrlLayer.querySelectorAll('.bg-img-frame')).forEach(el => {
+                if (!validIds.has(el.getAttribute('data-bg-id'))) el.remove();
+            });
+
+            geoState.bgImages.forEach((bg, idx) => {
+                if (bg.hidden) return;
+                bg.aspectRatio = bg.width / Math.max(1, bg.height);
+
+                let renderItem = imgLayer.querySelector(`.bg-image-render-item[data-bg-id="${bg.id}"]`);
+                if (!renderItem) {
+                    renderItem = document.createElement('div');
+                    renderItem.className = 'bg-image-render-item';
+                    renderItem.setAttribute('data-bg-id', bg.id);
+                    renderItem.setAttribute('data-testid', `bg-image-item-${idx}`);
+                    const imgEl = document.createElement('img');
+                    imgEl.src = bg.dataUrl;
+                    imgEl.alt = 'Pasted Image';
+                    renderItem.appendChild(imgEl);
+                    imgLayer.appendChild(renderItem);
+                }
+
+                let frameEl = ctrlLayer.querySelector(`.bg-img-frame[data-bg-id="${bg.id}"]`);
+                if (!frameEl) {
+                    frameEl = document.createElement('div');
+                    frameEl.className = 'bg-img-frame';
+                    frameEl.setAttribute('data-bg-id', bg.id);
+                    frameEl.setAttribute('data-testid', `bg-image-frame-${idx}`);
+
+                    frameEl.innerHTML = `
+                        <div class="bg-img-edge-crop n" data-edge="n" title="${t('Kéo biên trên để cắt (crop) ảnh', 'Drag top edge to crop image')}"></div>
+                        <div class="bg-img-edge-crop s" data-edge="s" title="${t('Kéo biên dưới để cắt (crop) ảnh', 'Drag bottom edge to crop image')}"></div>
+                        <div class="bg-img-edge-crop w" data-edge="w" title="${t('Kéo biên trái để cắt (crop) ảnh', 'Drag left edge to crop image')}"></div>
+                        <div class="bg-img-edge-crop e" data-edge="e" title="${t('Kéo biên phải để cắt (crop) ảnh', 'Drag right edge to crop image')}"></div>
+                        <div class="bg-img-corner-handle nw" data-handle="nw" title="${t('Kéo góc để chỉnh size (giữ nguyên tỉ lệ)', 'Drag corner to resize (aspect ratio locked)')}"></div>
+                        <div class="bg-img-corner-handle ne" data-handle="ne" title="${t('Kéo góc để chỉnh size (giữ nguyên tỉ lệ)', 'Drag corner to resize (aspect ratio locked)')}"></div>
+                        <div class="bg-img-corner-handle sw" data-handle="sw" title="${t('Kéo góc để chỉnh size (giữ nguyên tỉ lệ)', 'Drag corner to resize (aspect ratio locked)')}"></div>
+                        <div class="bg-img-corner-handle se" data-handle="se" title="${t('Kéo góc để chỉnh size (giữ nguyên tỉ lệ)', 'Drag corner to resize (aspect ratio locked)')}"></div>
+                    `;
+                    ctrlLayer.appendChild(frameEl);
+
+                    const syncFramePos = () => {
+                        applyCroppedImageMetricsToDOM(bg, renderItem, frameEl);
+                    };
+
+                    frameEl.addEventListener('pointerdown', (e) => {
+                        if (e.button !== 0) return;
+                        if (e.target.closest('.bg-img-corner-handle') || e.target.closest('.bg-img-edge-crop')) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        activeBgImageId = bg.id;
+                        renderBackgroundImagesDOM();
+                        const startX = e.clientX;
+                        const startY = e.clientY;
+                        const origX = bg.x;
+                        const origY = bg.y;
+                        const onMove = (ev) => {
+                            bg.x = Math.round(origX + (ev.clientX - startX));
+                            bg.y = Math.round(origY + (ev.clientY - startY));
+                            syncFramePos();
+                        };
+                        const onUp = () => {
+                            window.removeEventListener('pointermove', onMove);
+                            window.removeEventListener('pointerup', onUp);
+                            scheduleAutoSaveState();
+                        };
+                        window.addEventListener('pointermove', onMove);
+                        window.addEventListener('pointerup', onUp);
+                    });
+
+                    frameEl.querySelectorAll('.bg-img-edge-crop').forEach(edgeEl => {
+                        edgeEl.addEventListener('pointerdown', (e) => {
+                            if (e.button !== 0) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            activeBgImageId = bg.id;
+                            const edge = edgeEl.getAttribute('data-edge') || 'e';
+                            const startX = e.clientX;
+                            const startY = e.clientY;
+                            const startRect = { x: bg.x, y: bg.y, width: bg.width, height: bg.height };
+                            const startCrop = {
+                                cropLeft: bg.cropLeft || 0,
+                                cropRight: bg.cropRight || 0,
+                                cropTop: bg.cropTop || 0,
+                                cropBottom: bg.cropBottom || 0
+                            };
+                            const onMove = (ev) => {
+                                const next = computeEdgeCropRectInline(
+                                    startRect,
+                                    startCrop,
+                                    edge,
+                                    ev.clientX - startX,
+                                    ev.clientY - startY,
+                                    36
+                                );
+                                bg.x = next.x;
+                                bg.y = next.y;
+                                bg.width = next.width;
+                                bg.height = next.height;
+                                bg.cropLeft = next.cropLeft;
+                                bg.cropRight = next.cropRight;
+                                bg.cropTop = next.cropTop;
+                                bg.cropBottom = next.cropBottom;
+                                bg.aspectRatio = next.aspectRatio;
+                                syncFramePos();
+                            };
+                            const onUp = () => {
+                                window.removeEventListener('pointermove', onMove);
+                                window.removeEventListener('pointerup', onUp);
+                                scheduleAutoSaveState();
+                            };
+                            window.addEventListener('pointermove', onMove);
+                            window.addEventListener('pointerup', onUp);
+                        });
+                    });
+
+                    frameEl.querySelectorAll('.bg-img-corner-handle').forEach(hEl => {
+                        hEl.addEventListener('pointerdown', (e) => {
+                            if (e.button !== 0) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            activeBgImageId = bg.id;
+                            const handle = hEl.getAttribute('data-handle') || 'se';
+                            const startX = e.clientX;
+                            const startY = e.clientY;
+                            const startRect = { x: bg.x, y: bg.y, width: bg.width, height: bg.height };
+                            const ratio = bg.width / Math.max(1, bg.height);
+                            const onMove = (ev) => {
+                                const next = computeAspectLockedRect(
+                                    startRect,
+                                    ratio,
+                                    handle,
+                                    ev.clientX - startX,
+                                    ev.clientY - startY,
+                                    48,
+                                    2400
+                                );
+                                bg.x = next.x;
+                                bg.y = next.y;
+                                bg.width = next.width;
+                                bg.height = next.height;
+                                bg.aspectRatio = next.width / Math.max(1, next.height);
+                                syncFramePos();
+                            };
+                            const onUp = () => {
+                                window.removeEventListener('pointermove', onMove);
+                                window.removeEventListener('pointerup', onUp);
+                                scheduleAutoSaveState();
+                            };
+                            window.addEventListener('pointermove', onMove);
+                            window.addEventListener('pointerup', onUp);
+                        });
+                    });
+                }
+
+                applyCroppedImageMetricsToDOM(bg, renderItem, frameEl);
+                frameEl.classList.toggle('active', bg.id === activeBgImageId);
+            });
+        }
+
         function createDemoPyramid(recordHistory = true) {
             if (recordHistory && geoState && geoState.points && geoState.points.length > 0) {
                 saveHistory();
             }
-            geoState = { points: [], segments: [], faces: [], circles: [], solids: [], measureScale: null, measurements: [] };
+            const preservedTextBoxes = Array.isArray(geoState?.textBoxes) ? geoState.textBoxes : [];
+            const preservedBgImages = Array.isArray(geoState?.bgImages) ? geoState.bgImages : [];
+            geoState = {
+                points: [],
+                segments: [],
+                faces: [],
+                circles: [],
+                solids: [],
+                measureScale: null,
+                measurements: [],
+                textBoxes: preservedTextBoxes,
+                bgImages: preservedBgImages
+            };
             selectedPointIds = [];
             selectedCircleIds = [];
             measurePendingItems = [];
