@@ -100,6 +100,22 @@
         }
         .header-btn .svg-ic { width: 15px; height: 15px; }
         .header-btn:hover { background: #2563eb; border-color: #3b82f6; color: #ffffff; }
+        .header-btn.pin-app-btn {
+            background: rgba(56, 189, 248, 0.14);
+            border-color: rgba(56, 189, 248, 0.42);
+            color: #e0f2fe;
+        }
+        .header-btn.pin-app-btn:hover {
+            background: #0284c7;
+            border-color: #38bdf8;
+            color: #ffffff;
+        }
+        .header-btn.pin-app-btn.pinned-active {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-color: #fde68a;
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.45);
+        }
         .lang-switch-btn {
             background: #0f172a; border: 1px solid #475569;
             color: #94a3b8; border-radius: 8px; padding: 4px 8px;
@@ -1229,6 +1245,30 @@
             border-radius: 5px; cursor: pointer; background: none;
         }
 
+        /* Chế độ Ghim Bản Vẽ Tương Tác Duy Nhất (Always on Top / Pinned Drawing Workspace) */
+        #autopip-launch-banner {
+            position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+            z-index: 260; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            color: #ffffff; border: 1.5px solid #38bdf8; border-radius: 999px;
+            padding: 7px 14px; box-shadow: 0 12px 28px rgba(15, 23, 42, 0.38);
+            display: none; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 700;
+            white-space: nowrap;
+        }
+        #autopip-launch-banner.visible { display: inline-flex; }
+        .autopip-go-btn {
+            background: #f59e0b; color: #0f172a; border: none; border-radius: 999px;
+            padding: 5px 12px; font-size: 12px; font-weight: 800; cursor: pointer;
+            transition: 0.15s;
+        }
+        .autopip-go-btn:hover { background: #fbbf24; transform: scale(1.03); }
+
+        body.compact-pinned-mode header,
+        body.compact-pinned-mode footer,
+        body.in-doc-pip-window header,
+        body.in-doc-pip-window footer {
+            display: none !important;
+        }
+
         /* Footer */
         footer {
             background-color: #0f172a; color: #94a3b8;
@@ -1300,6 +1340,10 @@
             </div>
         </div>
         <div class="header-right-actions">
+            <button class="header-btn pin-app-btn" id="header-pin-btn" data-testid="header-pin-btn" onclick="togglePinDrawingWorkspace(event)" title="Ghim phần bản vẽ tương tác luôn nổi (Always on Top)">
+                <svg class="svg-ic" viewBox="0 0 24 24"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                <span id="header-pin-label">Ghim nổi</span>
+            </button>
             <button class="header-btn" id="header-save-btn" onclick="saveProjectToFile()" title="Lưu dự án hiện tại thành file (.json)">
                 <svg class="svg-ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 <span id="header-save-label">Lưu dự án</span>
@@ -1316,6 +1360,12 @@
         </div>
         <input type="file" id="project-file-input" accept=".json,.3dgeo,application/json" style="display:none" onchange="handleProjectFileInputChange(event)">
     </header>
+
+    <div id="autopip-launch-banner" data-testid="autopip-launch-banner">
+        <span id="autopip-banner-text">Ghim cửa sổ EZ3D luôn nổi trên các phần mềm khác:</span>
+        <button type="button" class="autopip-go-btn" id="autopip-go-btn" onclick="activateDocumentPiPFromBanner()">Bật cửa sổ luôn nổi ngay</button>
+        <button type="button" class="measure-close-btn" style="color:#cbd5e1;" onclick="dismissAutoPiPBanner()" title="Đóng">✕</button>
+    </div>
 
     <div id="workspace">
         <!-- Nút mở Cài đặt Khay công cụ -->
@@ -2352,6 +2402,10 @@
                 vi: { name: 'Tải ảnh hình vẽ (.PNG)', tip: '<b>Xuất ảnh (.PNG):</b> Tải ảnh hình vẽ 3D kèm nhãn điểm & số đo' },
                 en: { name: 'Export Image (.PNG)', tip: '<b>Export PNG:</b> Download high-res PNG image with labels & measurements' }
             },
+            'pin-app': {
+                vi: { name: 'Ghim cửa sổ App luôn nổi (Always on Top)', tip: '<b>Ghim cửa sổ luôn nổi:</b> Giữ cửa sổ dùng App luôn nổi trên các chương trình khác (PowerPoint, Word, PDF...)' },
+                en: { name: 'Pin App Window Always on Top', tip: '<b>Pin Always on Top:</b> Keep the EZ3D window floating on top of other desktop applications' }
+            },
             'clear-all': {
                 vi: { name: 'Xóa toàn bộ hình vẽ', tip: '<b>Xóa toàn bộ hình vẽ</b>' },
                 en: { name: 'Clear Entire Scene', tip: '<b>Clear entire scene</b>' }
@@ -2697,6 +2751,13 @@
                 actionFn: () => exportCanvasPng(),
                 iconHtml: SVG_ICONS.downloadPng,
                 tip: TOOL_I18N['export-png'].vi.tip
+            },
+            {
+                id: 'pin-app', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
+                name: 'Ghim cửa sổ App luôn nổi (Always on Top)', type: 'action',
+                actionFn: () => togglePinAppPopover(),
+                iconHtml: SVG_ICONS.pin,
+                tip: TOOL_I18N['pin-app'].vi.tip
             },
             {
                 id: 'clear-all', group: 7, groupName: 'Nhóm 7: Quỹ tích & Hệ thống',
@@ -4283,6 +4344,9 @@
             try {
                 if (!geoState || !Array.isArray(geoState.points)) return;
                 localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(geoState));
+                if (typeof broadcastPinSyncState === 'function') {
+                    broadcastPinSyncState();
+                }
             } catch (e) {}
         }
 
@@ -4350,9 +4414,11 @@
 
             setTxt('header-save-label', 'Lưu dự án', 'Save');
             setTxt('header-load-label', 'Tải dự án', 'Load');
+            setTitle('header-pin-btn', 'Ghim cửa sổ App luôn nổi trên các chương trình khác (Always on Top)', 'Pin App Window Always on Top of other desktop applications');
             setTitle('header-save-btn', 'Lưu dự án hình học 3D về máy (.json)', 'Save 3D Geometry project to file (.json)');
             setTitle('header-load-btn', 'Mở / Tải lên dự án hình học 3D đã lưu (.json)', 'Open / Load saved 3D Geometry project (.json)');
             setTitle('lang-toggle-btn', 'Chuyển đổi ngôn ngữ Tiếng Việt / Tiếng Anh (Switch Language)', 'Switch Language (Vietnamese / English)');
+            if (typeof syncPinAppUI === 'function') syncPinAppUI();
 
             setTxt('measure-panel-title-text', 'ĐO ĐẠC 3D', '3D MEASUREMENTS');
             setTxt('measure-set-scale-btn', 'Đặt quy chuẩn', 'Set Scale');
@@ -4812,6 +4878,7 @@
 
             setupStaticTooltips();
             setupGuideMarquee();
+            initPinAppSystem();
             applyLanguage(currentLang);
             if (restoreAutoSavedState()) {
                 selectTool('view');
@@ -16930,6 +16997,209 @@
             }
 
             if (renderer && scene && camera) renderer.render(scene, camera);
+        }
+
+        // =========================================================================
+        // CHẾ ĐỘ GHIM NỔI DUY NHẤT: GHIM PHẦN BẢN VẼ TƯƠNG TÁC NHƯ CHẾ ĐỘ FULL
+        // =========================================================================
+        const PIN_WORKSPACE_DEFAULT_SIZE = { width: 980, height: 660 };
+        let activeDocPiPWindow = null;
+        let isInsideDocPiPChild = false;
+        let isCompactPinnedUI = false;
+        let pinSyncChannel = null;
+        let lastBroadcastStamp = 0;
+
+        function initPinAppSystem() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('inpip') === '1') {
+                    isInsideDocPiPChild = true;
+                    isCompactPinnedUI = true;
+                    document.body.classList.add('in-doc-pip-window', 'compact-pinned-mode');
+                }
+                if (params.get('autopip') === '1') {
+                    const banner = document.getElementById('autopip-launch-banner');
+                    if (banner) banner.classList.add('visible');
+                }
+            } catch (e) {}
+
+            try {
+                if (typeof BroadcastChannel !== 'undefined') {
+                    pinSyncChannel = new BroadcastChannel('ez3d_pin_sync_v1');
+                    pinSyncChannel.onmessage = (ev) => {
+                        const data = ev?.data;
+                        if (!data || data.type !== 'STATE_SYNC' || !data.stamp || data.stamp <= lastBroadcastStamp) return;
+                        lastBroadcastStamp = data.stamp;
+                        if (restoreAutoSavedState()) {
+                            updateSceneFromState();
+                            updateAnimationControlPanel();
+                        }
+                    };
+                }
+            } catch (e) {}
+
+            syncPinAppUI();
+            if (isInsideDocPiPChild) {
+                setTimeout(() => onWindowResize(), 30);
+            }
+        }
+
+        function broadcastPinSyncState() {
+            try {
+                if (!pinSyncChannel) return;
+                const stamp = Date.now();
+                lastBroadcastStamp = stamp;
+                pinSyncChannel.postMessage({ type: 'STATE_SYNC', stamp });
+            } catch (e) {}
+        }
+
+        function buildStandalonePinUrlForCurrentPage(extraParamKey = 'inpip') {
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('autopip');
+                url.searchParams.delete('inpip');
+                url.searchParams.set(extraParamKey, '1');
+                return url.toString();
+            } catch (e) {
+                const sep = window.location.href.includes('?') ? '&' : '?';
+                return `${window.location.href}${sep}${extraParamKey}=1`;
+            }
+        }
+
+        function isAnyPinModeActive() {
+            return Boolean(activeDocPiPWindow || isInsideDocPiPChild || isCompactPinnedUI);
+        }
+
+        function syncPinAppUI() {
+            const anyActive = isAnyPinModeActive();
+            const headerPinBtn = document.getElementById('header-pin-btn');
+            const headerPinLabel = document.getElementById('header-pin-label');
+            if (headerPinBtn) {
+                headerPinBtn.classList.toggle('pinned-active', anyActive);
+            }
+            if (headerPinLabel) {
+                headerPinLabel.textContent = anyActive
+                    ? t('Đã ghim nổi', 'Pinned on Top')
+                    : t('Ghim nổi', 'Pin on Top');
+            }
+
+            const setTxt = (id, vi, en) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = t(vi, en);
+            };
+            setTxt('autopip-banner-text', 'Ghim cửa sổ EZ3D luôn nổi trên các phần mềm khác:', 'Pin EZ3D window always on top of other programs:');
+            setTxt('autopip-go-btn', 'Bật cửa sổ luôn nổi ngay', 'Launch Always-on-Top Window');
+        }
+
+        function setPinGuideHtml(html) {
+            const guideSpan = document.getElementById('guide-span');
+            if (!guideSpan) return;
+            guideSpan.innerHTML = html;
+            if (typeof renderMathInElementSafe === 'function') {
+                renderMathInElementSafe(guideSpan);
+            }
+            if (typeof updateGuideMarqueeState === 'function') {
+                updateGuideMarqueeState();
+            }
+        }
+
+        async function activateDocumentPiPFromBanner() {
+            dismissAutoPiPBanner();
+            await togglePinDrawingWorkspace();
+        }
+
+        function dismissAutoPiPBanner() {
+            const banner = document.getElementById('autopip-launch-banner');
+            if (banner) banner.classList.remove('visible');
+        }
+
+        function setCompactPinnedMode(enabled) {
+            isCompactPinnedUI = Boolean(enabled);
+            document.body.classList.toggle('compact-pinned-mode', isCompactPinnedUI);
+            onWindowResize();
+            syncPinAppUI();
+        }
+
+        // Chế độ Ghim duy nhất: Ghim trực tiếp phần bản vẽ tương tác như chế độ full
+        async function togglePinDrawingWorkspace(e) {
+            if (e && e.stopPropagation) e.stopPropagation();
+
+            // Nếu đang ở chế độ ghim thì bấm lại sẽ Bỏ ghim
+            if (isAnyPinModeActive()) {
+                await unpinAllAppModes();
+                return;
+            }
+
+            saveAutoStateToStorage();
+
+            // 1. Bật ngay giao diện Ghim phần bản vẽ tương tác (ẩn header & footer, hiển thị trọn vẹn bản vẽ + các khay công cụ + nút Bỏ ghim)
+            setCompactPinnedMode(true);
+
+            // 2. Nếu trình duyệt ở top-level hỗ trợ Document Picture-in-Picture, đồng thời mở cửa sổ Always-on-Top chỉ chứa phần bản vẽ tương tác
+            let isTopLevel = true;
+            try { isTopLevel = (window.self === window.top); } catch (err) { isTopLevel = false; }
+
+            if (isTopLevel && window.documentPictureInPicture && typeof window.documentPictureInPicture.requestWindow === 'function') {
+                try {
+                    const pipWin = await window.documentPictureInPicture.requestWindow({
+                        width: PIN_WORKSPACE_DEFAULT_SIZE.width,
+                        height: PIN_WORKSPACE_DEFAULT_SIZE.height
+                    });
+                    activeDocPiPWindow = pipWin;
+                    pipWin.document.title = 'EZ3D - GEOMETRY | Bản Vẽ Ghim Nổi';
+                    pipWin.document.documentElement.style.cssText = 'margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#f8fafc;';
+                    pipWin.document.body.style.cssText = 'margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#f8fafc;';
+
+                    const iframe = pipWin.document.createElement('iframe');
+                    iframe.src = buildStandalonePinUrlForCurrentPage('inpip');
+                    iframe.style.cssText = 'width:100%;height:100%;border:0;display:block;';
+                    iframe.setAttribute('allow', 'clipboard-read; clipboard-write; fullscreen');
+                    pipWin.document.body.appendChild(iframe);
+
+                    pipWin.addEventListener('pagehide', () => {
+                        activeDocPiPWindow = null;
+                        if (restoreAutoSavedState()) {
+                            updateSceneFromState();
+                            updateAnimationControlPanel();
+                        }
+                        if (isCompactPinnedUI) {
+                            setCompactPinnedMode(false);
+                        }
+                        syncPinAppUI();
+                    });
+
+                    syncPinAppUI();
+                    return;
+                } catch (err) {
+                    // Nếu trình duyệt không mở cửa sổ PiP riêng thì giữ nguyên chế độ ghim bản vẽ tương tác hiện tại
+                }
+            }
+
+            syncPinAppUI();
+        }
+
+        // Giữ alias để công cụ 'pin-app' trong khay công cụ gọi trực tiếp chế độ ghim bản vẽ duy nhất
+        function togglePinAppPopover(e) {
+            return togglePinDrawingWorkspace(e);
+        }
+
+        async function unpinAllAppModes() {
+            if (activeDocPiPWindow && !activeDocPiPWindow.closed) {
+                try { activeDocPiPWindow.close(); } catch (e) {}
+                activeDocPiPWindow = null;
+            }
+            if (isInsideDocPiPChild) {
+                saveAutoStateToStorage();
+                try { window.close(); } catch (e) {}
+            }
+            if (isCompactPinnedUI) {
+                setCompactPinnedMode(false);
+            }
+            syncPinAppUI();
+            setPinGuideHtml(t(
+                'Đã bỏ ghim bản vẽ và khôi phục giao diện đầy đủ.',
+                'Unpinned drawing workspace and restored full layout.'
+            ));
         }
 
         window.addEventListener('DOMContentLoaded', init);
