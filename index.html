@@ -7143,22 +7143,20 @@
                     edgeMeshes.push(tintMesh);
                 }
 
-                if (!isColorPatchFace) {
-                    const depthMat = new THREE.MeshBasicMaterial({
-                        colorWrite: false,
-                        depthWrite: true,
-                        side: THREE.DoubleSide,
-                        polygonOffset: true,
-                        polygonOffsetFactor: 1.5,
-                        polygonOffsetUnits: 4.0
-                    });
+                const depthMat = new THREE.MeshBasicMaterial({
+                    colorWrite: false,
+                    depthWrite: true,
+                    side: THREE.DoubleSide,
+                    polygonOffset: true,
+                    polygonOffsetFactor: isColorPatchFace ? 1.0 : 1.5,
+                    polygonOffsetUnits: isColorPatchFace ? 2.0 : 4.0
+                });
 
-                    const depthMesh = new THREE.Mesh(geo, depthMat);
-                    depthMesh.userData = { faceId: face.id, faceName: face.name };
-                    depthMesh.renderOrder = 2;
-                    scene.add(depthMesh);
-                    faceMeshes.push(depthMesh);
-                }
+                const depthMesh = new THREE.Mesh(geo, depthMat);
+                depthMesh.userData = { faceId: face.id, faceName: face.name || `(${face.pointIds.map(id => { const p = geoState.points.find(pt => pt.id === id); return p ? p.name : ''; }).join('')})` };
+                depthMesh.renderOrder = 2;
+                scene.add(depthMesh);
+                faceMeshes.push(depthMesh);
             });
 
             // Hiển thị vùng xem trước (preview) khi người dùng chọn các thành phần tạo thành bề mặt mới chưa có sẵn trong geoState.faces
@@ -8729,7 +8727,11 @@
             } else if (target.type === 'intersection') {
                 rule = target.rule ? { ...target.rule } : { type: 'intersection', segAId: target.segAId, segBId: target.segBId };
             }
-            return createNewPoint(target.pos.x, target.pos.y, target.pos.z, preferredName, rule);
+            const newPtId = createNewPoint(target.pos.x, target.pos.y, target.pos.z, preferredName, rule);
+            if (target && (target.type === 'edge' || target.type === 'intersection')) {
+                autoDetectClosedFacesFromSegments();
+            }
+            return newPtId;
         }
 
         function createNewPoint(x, y, z, preferredName = null, rule = { type: 'plane' }) {
@@ -8745,9 +8747,128 @@
             return id;
         }
 
+        function getOrderedCollinearPointIdsAlongSegmentOrLine(s) {
+            if (!s || s.hidden) return [];
+            const P1 = geoState.points.find(p => p.id === s.p1Id && !p.hidden && !p.isConstructedPlaneCorner);
+            const P2 = geoState.points.find(p => p.id === s.p2Id && !p.hidden && !p.isConstructedPlaneCorner);
+            if (!P1 || !P2) return [];
+            const v1 = new THREE.Vector3(P1.x, P1.y, P1.z);
+            const v2 = new THREE.Vector3(P2.x, P2.y, P2.z);
+            const ab = new THREE.Vector3().subVectors(v2, v1);
+            const lenSq = ab.lengthSq();
+            if (lenSq < 1e-6) return [];
+
+            const onLineItems = [
+                { id: P1.id, t: 0 },
+                { id: P2.id, t: 1 }
+            ];
+            geoState.points.forEach(pt => {
+                if (pt.hidden || pt.isConstructedPlaneCorner || pt.id === s.p1Id || pt.id === s.p2Id) return;
+                const vP = new THREE.Vector3(pt.x, pt.y, pt.z);
+                const tProj = new THREE.Vector3().subVectors(vP, v1).dot(ab) / lenSq;
+                const withinSpan = s.isLine ? true : (tProj >= -0.015 && tProj <= 1.015);
+                if (!withinSpan) return;
+                const proj = v1.clone().addScaledVector(ab, tProj);
+                if (proj.distanceTo(vP) < 0.045) {
+                    onLineItems.push({ id: pt.id, t: tProj });
+                }
+            });
+            onLineItems.sort((a, b) => a.t - b.t);
+            const uniqueIds = [];
+            onLineItems.forEach(item => {
+                if (!uniqueIds.includes(item.id)) uniqueIds.push(item.id);
+            });
+            return uniqueIds;
+        }
+
+        function collectElementaryCollinearSegments() {
+            const elemMap = new Map();
+            geoState.segments.forEach(s => {
+                const chain = getOrderedCollinearPointIdsAlongSegmentOrLine(s);
+                for (let i = 0; i < chain.length - 1; i++) {
+                    const u = chain[i];
+                    const v = chain[i + 1];
+                    if (u === v) continue;
+                    const key = u < v ? `${u}|${v}` : `${v}|${u}`;
+                    if (!elemMap.has(key)) {
+                        elemMap.set(key, [u, v]);
+                    }
+                }
+            });
+            return Array.from(elemMap.values());
+        }
+
+        function hasGeometricChord3D(polyPts, elementarySegs = null) {
+            if (!polyPts || polyPts.length < 3 || polyPts.some(p => !p)) return false;
+            const basis = computePointListPlaneBasis(polyPts);
+            if (!basis) return false;
+            const { origin, e1, e2, normal } = basis;
+            const n = polyPts.length;
+            const poly2D = polyPts.map(p => {
+                const v = new THREE.Vector3(p.x, p.y, p.z).sub(origin);
+                return { x: v.dot(e1), y: v.dot(e2) };
+            });
+
+            const distToBoundary2D = (px, py) => {
+                let minD = Infinity;
+                for (let i = 0; i < n; i++) {
+                    const a = poly2D[i];
+                    const b = poly2D[(i + 1) % n];
+                    const dx = b.x - a.x, dy = b.y - a.y;
+                    const lSq = dx * dx + dy * dy;
+                    let t = lSq > 1e-10 ? ((px - a.x) * dx + (py - a.y) * dy) / lSq : 0;
+                    t = Math.max(0, Math.min(1, t));
+                    const d = Math.hypot(px - (a.x + t * dx), py - (a.y + t * dy));
+                    if (d < minD) minD = d;
+                }
+                return minD;
+            };
+
+            const isStrictlyInside2D = (px, py, margin = 0.04) => {
+                if (distToBoundary2D(px, py) <= margin) return false;
+                let inside = false;
+                for (let i = 0, j = n - 1; i < n; j = i++) {
+                    const xi = poly2D[i].x, yi = poly2D[i].y;
+                    const xj = poly2D[j].x, yj = poly2D[j].y;
+                    const intersect = ((yi > py) !== (yj > py)) &&
+                        (px < (xj - xi) * (py - yi) / ((yj - yi) || 1e-12) + xi);
+                    if (intersect) inside = !inside;
+                }
+                return inside;
+            };
+
+            const ptById = {};
+            geoState.points.forEach(p => { if (!p.hidden) ptById[p.id] = p; });
+            const segPairs = elementarySegs || collectElementaryCollinearSegments();
+
+            for (const [uId, vId] of segPairs) {
+                const A = ptById[uId];
+                const B = ptById[vId];
+                if (!A || !B) continue;
+                const vA = new THREE.Vector3(A.x, A.y, A.z).sub(origin);
+                const vB = new THREE.Vector3(B.x, B.y, B.z).sub(origin);
+                if (Math.abs(vA.dot(normal)) > 0.06 || Math.abs(vB.dot(normal)) > 0.06) continue;
+
+                const ax = vA.dot(e1), ay = vA.dot(e2);
+                const bx = vB.dot(e1), by = vB.dot(e2);
+                if (Math.hypot(bx - ax, by - ay) < 0.06) continue;
+
+                // Nếu trung điểm của đoạn sơ cấp nằm hẳn bên trong miền đa giác (không nằm trên cạnh biên),
+                // nghĩa là đoạn thẳng này cắt qua phần trong của đa giác (dây cung hình học chia miền)
+                const mx = (ax + bx) * 0.5;
+                const my = (ay + by) * 0.5;
+                if (isStrictlyInside2D(mx, my, 0.04)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         function buildCoplanarAdjacencyWithOnEdgePoints(excludeP1Id = null, excludeP2Id = null) {
             const adj = {};
-            geoState.points.forEach(p => { if (!p.hidden) adj[p.id] = []; });
+            geoState.points.forEach(p => {
+                if (!p.hidden && !p.isConstructedPlaneCorner) adj[p.id] = [];
+            });
             const addAdjEdge = (u, v) => {
                 if (u === v) return;
                 if (excludeP1Id && excludeP2Id && ((u === excludeP1Id && v === excludeP2Id) || (u === excludeP2Id && v === excludeP1Id))) return;
@@ -8755,38 +8876,13 @@
                 if (adj[v] && !adj[v].includes(u)) adj[v].push(u);
             };
 
+            // Hỗ trợ cả đoạn thẳng (isLine: false) và đường thẳng kéo dài (isLine: true) cùng tất cả các điểm nằm trên đường đó
             geoState.segments.forEach(s => {
-                if (s.hidden || s.isLine) return;
-                addAdjEdge(s.p1Id, s.p2Id);
-                const P1 = geoState.points.find(p => p.id === s.p1Id);
-                const P2 = geoState.points.find(p => p.id === s.p2Id);
-                if (!P1 || !P2) return;
-                const v1 = new THREE.Vector3(P1.x, P1.y, P1.z);
-                const v2 = new THREE.Vector3(P2.x, P2.y, P2.z);
-                const ab = new THREE.Vector3().subVectors(v2, v1);
-                const lenSq = ab.lengthSq();
-                if (lenSq < 1e-6) return;
-
-                // Hỗ trợ cả các điểm thuộc cạnh (onEdge) và các điểm giao điểm nằm trên cạnh tham gia khép kín miền đa giác
-                const onSegPts = [];
-                geoState.points.forEach(pt => {
-                    if (pt.hidden || pt.id === s.p1Id || pt.id === s.p2Id) return;
-                    const vP = new THREE.Vector3(pt.x, pt.y, pt.z);
-                    const tProj = new THREE.Vector3().subVectors(vP, v1).dot(ab) / lenSq;
-                    if (tProj > 0.01 && tProj < 0.99) {
-                        const proj = v1.clone().addScaledVector(ab, tProj);
-                        if (proj.distanceTo(vP) < 0.03) {
-                            onSegPts.push({ id: pt.id, t: tProj });
-                        }
-                    }
-                });
-                onSegPts.sort((a, b) => a.t - b.t);
-                if (onSegPts.length > 0) {
-                    const chain = [s.p1Id, ...onSegPts.map(item => item.id), s.p2Id];
-                    for (let i = 0; i < chain.length; i++) {
-                        for (let j = i + 1; j < chain.length; j++) {
-                            addAdjEdge(chain[i], chain[j]);
-                        }
+                if (s.hidden) return;
+                const chain = getOrderedCollinearPointIdsAlongSegmentOrLine(s);
+                for (let i = 0; i < chain.length; i++) {
+                    for (let j = i + 1; j < chain.length; j++) {
+                        addAdjEdge(chain[i], chain[j]);
                     }
                 }
             });
@@ -8982,19 +9078,8 @@
                 if (isLine) existingSeg.isLine = true;
             }
 
-            if (isLine) return;
-
-            const adj = buildCoplanarAdjacencyWithOnEdgePoints(p1Id, p2Id);
-            const cycles = findChordlessCoplanarCyclesForPair(adj, p1Id, p2Id, 600);
-            // Ưu tiên xét các mặt có diện tích lớn trước để không tạo mặt con nằm trong mặt lớn hơn
-            cycles.sort((a, b) => {
-                const ptsA = a.map(id => geoState.points.find(p => p.id === id)).filter(Boolean);
-                const ptsB = b.map(id => geoState.points.find(p => p.id === id)).filter(Boolean);
-                return computePolygonArea3DWorld(ptsB) - computePolygonArea3DWorld(ptsA);
-            });
-            cycles.forEach(cycleIds => {
-                addFaceIfNotExists(cycleIds);
-            });
+            // Tự động phát hiện và tạo bề mặt cho mọi miền khép kín được tạo bởi cả đoạn thẳng và đường thẳng kéo dài
+            autoDetectClosedFacesFromSegments();
         }
 
         function hasCycleChord(cycleIds, adj) {
@@ -9041,11 +9126,16 @@
                 if (path.length >= 6) continue;
 
                 for (const next of (adj[last] || [])) {
+                    if (next === p1Id) continue;
+                    if (path.length === 1 && next !== p2Id && isCollinearTurn(p2Id, p1Id, next)) {
+                        continue;
+                    }
                     if (path.length >= 2 && isCollinearTurn(path[path.length - 2], last, next)) {
                         continue;
                     }
                     if (next === p2Id) {
                         if (path.length >= 2) {
+                            if (isCollinearTurn(last, p2Id, p1Id)) continue;
                             const cycleIds = [...path, p2Id];
                             const pts = cycleIds.map(id => ptById[id]);
                             if (arePointsCoplanar(cycleIds) && isValidSimplePolygon3D(pts)) {
@@ -9076,7 +9166,7 @@
             return true;
         }
 
-        function addFaceIfNotExists(pointIds) {
+        function addFaceIfNotExists(pointIds, options = {}) {
             if (!pointIds || pointIds.length < 3) return null;
             const pts = pointIds.map(id => geoState.points.find(pt => pt.id === id));
             if (pts.some(p => !p || p.isConstructedPlaneCorner)) return null;
@@ -9085,6 +9175,11 @@
             const sortedNew = [...pointIds].sort().join(',');
             const existsSameVertices = geoState.faces.some(f => !f.isColorPatch && [...f.pointIds].sort().join(',') === sortedNew);
             if (existsSameVertices) return null;
+
+            // Loại bỏ các chu trình gộp (composite cycle) bị chia cắt bởi một đoạn thẳng bên trong (ví dụ SCK chứa cạnh SD ở giữa)
+            if (!options.allowChord && hasGeometricChord3D(pts, options.elementarySegs || null)) {
+                return null;
+            }
 
             // Không tạo bề mặt nhỏ nằm bên trong bề mặt lớn hơn đã tồn tại
             const containedInExisting = geoState.faces.some(f => {
@@ -9106,14 +9201,16 @@
                 hidden: false
             };
 
-            // Nếu mặt mới tạo bao chứa các bề mặt nhỏ hơn đã được tạo trước đó trên cùng mặt phẳng, loại bỏ các mặt nhỏ
-            for (let i = geoState.faces.length - 1; i >= 0; i--) {
-                const oldFace = geoState.faces[i];
-                if (oldFace.isColorPatch) continue;
-                const oldPts = oldFace.pointIds.map(id => geoState.points.find(pt => pt.id === id)).filter(Boolean);
-                if (oldPts.length >= 3 && isPolygonContainedInPolygon3D(oldPts, pts, 0.045)) {
-                    migrateReplacedFaceReferences(oldFace, created);
-                    geoState.faces.splice(i, 1);
+            // Nếu mặt mới tạo bao chứa các bề mặt nhỏ hơn đã được tạo trước đó trên cùng mặt phẳng (khi mặt mới không có dây cung cắt ngang), loại bỏ các mặt nhỏ
+            if (!hasGeometricChord3D(pts, options.elementarySegs || null)) {
+                for (let i = geoState.faces.length - 1; i >= 0; i--) {
+                    const oldFace = geoState.faces[i];
+                    if (oldFace.isColorPatch) continue;
+                    const oldPts = oldFace.pointIds.map(id => geoState.points.find(pt => pt.id === id)).filter(Boolean);
+                    if (oldPts.length >= 3 && isPolygonContainedInPolygon3D(oldPts, pts, 0.045)) {
+                        migrateReplacedFaceReferences(oldFace, created);
+                        geoState.faces.splice(i, 1);
+                    }
                 }
             }
 
@@ -9123,15 +9220,38 @@
 
         function autoDetectClosedFacesFromSegments() {
             const adj = buildCoplanarAdjacencyWithOnEdgePoints();
-            const candidateCycles = [];
+            const elementarySegs = collectElementaryCollinearSegments();
+            const pairSet = new Set();
+            const searchPairs = [];
+            const addSearchPair = (u, v) => {
+                if (!u || !v || u === v) return;
+                const key = u < v ? `${u}|${v}` : `${v}|${u}`;
+                if (pairSet.has(key)) return;
+                pairSet.add(key);
+                searchPairs.push([u, v]);
+            };
+
+            elementarySegs.forEach(([u, v]) => addSearchPair(u, v));
             geoState.segments.forEach(s => {
-                if (s.hidden || s.isLine) return;
-                findChordlessCoplanarCyclesForPair(adj, s.p1Id, s.p2Id, 500).forEach(cycleIds => {
+                if (s.hidden) return;
+                addSearchPair(s.p1Id, s.p2Id);
+            });
+
+            const seenCycleKeys = new Set();
+            const candidateCycles = [];
+            searchPairs.forEach(([u, v]) => {
+                const adjWithoutUV = { ...adj };
+                if (adjWithoutUV[u]) adjWithoutUV[u] = adjWithoutUV[u].filter(id => id !== v);
+                if (adjWithoutUV[v]) adjWithoutUV[v] = adjWithoutUV[v].filter(id => id !== u);
+                findChordlessCoplanarCyclesForPair(adjWithoutUV, u, v, 500).forEach(cycleIds => {
+                    const key = [...cycleIds].sort().join(',');
+                    if (seenCycleKeys.has(key)) return;
+                    seenCycleKeys.add(key);
                     candidateCycles.push(cycleIds);
                 });
             });
 
-            // Sắp xếp giảm dần theo diện tích để mặt lớn được ưu tiên tạo trước, ngăn mặt nhỏ bên trong sinh ra
+            // Sắp xếp giảm dần theo diện tích để mặt hợp lệ lớn được ưu tiên tạo trước, ngăn mặt nhỏ bên trong sinh ra
             candidateCycles.sort((a, b) => {
                 const ptsA = a.map(id => geoState.points.find(p => p.id === id)).filter(Boolean);
                 const ptsB = b.map(id => geoState.points.find(p => p.id === id)).filter(Boolean);
@@ -9140,7 +9260,7 @@
 
             const newlyCreatedFaces = [];
             candidateCycles.forEach(cycleIds => {
-                const nf = addFaceIfNotExists(cycleIds);
+                const nf = addFaceIfNotExists(cycleIds, { elementarySegs });
                 if (nf) newlyCreatedFaces.push(nf);
             });
             return newlyCreatedFaces;
@@ -9157,7 +9277,7 @@
                     geoState.segments.push({ id: 'seg_' + Date.now() + Math.random(), p1Id: p1, p2Id: p2, isLine: false, hidden: false, trace: false });
                 }
             }
-            addFaceIfNotExists(pointIds);
+            addFaceIfNotExists(pointIds, { allowChord: true });
             const autoFaces = autoDetectClosedFacesFromSegments();
             if (autoFaces.length > 0) {
                 const guideSpan = document.getElementById('guide-span');
@@ -13563,6 +13683,7 @@
                 }
 
                 recomputeAllDependentGeometry();
+                autoDetectClosedFacesFromSegments();
                 updateSceneFromState();
                 setGuideHtml(t(
                     `Đã xác định giao tuyến của hai mặt phẳng <b>${surf1.name}</b> và <b>${surf2.name}</b>!`,
@@ -15009,6 +15130,22 @@
             }) || null;
         }
 
+        function isPointLyingOnSegmentOrLine(pt, seg, tol = 0.08) {
+            if (!pt || !seg) return false;
+            if (pt.id === seg.p1Id || pt.id === seg.p2Id) return true;
+            const s1 = geoState.points.find(p => p.id === seg.p1Id && !p.hidden);
+            const s2 = geoState.points.find(p => p.id === seg.p2Id && !p.hidden);
+            if (!s1 || !s2) return false;
+            const ab = new THREE.Vector3(s2.x - s1.x, s2.y - s1.y, s2.z - s1.z);
+            const lenSq = ab.lengthSq();
+            if (lenSq < 1e-8) return false;
+            const ap = new THREE.Vector3(pt.x - s1.x, pt.y - s1.y, pt.z - s1.z);
+            const tParam = ap.dot(ab) / lenSq;
+            if (!seg.isLine && (tParam < -0.04 || tParam > 1.04)) return false;
+            const proj = new THREE.Vector3(s1.x, s1.y, s1.z).addScaledVector(ab, tParam);
+            return proj.distanceTo(new THREE.Vector3(pt.x, pt.y, pt.z)) < tol;
+        }
+
         function intersectSelectedCoplanarSegmentsToPointId(segA, segB) {
             if (!segA || !segB || segA.id === segB.id) return null;
             if (segA.p1Id === segB.p1Id || segA.p1Id === segB.p2Id) return segA.p1Id;
@@ -15020,28 +15157,15 @@
             const b2 = geoState.points.find(p => p.id === segB.p2Id && !p.hidden);
             if (!a1 || !a2 || !b1 || !b2) return null;
 
-            // Kiểm tra điểm đầu mút của đoạn này có nằm trên đoạn kia không (ví dụ M thuộc SA, chọn SA và MN)
-            const endpoints = [
-                { pt: a1, other1: b1, other2: b2 },
-                { pt: a2, other1: b1, other2: b2 },
-                { pt: b1, other1: a1, other2: a2 },
-                { pt: b2, other1: a1, other2: a2 }
-            ];
-            for (const item of endpoints) {
-                const ab = new THREE.Vector3(item.other2.x - item.other1.x, item.other2.y - item.other1.y, item.other2.z - item.other1.z);
-                const lenSq = ab.lengthSq();
-                if (lenSq < 1e-8) continue;
-                const ap = new THREE.Vector3(item.pt.x - item.other1.x, item.pt.y - item.other1.y, item.pt.z - item.other1.z);
-                const tParam = ap.dot(ab) / lenSq;
-                if (tParam >= -0.03 && tParam <= 1.03) {
-                    const proj = new THREE.Vector3(item.other1.x, item.other1.y, item.other1.z).addScaledVector(ab, tParam);
-                    if (proj.distanceTo(new THREE.Vector3(item.pt.x, item.pt.y, item.pt.z)) < 0.08) {
-                        return item.pt.id;
-                    }
+            // 1. Kiểm tra bất kỳ điểm nào hiện có trên hình đồng thời nằm trên cả segA và segB (hỗ trợ cả đoạn thẳng và đường thẳng kéo dài)
+            for (const pt of geoState.points) {
+                if (pt.hidden || pt.isConstructedPlaneCorner) continue;
+                if (isPointLyingOnSegmentOrLine(pt, segA, 0.08) && isPointLyingOnSegmentOrLine(pt, segB, 0.08)) {
+                    return pt.id;
                 }
             }
 
-            // Kiểm tra giao điểm nội bộ của 2 đoạn thẳng nếu đã có điểm tạo sẵn tại giao điểm đó
+            // 2. Kiểm tra giao điểm hình học của 2 đường/đoạn thẳng nếu có điểm gần giao điểm đó
             const p1 = new THREE.Vector3(a1.x, a1.y, a1.z);
             const d1 = new THREE.Vector3(a2.x - a1.x, a2.y - a1.y, a2.z - a1.z);
             const p2 = new THREE.Vector3(b1.x, b1.y, b1.z);
@@ -15052,13 +15176,15 @@
             const diff = new THREE.Vector3().subVectors(p2, p1);
             const t1 = new THREE.Vector3().crossVectors(diff, d2).dot(crossD) / denom;
             const t2 = new THREE.Vector3().crossVectors(diff, d1).dot(crossD) / denom;
-            if (t1 >= -0.03 && t1 <= 1.03 && t2 >= -0.03 && t2 <= 1.03) {
+            const validT1 = segA.isLine ? true : (t1 >= -0.04 && t1 <= 1.04);
+            const validT2 = segB.isLine ? true : (t2 >= -0.04 && t2 <= 1.04);
+            if (validT1 && validT2) {
                 const hitA = p1.clone().addScaledVector(d1, t1);
                 const hitB = p2.clone().addScaledVector(d2, t2);
-                if (hitA.distanceTo(hitB) < 0.08) {
+                if (hitA.distanceTo(hitB) < 0.09) {
                     const mid = hitA.clone().lerp(hitB, 0.5);
                     for (const pt of geoState.points) {
-                        if (pt.hidden) continue;
+                        if (pt.hidden || pt.isConstructedPlaneCorner) continue;
                         if (Math.hypot(pt.x - mid.x, pt.y - mid.y, pt.z - mid.z) < 0.12) {
                             return pt.id;
                         }
@@ -15072,7 +15198,7 @@
             const k = segs.length;
             if (k < 3 || k > 8) return null;
 
-            // Ma trận giao điểm giữa các đoạn thẳng được chọn
+            // Ma trận giao điểm giữa các đoạn/đường thẳng được chọn
             const adj = Array.from({ length: k }, () => Array(k).fill(null));
             for (let i = 0; i < k; i++) {
                 for (let j = i + 1; j < k; j++) {
@@ -15084,31 +15210,36 @@
                 }
             }
 
-            // Tìm chu trình Hamilton qua k đoạn thẳng sao cho k đỉnh giao liên tiếp đôi một phân biệt và đồng phẳng
+            // Tìm chu trình Hamilton qua k đường/đoạn thẳng sao cho k đỉnh giao liên tiếp đôi một phân biệt và tạo thành đa giác đơn đồng phẳng
             const used = Array(k).fill(false);
             const order = [0];
             used[0] = true;
+            const validCycles = [];
 
             function dfs(depth) {
                 if (depth === k) {
                     const lastSegIdx = order[k - 1];
                     const firstSegIdx = order[0];
-                    if (!adj[lastSegIdx][firstSegIdx]) return null;
+                    if (!adj[lastSegIdx][firstSegIdx]) return;
                     const cyclePtIds = [];
                     const seenPtIds = new Set();
                     for (let m = 0; m < k; m++) {
                         const u = order[m];
                         const v = order[(m + 1) % k];
                         const pId = adj[u][v];
-                        if (!pId || seenPtIds.has(pId)) return null;
+                        if (!pId || seenPtIds.has(pId)) return;
                         seenPtIds.add(pId);
                         cyclePtIds.push(pId);
                     }
-                    const coplanarIds = findCoplanarOrderedPolygonIds(cyclePtIds);
-                    if (coplanarIds && coplanarIds.length === k) {
-                        return coplanarIds;
+                    const cyclePts = cyclePtIds.map(id => geoState.points.find(p => p.id === id && !p.hidden));
+                    if (cyclePts.some(p => !p)) return;
+                    if (arePointsCoplanar(cyclePtIds) && isValidSimplePolygon3D(cyclePts)) {
+                        validCycles.push({
+                            pointIds: cyclePtIds,
+                            area: computePolygonArea3DWorld(cyclePts)
+                        });
                     }
-                    return null;
+                    return;
                 }
 
                 const prevSegIdx = order[depth - 1];
@@ -15116,15 +15247,16 @@
                     if (used[nxt] || !adj[prevSegIdx][nxt]) continue;
                     used[nxt] = true;
                     order.push(nxt);
-                    const found = dfs(depth + 1);
-                    if (found) return found;
+                    dfs(depth + 1);
                     order.pop();
                     used[nxt] = false;
                 }
-                return null;
             }
 
-            return dfs(1);
+            dfs(1);
+            if (validCycles.length === 0) return null;
+            validCycles.sort((a, b) => a.area - b.area);
+            return validCycles[0].pointIds;
         }
 
         function resolveCurrentColorSelection() {
@@ -15621,11 +15753,17 @@
                     face = findExistingFaceByVertexSet(resolved.pointIds);
                     if (!face) {
                         const newFaceId = 'face_color_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                        const polyName = resolved.pointIds.map(id => {
+                            const p = geoState.points.find(pt => pt.id === id);
+                            return p ? p.name : '';
+                        }).join('');
                         face = {
                             id: newFaceId,
                             pointIds: [...resolved.pointIds],
+                            name: `(${polyName})`,
                             color: colorHex,
                             opacity,
+                            hidden: false,
                             isColorPatch: true
                         };
                         geoState.faces.push(face);
