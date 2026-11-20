@@ -6080,6 +6080,100 @@
             };
         }
 
+        function computeRevolveSilhouetteSegments3D(revGeom, viewDir, keyRingIndices = null) {
+            const empty = {
+                branch1: [],
+                branch2: [],
+                frontDir: new THREE.Vector3(1, 0, 0),
+                sideDir: new THREE.Vector3(0, 0, 1)
+            };
+            if (!revGeom || !revGeom.stations || revGeom.stations.length < 2 || !viewDir) return empty;
+            const vLen = viewDir.length();
+            if (vLen < 1e-8) return empty;
+
+            const camDir = viewDir.clone().divideScalar(vLen);
+            const axisDir = revGeom.axisDir.clone().normalize();
+            const cA = camDir.dot(axisDir);
+            const camPerp = camDir.clone().addScaledVector(axisDir, -cA);
+            const cP = camPerp.length();
+            if (cP < 1e-6) return empty;
+
+            const frontDir = camPerp.divideScalar(cP);
+            const sideDir = new THREE.Vector3().crossVectors(axisDir, frontDir);
+            const tanElev = cA / cP;
+            const keySet = new Set(Array.isArray(keyRingIndices) ? keyRingIndices : (revGeom.keyRingIndices || []));
+
+            const stations = revGeom.stations;
+            const n = stations.length;
+            const bandCos = new Array(n - 1).fill(null);
+
+            for (let i = 0; i < n - 1; i++) {
+                const s0 = stations[i];
+                const s1 = stations[i + 1];
+                if (s0.radius < 1e-6 && s1.radius < 1e-6) continue;
+                const dh = s1.axialCoord - s0.axialCoord;
+                const dr = s1.radius - s0.radius;
+                if (Math.hypot(dh, dr) < 1e-7) continue;
+                if (Math.abs(dh) <= 1e-7) continue;
+                const cosPhi = (dr / dh) * tanElev;
+                if (!Number.isFinite(cosPhi) || Math.abs(cosPhi) >= 1 - 1e-6) continue;
+                bandCos[i] = cosPhi;
+            }
+
+            const branch1 = [];
+            const branch2 = [];
+
+            for (let i = 0; i < n - 1; i++) {
+                const cBand = bandCos[i];
+                if (cBand === null) continue;
+                const s0 = stations[i];
+                const s1 = stations[i + 1];
+
+                let cos0 = cBand;
+                let cos1 = cBand;
+
+                if (i > 0 && !keySet.has(i) && s0.radius > 1e-4 && bandCos[i - 1] !== null) {
+                    const prevC = bandCos[i - 1];
+                    if (Math.abs(cBand - prevC) < 0.25) {
+                        const avg = 0.5 * (prevC + cBand);
+                        if (Math.abs(avg) < 1 - 1e-6) cos0 = avg;
+                    }
+                }
+                if (i + 1 < n - 1 && !keySet.has(i + 1) && s1.radius > 1e-4 && bandCos[i + 1] !== null) {
+                    const nextC = bandCos[i + 1];
+                    if (Math.abs(nextC - cBand) < 0.25) {
+                        const avg = 0.5 * (cBand + nextC);
+                        if (Math.abs(avg) < 1 - 1e-6) cos1 = avg;
+                    }
+                }
+
+                const sin0 = Math.sqrt(Math.max(0, 1 - cos0 * cos0));
+                const sin1 = Math.sqrt(Math.max(0, 1 - cos1 * cos1));
+
+                const dir0Plus = frontDir.clone().multiplyScalar(cos0).addScaledVector(sideDir, sin0);
+                const dir1Plus = frontDir.clone().multiplyScalar(cos1).addScaledVector(sideDir, sin1);
+                const dir0Minus = frontDir.clone().multiplyScalar(cos0).addScaledVector(sideDir, -sin0);
+                const dir1Minus = frontDir.clone().multiplyScalar(cos1).addScaledVector(sideDir, -sin1);
+
+                branch1.push({
+                    bandIndex: i,
+                    p0: s0.axisFoot.clone().addScaledVector(dir0Plus, s0.radius),
+                    p1: s1.axisFoot.clone().addScaledVector(dir1Plus, s1.radius),
+                    dir0: dir0Plus,
+                    dir1: dir1Plus
+                });
+                branch2.push({
+                    bandIndex: i,
+                    p0: s0.axisFoot.clone().addScaledVector(dir0Minus, s0.radius),
+                    p1: s1.axisFoot.clone().addScaledVector(dir1Minus, s1.radius),
+                    dir0: dir0Minus,
+                    dir1: dir1Minus
+                });
+            }
+
+            return { branch1, branch2, frontDir, sideDir };
+        }
+
         function extractRevolveSolidGeometry(sol, radialSegments = 72, axialSubSteps = 12) {
             if (!sol || sol.kind !== 'revolve') return null;
 
@@ -8414,7 +8508,9 @@
             if (dirVec) lineObj.userData.unitDir = dirVec;
             for (let i = 1; i < offsets.length; i++) {
                 const [ox, oy, oz] = offsets[i];
-                const child = new THREE.Line(lineObj.geometry, strandMat);
+                const child = lineObj.isLineSegments
+                    ? new THREE.LineSegments(lineObj.geometry, strandMat)
+                    : new THREE.Line(lineObj.geometry, strandMat);
                 child.position.set(ox, oy, oz);
                 child.renderOrder = lineObj.renderOrder;
                 lineObj.add(child);
@@ -9191,7 +9287,7 @@
                             solidMeshes.push(rSolid);
                         });
 
-                        // Hai đường kinh tuyến biên (Silhouette contours) tự động cập nhật theo góc nhìn Camera
+                        // Hai đường kinh tuyến biên (Silhouette contours) tự động cập nhật chính xác theo góc nhìn Camera
                         const makeSilPair = () => {
                             const dGeo = new THREE.BufferGeometry();
                             const dMat = new THREE.LineDashedMaterial({
@@ -9202,7 +9298,7 @@
                                 depthFunc: THREE.GreaterDepth,
                                 depthWrite: false
                             });
-                            const dLine = new THREE.Line(dGeo, dMat);
+                            const dLine = new THREE.LineSegments(dGeo, dMat);
                             dLine.renderOrder = 4;
                             applyLineThicknessStrands(dLine, -0.3);
                             scene.add(dLine);
@@ -9215,7 +9311,7 @@
                                 depthTest: true,
                                 depthFunc: THREE.LessEqualDepth
                             });
-                            const sLine = new THREE.Line(sGeo, sMat);
+                            const sLine = new THREE.LineSegments(sGeo, sMat);
                             sLine.renderOrder = 5;
                             applyLineThicknessStrands(sLine, 0);
                             scene.add(sLine);
@@ -9228,33 +9324,30 @@
 
                         const updateRevolveSil = (viewDir) => {
                             const camDir = viewDir.clone().normalize();
-                            let sideDir = new THREE.Vector3().crossVectors(revGeom.axisDir, camDir);
-                            if (sideDir.lengthSq() < 1e-8) {
-                                sideDir = revGeom.uAxis.clone();
-                            } else {
-                                sideDir.normalize();
-                            }
-                            const pts1 = [];
-                            const pts2 = [];
-                            for (const st of revGeom.stations) {
-                                pts1.push(
-                                    st.axisFoot.clone()
-                                        .addScaledVector(sideDir, st.radius)
-                                        .addScaledVector(camDir, 0.26)
-                                );
-                                pts2.push(
-                                    st.axisFoot.clone()
-                                        .addScaledVector(sideDir, -st.radius)
-                                        .addScaledVector(camDir, 0.26)
-                                );
-                            }
-                            sil1.dLine.geometry.setFromPoints(pts1);
-                            sil1.dLine.computeLineDistances();
-                            sil1.sLine.geometry.setFromPoints(pts1);
-
-                            sil2.dLine.geometry.setFromPoints(pts2);
-                            sil2.dLine.computeLineDistances();
-                            sil2.sLine.geometry.setFromPoints(pts2);
+                            const silRes = computeRevolveSilhouetteSegments3D(revGeom, camDir, revGeom.keyRingIndices);
+                            const applyBranch = (pair, segs) => {
+                                const pts = [];
+                                const dists = [];
+                                let runningDist = 0;
+                                let prevEnd = null;
+                                for (const seg of segs) {
+                                    if (!prevEnd || prevEnd.distanceToSquared(seg.p0) > 1e-6) {
+                                        runningDist = 0;
+                                    }
+                                    const segLen = seg.p0.distanceTo(seg.p1);
+                                    pts.push(seg.p0.clone().addScaledVector(camDir, 0.28));
+                                    dists.push(runningDist);
+                                    runningDist += segLen;
+                                    pts.push(seg.p1.clone().addScaledVector(camDir, 0.28));
+                                    dists.push(runningDist);
+                                    prevEnd = seg.p1;
+                                }
+                                pair.dLine.geometry.setFromPoints(pts);
+                                pair.dLine.geometry.setAttribute('lineDistance', new THREE.Float32BufferAttribute(dists, 1));
+                                pair.sLine.geometry.setFromPoints(pts);
+                            };
+                            applyBranch(sil1, silRes.branch1);
+                            applyBranch(sil2, silRes.branch2);
                         };
                         updateRevolveSil(getCameraViewToEyeDir());
                         dynamicSilhouetteUpdaters.push(updateRevolveSil);
@@ -10320,38 +10413,33 @@
                         } else if (sol.kind === 'revolve') {
                             const revGeom = extractRevolveSolidGeometry(sol, 48);
                             if (revGeom && revGeom.stations && revGeom.stations.length >= 2) {
-                                const camDir = viewDir.clone().normalize();
-                                let sideDir = new THREE.Vector3().crossVectors(revGeom.axisDir, camDir);
-                                if (sideDir.lengthSq() < 1e-8) sideDir = revGeom.uAxis.clone();
-                                else sideDir.normalize();
-                                for (let i = 0; i < revGeom.stations.length - 1; i++) {
-                                    const stA = revGeom.stations[i];
-                                    const stB = revGeom.stations[i + 1];
-                                    for (const sgn of [1, -1]) {
-                                        const pA = stA.axisFoot.clone().addScaledVector(sideDir, sgn * stA.radius);
-                                        const pB = stB.axisFoot.clone().addScaledVector(sideDir, sgn * stB.radius);
-                                        const segHit = testScreenSegmentSnap(pA, pB);
-                                        if (segHit && segHit.dist < bestSilDist) {
-                                            bestSilDist = segHit.dist;
-                                            const exactPos = pA.clone().lerp(pB, segHit.t);
-                                            const uRatio = (i + segHit.t) / (revGeom.stations.length - 1);
-                                            const angle = Math.atan2(sideDir.dot(revGeom.vAxis) * sgn, sideDir.dot(revGeom.uAxis) * sgn);
-                                            const targetObj = isSolidObjectTool
-                                                ? { type: 'solid', solidId: sol.id, solidKind: 'revolve', pos: exactPos, label: solidName }
-                                                : {
-                                                    type: 'revolve',
-                                                    solidId: sol.id,
-                                                    uRatio,
-                                                    angle,
-                                                    pos: exactPos,
-                                                    label: t(`Trên đường sinh ${solidName}`, `On generator of ${solidName}`)
-                                                };
-                                            bestSilCand = {
-                                                screenDist: segHit.dist,
-                                                camDepth: exactPos.distanceTo(raycaster.ray.origin),
-                                                target: targetObj
+                                const silRes = computeRevolveSilhouetteSegments3D(revGeom, viewDir, revGeom.keyRingIndices);
+                                const allSilSegs = [...silRes.branch1, ...silRes.branch2];
+                                for (const seg of allSilSegs) {
+                                    const segHit = testScreenSegmentSnap(seg.p0, seg.p1);
+                                    if (segHit && segHit.dist < bestSilDist) {
+                                        bestSilDist = segHit.dist;
+                                        const exactPos = seg.p0.clone().lerp(seg.p1, segHit.t);
+                                        const uRatio = (seg.bandIndex + segHit.t) / (revGeom.stations.length - 1);
+                                        const interpDir = seg.dir0.clone().lerp(seg.dir1, segHit.t);
+                                        const angle = interpDir.lengthSq() > 1e-10
+                                            ? Math.atan2(interpDir.dot(revGeom.vAxis), interpDir.dot(revGeom.uAxis))
+                                            : 0;
+                                        const targetObj = isSolidObjectTool
+                                            ? { type: 'solid', solidId: sol.id, solidKind: 'revolve', pos: exactPos, label: solidName }
+                                            : {
+                                                type: 'revolve',
+                                                solidId: sol.id,
+                                                uRatio,
+                                                angle,
+                                                pos: exactPos,
+                                                label: t(`Trên đường sinh ${solidName}`, `On generator of ${solidName}`)
                                             };
-                                        }
+                                        bestSilCand = {
+                                            screenDist: segHit.dist,
+                                            camDepth: exactPos.distanceTo(raycaster.ray.origin),
+                                            target: targetObj
+                                        };
                                     }
                                 }
                             }
