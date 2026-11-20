@@ -3933,9 +3933,24 @@
                     }
                 });
 
-                // 2b. Kiểm tra các Đường cong nội suy có chứa điểm bị xóa
+                // 2b. Kiểm tra các Đường cong nội suy / Đường giao tuyến có phụ thuộc vào đối tượng bị xóa
                 (geoState.curves || []).forEach(curv => {
                     if (delCurves.has(curv.id)) return;
+                    if (curv.mode === 'surfaceIntersection') {
+                        const isSurfDep = (surf) => {
+                            if (!surf) return false;
+                            if (surf.solidId && delSolids.has(surf.solidId)) return true;
+                            if (surf.faceId && delFaces.has(surf.faceId)) return true;
+                            if (surf.circleId && delCircles.has(surf.circleId)) return true;
+                            if (surf.planeId && isPlaneRefDependentOnDeleted(surf.planeId, delPoints, delFaces, delCircles)) return true;
+                            return false;
+                        };
+                        if (isSurfDep(curv.surf1) || isSurfDep(curv.surf2)) {
+                            delCurves.add(curv.id);
+                            changed = true;
+                        }
+                        return;
+                    }
                     const remainingPts = (curv.pointIds || []).filter(pid => !delPoints.has(pid));
                     if (remainingPts.length < 2) {
                         delCurves.add(curv.id);
@@ -4104,9 +4119,16 @@
                 const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId);
                 return sol ? `${t('mặt cầu', 'sphere')} ${sol.name || '(S)'}` : t('mặt cầu', 'sphere');
             }
-            if (pt.rule.type === 'onCone' || pt.rule.type === 'onFrustum') {
+            if (pt.rule.type === 'onCone' || pt.rule.type === 'onFrustum' || pt.rule.type === 'onRevolve') {
                 const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId);
                 return sol ? `${sol.name || t('mặt tròn xoay', 'solid surface')}` : t('mặt tròn xoay', 'solid surface');
+            }
+            if (pt.rule.type === 'onCurve') {
+                const curv = (geoState.curves || []).find(c => c.id === pt.rule.curveId);
+                if (curv && curv.mode === 'surfaceIntersection') {
+                    return curv.name || t('giao tuyến', 'intersection curve');
+                }
+                return curv ? `${t('đường cong', 'curve')} ${curv.name || '(C)'}` : t('đường cong', 'curve');
             }
             if (['intersection', 'lineFaceIntersection', 'lineCircleIntersection', 'lineSolidIntersection', 'generatorFaceIntersection', 'lineBasePlaneIntersection'].includes(pt.rule.type)) {
                 return t('giao điểm đường - mặt', 'line-surface intersection');
@@ -4142,7 +4164,7 @@
             if (!panel || !containerEl) return;
 
             const animPoints = geoState.points.filter(pt =>
-                !pt.hidden && pt.rule && ['onEdge', 'onCircle', 'onCircleDisk', 'onFace', 'onSphere', 'onCone', 'onFrustum'].includes(pt.rule.type) && (pt.animUI || pt.animating)
+                !pt.hidden && pt.rule && ['onEdge', 'onCircle', 'onCircleDisk', 'onFace', 'onSphere', 'onCone', 'onFrustum', 'onRevolve', 'onCurve'].includes(pt.rule.type) && (pt.animUI || pt.animating)
             );
 
             if (animPoints.length === 0 || isAnimPanelDismissed) {
@@ -4241,7 +4263,7 @@
 
         function toggleAllActiveAnimations() {
             const animPoints = geoState.points.filter(pt =>
-                !pt.hidden && pt.rule && ['onEdge', 'onCircle', 'onCircleDisk', 'onFace', 'onSphere', 'onCone', 'onFrustum'].includes(pt.rule.type) && (pt.animUI || pt.animating)
+                !pt.hidden && pt.rule && ['onEdge', 'onCircle', 'onCircleDisk', 'onFace', 'onSphere', 'onCone', 'onFrustum', 'onRevolve', 'onCurve'].includes(pt.rule.type) && (pt.animUI || pt.animating)
             );
             const anyPlaying = animPoints.some(pt => pt.animating);
             animPoints.forEach(pt => {
@@ -4423,6 +4445,7 @@
         let hoveredPointId = null;
         let hoveredCircleId = null;
         let hoveredCurveId = null;
+        let hoveredPlaneBorderSegId = null;
         let activeInterpCurveState = { curveId: null, lockedPlaneSpec: null };
 
         let isCreating3DPoint = false;
@@ -4432,6 +4455,8 @@
 
         let isDraggingExistingPoint = false;
         let draggedPointId = null;
+        let isDraggingPlaneBorder = false;
+        let draggedPlaneBorder = null;
         let dragPlane = null;
         let dragStartMouseY = 0;
         let dragStartPointY = 0;
@@ -5623,6 +5648,70 @@
             return { basisU, basisV };
         }
 
+        function computePlanePatchCorners3D(patchCenter, dirA, dirB, bounds) {
+            const { uMin, uMax, vMin, vMax } = bounds;
+            return [
+                patchCenter.clone().addScaledVector(dirA, uMax).addScaledVector(dirB, vMax),
+                patchCenter.clone().addScaledVector(dirA, uMin).addScaledVector(dirB, vMax),
+                patchCenter.clone().addScaledVector(dirA, uMin).addScaledVector(dirB, vMin),
+                patchCenter.clone().addScaledVector(dirA, uMax).addScaledVector(dirB, vMin)
+            ];
+        }
+
+        function computePlaneAffineCoords2D(point3D, patchCenter, dirA, dirB) {
+            const dAA = dirA.dot(dirA);
+            const dBB = dirB.dot(dirB);
+            const dAB = dirA.dot(dirB);
+            const det = dAA * dBB - dAB * dAB;
+            if (Math.abs(det) < 1e-10) return null;
+            const rel = new THREE.Vector3().subVectors(point3D, patchCenter);
+            const rA = rel.dot(dirA);
+            const rB = rel.dot(dirB);
+            const u = (dBB * rA - dAB * rB) / det;
+            const v = (dAA * rB - dAB * rA) / det;
+            if (!Number.isFinite(u) || !Number.isFinite(v)) return null;
+            return { u, v };
+        }
+
+        function computeResizedPlanePatchBounds3D(patchCenter, dirA, dirB, currentBounds, edgeIndex, dragPointOnPlane, minSpan = 0.6, maxExtent = 40) {
+            if (!patchCenter || !dirA || !dirB || !currentBounds || !dragPointOnPlane) return null;
+            if (edgeIndex < 0 || edgeIndex > 3) return null;
+            const coords = computePlaneAffineCoords2D(dragPointOnPlane, patchCenter, dirA, dirB);
+            if (!coords) return null;
+            const nextBounds = {
+                uMin: currentBounds.uMin,
+                uMax: currentBounds.uMax,
+                vMin: currentBounds.vMin,
+                vMax: currentBounds.vMax
+            };
+            if (edgeIndex === 0) {
+                nextBounds.vMax = Math.max(nextBounds.vMin + minSpan, Math.min(maxExtent, coords.v));
+            } else if (edgeIndex === 1) {
+                nextBounds.uMin = Math.min(nextBounds.uMax - minSpan, Math.max(-maxExtent, coords.u));
+            } else if (edgeIndex === 2) {
+                nextBounds.vMin = Math.min(nextBounds.vMax - minSpan, Math.max(-maxExtent, coords.v));
+            } else if (edgeIndex === 3) {
+                nextBounds.uMax = Math.max(nextBounds.uMin + minSpan, Math.min(maxExtent, coords.u));
+            }
+            return {
+                bounds: nextBounds,
+                corners: computePlanePatchCorners3D(patchCenter, dirA, dirB, nextBounds)
+            };
+        }
+
+        function resolvePlanePatchBounds(spec, defaultHalfU, defaultHalfV) {
+            const pb = spec && spec.patchBounds;
+            if (pb && Number.isFinite(pb.uMin) && Number.isFinite(pb.uMax) && Number.isFinite(pb.vMin) && Number.isFinite(pb.vMax)) {
+                return { uMin: pb.uMin, uMax: pb.uMax, vMin: pb.vMin, vMax: pb.vMax };
+            }
+            return {
+                uMin: -defaultHalfU,
+                uMax: defaultHalfU,
+                vMin: -defaultHalfV,
+                vMax: defaultHalfV
+            };
+        }
+
         function evaluateConstructedPlaneSpec(spec) {
             if (!spec || !spec.mode) return null;
             const M = geoState.points.find(p => p.id === spec.mId);
@@ -5650,23 +5739,20 @@
                     : vM.clone();
                 const halfU = Math.max(baseScale, distToLine * 0.65 + 0.85);
                 const halfV = Math.max(baseScale * 0.85, Math.min(halfU, baseScale * 1.25));
-                const uVec = basisU.clone().multiplyScalar(halfU);
-                const vVec = basisV.clone().multiplyScalar(halfV);
-                const corners = [
-                    patchCenter.clone().add(uVec).add(vVec),
-                    patchCenter.clone().sub(uVec).add(vVec),
-                    patchCenter.clone().sub(uVec).sub(vVec),
-                    patchCenter.clone().add(uVec).sub(vVec)
-                ];
+                const patchBounds = resolvePlanePatchBounds(spec, halfU, halfV);
+                const corners = computePlanePatchCorners3D(patchCenter, basisU, basisV, patchBounds);
                 return {
                     origin: vM,
                     normal,
                     basisU,
                     basisV,
+                    dirA: basisU.clone(),
+                    dirB: basisV.clone(),
                     footPos,
                     tFoot,
                     distToLine,
                     patchCenter,
+                    patchBounds,
                     corners
                 };
             }
@@ -5697,21 +5783,19 @@
                 }
                 const { basisU, basisV } = buildOrthonormalBasisFromNormal(normal, preferredDir);
                 const distToPlane = Math.abs(new THREE.Vector3().subVectors(vM, refPlane.origin).dot(normal));
-                const uVec = basisU.clone().multiplyScalar(halfU);
-                const vVec = basisV.clone().multiplyScalar(halfV);
-                const corners = [
-                    vM.clone().add(uVec).add(vVec),
-                    vM.clone().sub(uVec).add(vVec),
-                    vM.clone().sub(uVec).sub(vVec),
-                    vM.clone().add(uVec).sub(vVec)
-                ];
+                const patchCenter = vM.clone();
+                const patchBounds = resolvePlanePatchBounds(spec, halfU, halfV);
+                const corners = computePlanePatchCorners3D(patchCenter, basisU, basisV, patchBounds);
                 return {
                     origin: vM,
                     normal,
                     basisU,
                     basisV,
+                    dirA: basisU.clone(),
+                    dirB: basisV.clone(),
                     distToPlane,
-                    patchCenter: vM.clone(),
+                    patchCenter,
+                    patchBounds,
                     corners
                 };
             }
@@ -5734,24 +5818,22 @@
                 const { basisU, basisV } = buildOrthonormalBasisFromNormal(normal, u1);
                 const baseScale = spec.patchScale || 2.25;
                 // Khi góc giữa 2 đường đủ lớn, dùng chính hướng u1, u2 làm 2 cạnh hình bình hành để trực quan song song với cả 2 đường
-                const dirA = sinAngle >= 0.35 ? u1 : basisU;
-                const dirB = sinAngle >= 0.35 ? u2 : basisV;
-                const uVec = dirA.clone().multiplyScalar(baseScale);
-                const vVec = dirB.clone().multiplyScalar(baseScale * 0.88);
-                const corners = [
-                    vM.clone().add(uVec).add(vVec),
-                    vM.clone().sub(uVec).add(vVec),
-                    vM.clone().sub(uVec).sub(vVec),
-                    vM.clone().add(uVec).sub(vVec)
-                ];
+                const dirA = (sinAngle >= 0.35 ? u1 : basisU).clone();
+                const dirB = (sinAngle >= 0.35 ? u2 : basisV).clone();
+                const patchCenter = vM.clone();
+                const patchBounds = resolvePlanePatchBounds(spec, baseScale, baseScale * 0.88);
+                const corners = computePlanePatchCorners3D(patchCenter, dirA, dirB, patchBounds);
                 return {
                     origin: vM,
                     normal,
                     basisU,
                     basisV,
+                    dirA,
+                    dirB,
                     u1,
                     u2,
-                    patchCenter: vM.clone(),
+                    patchCenter,
+                    patchBounds,
                     corners
                 };
             }
@@ -5931,7 +6013,7 @@
             };
         }
 
-        function extractRevolveSolidGeometry(sol, radialSegments = 72) {
+        function extractRevolveSolidGeometry(sol, radialSegments = 72, axialSubSteps = 12) {
             if (!sol || sol.kind !== 'revolve') return null;
 
             let axisP1 = null;
@@ -5957,7 +6039,8 @@
                 if (!curv || !Array.isArray(curv.pointIds) || curv.pointIds.length < 2) return null;
                 const cPts = curv.pointIds.map(pid => geoState.points.find(p => p.id === pid)).filter(Boolean);
                 if (cPts.length < 2) return null;
-                const polyRes = computeCoplanarInterpolatingPolynomial3D(cPts, 64);
+                const sampleCount = Math.max(64, axialSubSteps * 3);
+                const polyRes = computeCoplanarInterpolatingPolynomial3D(cPts, sampleCount);
                 if (!polyRes || !polyRes.sampledPoints || polyRes.sampledPoints.length < 2) return null;
                 profilePoints = polyRes.sampledPoints;
                 keyRingIndices.add(0);
@@ -5981,7 +6064,7 @@
                 const verts = ordered.vertices;
                 if (verts.length < 2) return null;
 
-                const subSteps = 12;
+                const subSteps = Math.max(4, axialSubSteps);
                 for (let i = 0; i < verts.length - 1; i++) {
                     const vA = verts[i];
                     const vB = verts[i + 1];
@@ -6023,6 +6106,367 @@
                 axisP1,
                 axisP2
             };
+        }
+
+        function evalPointOnRevolveSurface3D(revGeom, uRatio, angle) {
+            if (!revGeom || !revGeom.stations || revGeom.stations.length < 2) return null;
+            const n = revGeom.stations.length;
+            const clampedU = Math.max(0, Math.min(1, Number.isFinite(uRatio) ? uRatio : 0.5));
+            const fIdx = clampedU * (n - 1);
+            const idx = Math.min(n - 2, Math.max(0, Math.floor(fIdx)));
+            const frac = fIdx - idx;
+            const s0 = revGeom.stations[idx];
+            const s1 = revGeom.stations[idx + 1];
+            const axialCoord = s0.axialCoord + (s1.axialCoord - s0.axialCoord) * frac;
+            const radius = Math.max(0, s0.radius + (s1.radius - s0.radius) * frac);
+            const center = revGeom.axisOrigin.clone().addScaledVector(revGeom.axisDir, axialCoord);
+            const ang = Number.isFinite(angle) ? angle : 0;
+            return center
+                .addScaledVector(revGeom.uAxis, radius * Math.cos(ang))
+                .addScaledVector(revGeom.vAxis, radius * Math.sin(ang));
+        }
+
+        function projectPointOntoRevolveSurface3D(point3D, revGeom) {
+            if (!point3D || !revGeom || !revGeom.stations || revGeom.stations.length < 2) return null;
+            const rel = new THREE.Vector3().subVectors(point3D, revGeom.axisOrigin);
+            const h = rel.dot(revGeom.axisDir);
+            const uCoord = rel.dot(revGeom.uAxis);
+            const vCoord = rel.dot(revGeom.vAxis);
+            const r = Math.hypot(uCoord, vCoord);
+            const angle = r > 1e-6 ? Math.atan2(vCoord, uCoord) : 0;
+
+            const stations = revGeom.stations;
+            const n = stations.length;
+            let bestDistSq = Infinity;
+            let bestURatio = 0.5;
+            for (let i = 0; i < n - 1; i++) {
+                const h0 = stations[i].axialCoord;
+                const r0 = stations[i].radius;
+                const h1 = stations[i + 1].axialCoord;
+                const r1 = stations[i + 1].radius;
+                const dh = h1 - h0;
+                const dr = r1 - r0;
+                const lenSq = dh * dh + dr * dr;
+                let tSeg = 0;
+                if (lenSq > 1e-10) {
+                    tSeg = Math.max(0, Math.min(1, ((h - h0) * dh + (r - r0) * dr) / lenSq));
+                }
+                const ph = h0 + tSeg * dh;
+                const pr = r0 + tSeg * dr;
+                const dSq = (h - ph) * (h - ph) + (r - pr) * (r - pr);
+                if (dSq < bestDistSq) {
+                    bestDistSq = dSq;
+                    bestURatio = (i + tSeg) / (n - 1);
+                }
+            }
+            const pos = evalPointOnRevolveSurface3D(revGeom, bestURatio, angle);
+            if (!pos) return null;
+            return { uRatio: bestURatio, angle, pos, distance: Math.sqrt(bestDistSq) };
+        }
+
+        function computeSignedDistanceToRevolveSurface3D(point3D, revGeom, endMargin = 0.08) {
+            if (!point3D || !revGeom || !revGeom.stations || revGeom.stations.length < 2) return null;
+            const rel = new THREE.Vector3().subVectors(point3D, revGeom.axisOrigin);
+            const h = rel.dot(revGeom.axisDir);
+            const uCoord = rel.dot(revGeom.uAxis);
+            const vCoord = rel.dot(revGeom.vAxis);
+            const r = Math.hypot(uCoord, vCoord);
+            const stations = revGeom.stations;
+            let bestVal = null;
+            let bestAbs = Infinity;
+            for (let i = 0; i < stations.length - 1; i++) {
+                const h0 = stations[i].axialCoord;
+                const h1 = stations[i + 1].axialCoord;
+                const r0 = stations[i].radius;
+                const r1 = stations[i + 1].radius;
+                if (h < Math.min(h0, h1) - endMargin || h > Math.max(h0, h1) + endMargin) continue;
+                const dh = h1 - h0;
+                let rSurf;
+                if (Math.abs(dh) > 1e-6) {
+                    const t = Math.max(0, Math.min(1, (h - h0) / dh));
+                    rSurf = r0 + t * (r1 - r0);
+                } else {
+                    const minR = Math.min(r0, r1);
+                    const maxR = Math.max(r0, r1);
+                    rSurf = (r >= minR && r <= maxR) ? r : (Math.abs(r - minR) < Math.abs(r - maxR) ? minR : maxR);
+                }
+                const signed = r - rSurf;
+                if (Math.abs(signed) < bestAbs) {
+                    bestAbs = Math.abs(signed);
+                    bestVal = signed;
+                }
+            }
+            return bestVal;
+        }
+
+        function extractContourPolylinesFromRevolveGrid3D(revGeom, evalFn) {
+            if (!revGeom || !revGeom.rings || revGeom.rings.length < 2) return [];
+            const rows = revGeom.rings.length;
+            const cols = revGeom.rings[0].length - 1;
+            if (cols < 3) return [];
+
+            const gridVals = [];
+            for (let i = 0; i < rows; i++) {
+                const rowVals = [];
+                for (let j = 0; j < cols; j++) {
+                    const raw = evalFn(revGeom.rings[i][j]);
+                    if (raw === null || !Number.isFinite(raw)) {
+                        rowVals.push(null);
+                    } else {
+                        rowVals.push(Math.abs(raw) < 1e-7 ? 1e-7 : raw);
+                    }
+                }
+                gridVals.push(rowVals);
+            }
+
+            const rawSegs = [];
+            const processTri = (pA, vA, pB, vB, pC, vC) => {
+                if (vA === null || vB === null || vC === null) return;
+                const pts = [];
+                const checkEdge = (p1, v1, p2, v2) => {
+                    if ((v1 > 0 && v2 < 0) || (v1 < 0 && v2 > 0)) {
+                        const t = v1 / (v1 - v2);
+                        pts.push(new THREE.Vector3(
+                            p1.x + (p2.x - p1.x) * t,
+                            p1.y + (p2.y - p1.y) * t,
+                            p1.z + (p2.z - p1.z) * t
+                        ));
+                    }
+                };
+                checkEdge(pA, vA, pB, vB);
+                checkEdge(pB, vB, pC, vC);
+                checkEdge(pC, vC, pA, vA);
+                if (pts.length === 2 && pts[0].distanceTo(pts[1]) > 1e-6) {
+                    rawSegs.push([pts[0], pts[1]]);
+                }
+            };
+
+            for (let i = 0; i < rows - 1; i++) {
+                for (let j = 0; j < cols; j++) {
+                    const jNext = (j + 1) % cols;
+                    const p00 = revGeom.rings[i][j];
+                    const p10 = revGeom.rings[i + 1][j];
+                    const p11 = revGeom.rings[i + 1][jNext];
+                    const p01 = revGeom.rings[i][jNext];
+                    processTri(p00, gridVals[i][j], p10, gridVals[i + 1][j], p11, gridVals[i + 1][jNext]);
+                    processTri(p00, gridVals[i][j], p11, gridVals[i + 1][jNext], p01, gridVals[i][jNext]);
+                }
+            }
+            if (rawSegs.length === 0) return [];
+
+            const QUANT = 2500;
+            const keyOf = (p) => `${Math.round(p.x * QUANT)},${Math.round(p.y * QUANT)},${Math.round(p.z * QUANT)}`;
+            const adj = new Map();
+            const segKeys = [];
+            for (let idx = 0; idx < rawSegs.length; idx++) {
+                const k0 = keyOf(rawSegs[idx][0]);
+                const k1 = keyOf(rawSegs[idx][1]);
+                segKeys.push([k0, k1]);
+                if (!adj.has(k0)) adj.set(k0, []);
+                if (!adj.has(k1)) adj.set(k1, []);
+                adj.get(k0).push(idx);
+                adj.get(k1).push(idx);
+            }
+
+            const used = new Uint8Array(rawSegs.length);
+            const result = [];
+            const walkChain = (startSegIdx, reverseStart) => {
+                used[startSegIdx] = 1;
+                const pts = reverseStart
+                    ? [rawSegs[startSegIdx][1], rawSegs[startSegIdx][0]]
+                    : [rawSegs[startSegIdx][0], rawSegs[startSegIdx][1]];
+                let currKey = reverseStart ? segKeys[startSegIdx][0] : segKeys[startSegIdx][1];
+                const startKey = reverseStart ? segKeys[startSegIdx][1] : segKeys[startSegIdx][0];
+                while (true) {
+                    const neighbors = adj.get(currKey) || [];
+                    let nextSeg = -1;
+                    for (const nIdx of neighbors) {
+                        if (!used[nIdx]) { nextSeg = nIdx; break; }
+                    }
+                    if (nextSeg === -1) break;
+                    used[nextSeg] = 1;
+                    const [ka, kb] = segKeys[nextSeg];
+                    if (ka === currKey) {
+                        pts.push(rawSegs[nextSeg][1]);
+                        currKey = kb;
+                    } else {
+                        pts.push(rawSegs[nextSeg][0]);
+                        currKey = ka;
+                    }
+                }
+                let closed = currKey === startKey && pts.length >= 4;
+                if (!closed && pts.length >= 4 && pts[pts.length - 1].distanceTo(pts[0]) < 0.03) {
+                    closed = true;
+                    pts[pts.length - 1] = pts[0].clone();
+                }
+                return { points: pts, closed };
+            };
+
+            for (const [key, segList] of adj.entries()) {
+                if (segList.length === 1) {
+                    const sIdx = segList[0];
+                    if (used[sIdx]) continue;
+                    const poly = walkChain(sIdx, segKeys[sIdx][1] === key);
+                    if (poly.points.length >= 2) result.push(poly);
+                }
+            }
+            for (let i = 0; i < rawSegs.length; i++) {
+                if (used[i]) continue;
+                const poly = walkChain(i, false);
+                if (poly.points.length >= 2) result.push(poly);
+            }
+
+            const merged = [];
+            const openPolys = result.filter(p => !p.closed);
+            for (const p of result) {
+                if (p.closed) merged.push(p);
+            }
+            const openUsed = new Uint8Array(openPolys.length);
+            const MERGE_TOL = 0.06;
+            for (let i = 0; i < openPolys.length; i++) {
+                if (openUsed[i]) continue;
+                openUsed[i] = 1;
+                let pts = openPolys[i].points.slice();
+                let changed = true;
+                while (changed) {
+                    changed = false;
+                    for (let j = 0; j < openPolys.length; j++) {
+                        if (openUsed[j]) continue;
+                        const cand = openPolys[j].points;
+                        const head = pts[0];
+                        const tail = pts[pts.length - 1];
+                        const cHead = cand[0];
+                        const cTail = cand[cand.length - 1];
+                        if (tail.distanceTo(cHead) < MERGE_TOL) {
+                            pts = pts.concat(cand.slice(1));
+                            openUsed[j] = 1; changed = true;
+                        } else if (tail.distanceTo(cTail) < MERGE_TOL) {
+                            pts = pts.concat(cand.slice(0, -1).reverse());
+                            openUsed[j] = 1; changed = true;
+                        } else if (head.distanceTo(cTail) < MERGE_TOL) {
+                            pts = cand.concat(pts.slice(1));
+                            openUsed[j] = 1; changed = true;
+                        } else if (head.distanceTo(cHead) < MERGE_TOL) {
+                            pts = cand.slice().reverse().concat(pts.slice(1));
+                            openUsed[j] = 1; changed = true;
+                        }
+                    }
+                }
+                const isClosed = pts.length >= 4 && pts[0].distanceTo(pts[pts.length - 1]) < MERGE_TOL;
+                if (isClosed) pts[pts.length - 1] = pts[0].clone();
+                if (pts.length >= 2) merged.push({ points: pts, closed: isClosed });
+            }
+            return merged;
+        }
+
+        function buildImplicitSurfaceEvaluator3D(surf) {
+            if (!surf) return null;
+            if (surf.surfType === 'plane') {
+                const plane = getPlaneDataFromId(surf.planeId);
+                if (!plane || !plane.origin || !plane.normal) return null;
+                const n = plane.normal.clone().normalize();
+                const orig = plane.origin.clone();
+                return (p) => new THREE.Vector3().subVectors(p, orig).dot(n);
+            }
+            if (surf.surfType === 'solid' && surf.solidId) {
+                const sol = (geoState.solids || []).find(s => s.id === surf.solidId);
+                if (!sol) return null;
+                if (sol.kind === 'sphere') {
+                    const sGeom = computeSphereGeometry(sol);
+                    if (!sGeom) return null;
+                    return (p) => p.distanceTo(sGeom.center) - sGeom.radius;
+                }
+                if (sol.kind === 'cone') {
+                    const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
+                    const S = geoState.points.find(p => p.id === sol.apexId);
+                    const geom = computeCircleGeometry(cir);
+                    if (!geom || !S) return null;
+                    const vS = new THREE.Vector3(S.x, S.y, S.z);
+                    const axisVec = new THREE.Vector3().subVectors(geom.center, vS);
+                    const denom = axisVec.dot(geom.normal);
+                    const axisLenSq = axisVec.lengthSq();
+                    if (axisLenSq < 1e-8) return null;
+                    return (p) => {
+                        const rel = new THREE.Vector3().subVectors(p, vS);
+                        const t = Math.abs(denom) > 1e-5 ? (rel.dot(geom.normal) / denom) : (rel.dot(axisVec) / axisLenSq);
+                        if (t < -0.05 || t > 1.05) return null;
+                        const tc = Math.max(0, Math.min(1, t));
+                        const centerT = vS.clone().addScaledVector(axisVec, tc);
+                        return p.distanceTo(centerT) - tc * geom.radius;
+                    };
+                }
+                if (sol.kind === 'frustum') {
+                    const cir1 = (geoState.circles || []).find(c => c.id === sol.circle1Id);
+                    const cir2 = (geoState.circles || []).find(c => c.id === sol.circle2Id);
+                    const g1 = computeCircleGeometry(cir1);
+                    const g2 = computeCircleGeometry(cir2);
+                    if (!g1 || !g2) return null;
+                    const axisVec = new THREE.Vector3().subVectors(g2.center, g1.center);
+                    const denom = axisVec.dot(g1.normal);
+                    const axisLenSq = axisVec.lengthSq();
+                    if (axisLenSq < 1e-8) return null;
+                    return (p) => {
+                        const rel = new THREE.Vector3().subVectors(p, g1.center);
+                        const t = Math.abs(denom) > 1e-5 ? (rel.dot(g1.normal) / denom) : (rel.dot(axisVec) / axisLenSq);
+                        if (t < -0.05 || t > 1.05) return null;
+                        const tc = Math.max(0, Math.min(1, t));
+                        const centerT = g1.center.clone().addScaledVector(axisVec, tc);
+                        const rSurf = g1.radius + (g2.radius - g1.radius) * tc;
+                        return p.distanceTo(centerT) - rSurf;
+                    };
+                }
+                if (sol.kind === 'revolve') {
+                    const rev2 = extractRevolveSolidGeometry(sol, 64, 24);
+                    if (!rev2) return null;
+                    return (p) => computeSignedDistanceToRevolveSurface3D(p, rev2, 0.08);
+                }
+            }
+            return null;
+        }
+
+        function computeSurfaceIntersectionPolylines3D(surf1, surf2) {
+            if (!surf1 || !surf2) return [];
+            const sol1 = (surf1.surfType === 'solid' && surf1.solidId) ? (geoState.solids || []).find(s => s.id === surf1.solidId) : null;
+            const sol2 = (surf2.surfType === 'solid' && surf2.solidId) ? (geoState.solids || []).find(s => s.id === surf2.solidId) : null;
+
+            let gridSol = null;
+            let otherSurf = null;
+            if (sol1 && sol1.kind === 'revolve' && sol2 && sol2.kind === 'revolve') {
+                const g1 = extractRevolveSolidGeometry(sol1, 96, 36);
+                const g2 = extractRevolveSolidGeometry(sol2, 96, 36);
+                if (!g1 || !g2) return [];
+                if (g1.maxRadius <= g2.maxRadius) {
+                    return extractContourPolylinesFromRevolveGrid3D(g1, (p) => computeSignedDistanceToRevolveSurface3D(p, g2, 0.08));
+                } else {
+                    return extractContourPolylinesFromRevolveGrid3D(g2, (p) => computeSignedDistanceToRevolveSurface3D(p, g1, 0.08));
+                }
+            } else if (sol1 && sol1.kind === 'revolve') {
+                gridSol = sol1;
+                otherSurf = surf2;
+            } else if (sol2 && sol2.kind === 'revolve') {
+                gridSol = sol2;
+                otherSurf = surf1;
+            } else {
+                return [];
+            }
+
+            const revGeom = extractRevolveSolidGeometry(gridSol, 96, 36);
+            if (!revGeom) return [];
+            const evalFn = buildImplicitSurfaceEvaluator3D(otherSurf);
+            if (!evalFn) return [];
+            return extractContourPolylinesFromRevolveGrid3D(revGeom, evalFn);
+        }
+
+        function computeCurvePolylines3D(curv) {
+            if (!curv) return [];
+            if (curv.mode === 'surfaceIntersection') {
+                return computeSurfaceIntersectionPolylines3D(curv.surf1, curv.surf2);
+            }
+            const cPts = (curv.pointIds || []).map(pid => geoState.points.find(p => p.id === pid)).filter(Boolean);
+            if (cPts.length < 2) return [];
+            const polyRes = computeCoplanarInterpolatingPolynomial3D(cPts, 140);
+            if (!polyRes || !polyRes.sampledPoints || polyRes.sampledPoints.length < 2) return [];
+            return [{ points: polyRes.sampledPoints, closed: false }];
         }
 
         function projectPointOntoCurvePlane3D(candidate, p0, p1, p2) {
@@ -6415,6 +6859,16 @@
                                     .addScaledVector(u2, g2.radius * Math.cos(ang))
                                     .addScaledVector(v2, g2.radius * Math.sin(ang));
                                 const pos = p1.clone().lerp(p2, t);
+                                pt.x = pos.x; pt.y = pos.y; pt.z = pos.z;
+                            }
+                        }
+                    }
+                    else if (r.type === 'onRevolve') {
+                        const sol = (geoState.solids || []).find(s => s.id === r.solidId && s.kind === 'revolve');
+                        if (sol) {
+                            const revGeom = extractRevolveSolidGeometry(sol, 48);
+                            const pos = evalPointOnRevolveSurface3D(revGeom, r.uRatio, r.angle);
+                            if (pos) {
                                 pt.x = pos.x; pt.y = pos.y; pt.z = pos.z;
                             }
                         }
@@ -6846,7 +7300,11 @@
                         }
                     }
                     else if (r.type === 'constructedPlaneCorner') {
-                        const specData = evaluateConstructedPlaneSpec(r.planeSpec);
+                        const parentFace = (geoState.faces || []).find(f =>
+                            f.isConstructedPlanePatch && Array.isArray(f.pointIds) && f.pointIds.includes(pt.id)
+                        );
+                        const effectiveSpec = (parentFace && parentFace.constructedPlaneSpec) ? parentFace.constructedPlaneSpec : r.planeSpec;
+                        const specData = evaluateConstructedPlaneSpec(effectiveSpec);
                         const idx = typeof r.cornerIndex === 'number' ? r.cornerIndex : 0;
                         if (specData && specData.corners && specData.corners[idx]) {
                             const c = specData.corners[idx];
@@ -6869,17 +7327,18 @@
                     }
                     else if (r.type === 'onCurve') {
                         const curv = (geoState.curves || []).find(c => c.id === r.curveId);
-                        if (curv && Array.isArray(curv.pointIds) && curv.pointIds.length >= 2) {
-                            const cPts = curv.pointIds.map(pid => geoState.points.find(p => p.id === pid)).filter(Boolean);
-                            const polyRes = computeCoplanarInterpolatingPolynomial3D(cPts, 120);
-                            if (polyRes && polyRes.sampledPoints && polyRes.sampledPoints.length >= 2) {
+                        if (curv) {
+                            const branches = computeCurvePolylines3D(curv);
+                            const bIdx = (typeof r.branchIdx === 'number' && branches[r.branchIdx]) ? r.branchIdx : 0;
+                            const sampled = branches[bIdx] ? branches[bIdx].points : null;
+                            if (sampled && sampled.length >= 2) {
                                 const ratio = Math.max(0, Math.min(1, typeof r.uRatio === 'number' ? r.uRatio : 0.5));
-                                const fIdx = ratio * (polyRes.sampledPoints.length - 1);
+                                const fIdx = ratio * (sampled.length - 1);
                                 const idx0 = Math.floor(fIdx);
-                                const idx1 = Math.min(polyRes.sampledPoints.length - 1, idx0 + 1);
+                                const idx1 = Math.min(sampled.length - 1, idx0 + 1);
                                 const frac = fIdx - idx0;
-                                const pA = polyRes.sampledPoints[idx0];
-                                const pB = polyRes.sampledPoints[idx1];
+                                const pA = sampled[idx0];
+                                const pB = sampled[idx1];
                                 pt.x = pA.x + frac * (pB.x - pA.x);
                                 pt.y = pA.y + frac * (pB.y - pA.y);
                                 pt.z = pA.z + frac * (pB.z - pA.z);
@@ -7613,6 +8072,65 @@
                         if (!seg.isLine && (tk < -1e-4 || tk > 1 + 1e-4)) continue;
                     }
                     const pos = P1.clone().addScaledVector(u, tk);
+                    out.push({
+                        pos,
+                        segAId: seg.id,
+                        segBId: null,
+                        rule: { type: 'lineSolidIntersection', segId: seg.id, solidId: sol.id, rootIdx: k },
+                        isSurfaceIntersection: true,
+                        label: t(`Giao điểm: ${segName} × ${solidName}`, `Intersection: ${segName} × ${solidName}`)
+                    });
+                }
+                return out;
+            }
+
+            if (sol.kind === 'revolve') {
+                if ((Array.isArray(sol.segmentIds) && sol.segmentIds.includes(seg.id)) || sol.axisSegId === seg.id) {
+                    return [];
+                }
+                const revGeom = extractRevolveSolidGeometry(sol, 48, 16);
+                if (!revGeom || !revGeom.rings || revGeom.rings.length < 2) return [];
+                const uLen = u.length();
+                if (uLen < 1e-8) return [];
+                const dir = u.clone().divideScalar(uLen);
+                const forwardRay = new THREE.Ray(P1.clone(), dir);
+                const backwardRay = new THREE.Ray(P1.clone(), dir.clone().negate());
+                const hitTs = [];
+                const hitPt = new THREE.Vector3();
+                const rows = revGeom.rings.length;
+                const cols = revGeom.rings[0].length - 1;
+                const acceptT = (tVal) => ignoreBounds || seg.isLine || (tVal >= -1e-4 && tVal <= 1 + 1e-4);
+                const checkTri = (a, b, c) => {
+                    if (forwardRay.intersectTriangle(a, b, c, false, hitPt)) {
+                        const tVal = hitPt.clone().sub(P1).dot(dir) / uLen;
+                        if (acceptT(tVal)) hitTs.push(tVal);
+                    } else if ((seg.isLine || ignoreBounds) && backwardRay.intersectTriangle(a, b, c, false, hitPt)) {
+                        const tVal = hitPt.clone().sub(P1).dot(dir) / uLen;
+                        if (acceptT(tVal)) hitTs.push(tVal);
+                    }
+                };
+                for (let i = 0; i < rows - 1; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const jN = (j + 1) % cols;
+                        const p00 = revGeom.rings[i][j];
+                        const p10 = revGeom.rings[i + 1][j];
+                        const p11 = revGeom.rings[i + 1][jN];
+                        const p01 = revGeom.rings[i][jN];
+                        checkTri(p00, p10, p11);
+                        checkTri(p00, p11, p01);
+                    }
+                }
+                hitTs.sort((a, b) => a - b);
+                const uniqueTs = [];
+                for (const tk of hitTs) {
+                    if (!uniqueTs.some(prev => Math.abs(prev - tk) < 0.02)) {
+                        uniqueTs.push(tk);
+                    }
+                }
+                const out = [];
+                for (let k = 0; k < uniqueTs.length; k++) {
+                    if (filterRootIdx !== null && filterRootIdx !== k) continue;
+                    const pos = P1.clone().addScaledVector(u, uniqueTs[k]);
                     out.push({
                         pos,
                         segAId: seg.id,
@@ -8700,11 +9218,17 @@
                     ((currentTool === 'plane-perp' || currentTool === 'plane-parallel') &&
                         planeConstructorPending.segments.some(s => s.id === seg.id))
                 );
+                const isActivePlaneBorder = Boolean(seg.isConstructedPlaneBorder) && (
+                    hoveredPlaneBorderSegId === seg.id ||
+                    (isDraggingPlaneBorder && draggedPlaneBorder && draggedPlaneBorder.segId === seg.id)
+                );
                 const customSegColor = seg.color ? parseHexColorToInt(seg.color, 0x000000) : null;
                 const lineColor = isSelectedIntersectSeg
                     ? 0xdc2626
-                    : (customSegColor !== null ? customSegColor : (seg.trace ? 0x9333ea : (seg.isConstructedPlaneBorder ? 0x0284c7 : 0x000000)));
-                const priorityLayer = isSelectedIntersectSeg ? 2 : (customSegColor !== null ? 1 : 0);
+                    : (isActivePlaneBorder
+                        ? 0xd97706
+                        : (customSegColor !== null ? customSegColor : (seg.trace ? 0x9333ea : (seg.isConstructedPlaneBorder ? 0x0284c7 : 0x000000))));
+                const priorityLayer = (isSelectedIntersectSeg || isActivePlaneBorder) ? 2 : (customSegColor !== null ? 1 : 0);
                 rawVisualSegments.push({ v1, v2, lineColor, priorityLayer });
 
                 const hitGeo = new THREE.BufferGeometry().setFromPoints([v1, v2]);
@@ -8930,69 +9454,77 @@
                 }
             });
 
-            // Vẽ các Đường cong đa thức nội suy đi qua n điểm đồng phẳng (có xét nét đứt / nét liền theo mặt chắn sáng 3D)
+            // Vẽ các Đường cong đa thức nội suy & Đường giao tuyến của mặt tròn xoay (có xét nét đứt / nét liền theo mặt chắn sáng 3D)
             (geoState.curves || []).forEach(curv => {
                 if (!curv || curv.hidden) return;
                 const isCurveVisuallyUnlocked = !stepFilter || !stepFilter.visibleCurveIds || stepFilter.visibleCurveIds.has(curv.id);
                 if (!isCurveVisuallyUnlocked) return;
 
-                const cPts = (curv.pointIds || []).map(pid => geoState.points.find(p => p.id === pid)).filter(Boolean);
-                if (cPts.length < 2) return;
-                const polyRes = computeCoplanarInterpolatingPolynomial3D(cPts, 140);
-                if (!polyRes || !polyRes.sampledPoints || polyRes.sampledPoints.length < 2) return;
+                const branches = computeCurvePolylines3D(curv);
+                if (!branches || branches.length === 0) return;
 
+                const isSurfIntersect = curv.mode === 'surfaceIntersection';
                 const isSelectedCurv = (colorSelection && colorSelection.curveIds && colorSelection.curveIds.includes(curv.id)) ||
                     (activeColorResolved && activeColorResolved.kind === 'curve' && activeColorResolved.curveId === curv.id) ||
                     (currentTool === 'solid-revolve' && typeof revolveBuilderState === 'object' && revolveBuilderState && revolveBuilderState.curveId === curv.id);
                 const isHoveredCurv = hoveredCurveId === curv.id && ['delete-obj', 'hide', 'color-obj', 'solid-revolve'].includes(currentTool);
                 const isActiveBuildingCurv = (currentTool === 'curve-interp' && activeInterpCurveState && activeInterpCurveState.curveId === curv.id);
-                const customCurvHex = curv.color ? parseHexColorToInt(curv.color, 0x0f172a) : null;
+                const defaultCurvColor = isSurfIntersect ? 0xbe123c : (isActiveBuildingCurv ? 0x0284c7 : 0x0f172a);
+                const customCurvHex = curv.color ? parseHexColorToInt(curv.color, defaultCurvColor) : null;
                 const curvColor = isSelectedCurv
                     ? 0xdc2626
                     : (isHoveredCurv
                         ? (currentTool === 'delete-obj' ? 0xdc2626 : 0xd97706)
-                        : (customCurvHex !== null ? customCurvHex : (isActiveBuildingCurv ? 0x0284c7 : 0x0f172a)));
-
-                const curvGeo = new THREE.BufferGeometry().setFromPoints(polyRes.sampledPoints);
-
-                const hitCurvMat = new THREE.LineBasicMaterial({ visible: false });
-                const hitCurv = new THREE.Line(curvGeo.clone(), hitCurvMat);
-                hitCurv.userData = {
-                    isCurve: true,
-                    curveId: curv.id,
-                    sampledPoints: polyRes.sampledPoints,
-                    label: `đường cong nội suy ${curv.name || '(C)'}`
-                };
-                scene.add(hitCurv);
-                hitCircleMeshes.push(hitCurv);
+                        : (customCurvHex !== null ? customCurvHex : defaultCurvColor));
 
                 const isHighlightedCurv = isSelectedCurv || isHoveredCurv || isActiveBuildingCurv;
-                const dashedCurvMat = new THREE.LineDashedMaterial({
-                    color: curvColor,
-                    dashSize: 0.22,
-                    gapSize: 0.16,
-                    depthTest: true,
-                    depthFunc: THREE.GreaterDepth,
-                    depthWrite: false
-                });
-                const dashedCurv = new THREE.Line(curvGeo.clone(), dashedCurvMat);
-                dashedCurv.computeLineDistances();
-                dashedCurv.renderOrder = 4;
-                applyLineThicknessStrands(dashedCurv, isHighlightedCurv ? 0.5 : -0.3);
-                scene.add(dashedCurv);
-                circleMeshes.push(dashedCurv);
+                const curveHitLabel = isSurfIntersect
+                    ? (curv.name || t('giao tuyến', 'intersection curve'))
+                    : `đường cong nội suy ${curv.name || '(C)'}`;
 
-                const solidCurvMat = new THREE.LineBasicMaterial({
-                    color: curvColor,
-                    linewidth: isHighlightedCurv ? (visualStyle.lineWidth || 2) + 1 : (visualStyle.lineWidth || 2),
-                    depthTest: true,
-                    depthFunc: THREE.LessEqualDepth
+                branches.forEach((branch, branchIdx) => {
+                    if (!branch || !branch.points || branch.points.length < 2) return;
+                    const curvGeo = new THREE.BufferGeometry().setFromPoints(branch.points);
+
+                    const hitCurvMat = new THREE.LineBasicMaterial({ visible: false });
+                    const hitCurv = new THREE.Line(curvGeo.clone(), hitCurvMat);
+                    hitCurv.userData = {
+                        isCurve: true,
+                        curveId: curv.id,
+                        branchIdx,
+                        sampledPoints: branch.points,
+                        label: curveHitLabel
+                    };
+                    scene.add(hitCurv);
+                    hitCircleMeshes.push(hitCurv);
+
+                    const dashedCurvMat = new THREE.LineDashedMaterial({
+                        color: curvColor,
+                        dashSize: 0.22,
+                        gapSize: 0.16,
+                        depthTest: true,
+                        depthFunc: THREE.GreaterDepth,
+                        depthWrite: false
+                    });
+                    const dashedCurv = new THREE.Line(curvGeo.clone(), dashedCurvMat);
+                    dashedCurv.computeLineDistances();
+                    dashedCurv.renderOrder = 4;
+                    applyLineThicknessStrands(dashedCurv, isHighlightedCurv ? 0.6 : (isSurfIntersect ? 0.2 : -0.3));
+                    scene.add(dashedCurv);
+                    circleMeshes.push(dashedCurv);
+
+                    const solidCurvMat = new THREE.LineBasicMaterial({
+                        color: curvColor,
+                        linewidth: isHighlightedCurv ? (visualStyle.lineWidth || 2) + 1 : (visualStyle.lineWidth || 2),
+                        depthTest: true,
+                        depthFunc: THREE.LessEqualDepth
+                    });
+                    const solidCurv = new THREE.Line(curvGeo, solidCurvMat);
+                    solidCurv.renderOrder = 5;
+                    applyLineThicknessStrands(solidCurv, isHighlightedCurv ? 1.2 : (isSurfIntersect ? 0.6 : 0));
+                    scene.add(solidCurv);
+                    circleMeshes.push(solidCurv);
                 });
-                const solidCurv = new THREE.Line(curvGeo, solidCurvMat);
-                solidCurv.renderOrder = 5;
-                applyLineThicknessStrands(solidCurv, isHighlightedCurv ? 1 : 0);
-                scene.add(solidCurv);
-                circleMeshes.push(solidCurv);
             });
 
             const basePtSize = visualStyle.pointSize || 9;
@@ -9009,7 +9541,7 @@
                 else if (isHovered) tex = texPointHover;
                 else if (pt.color) tex = getCustomPointTexture(pt.color);
                 else if (pt.trace) tex = texPointTrace;
-                else if (pt.rule && ['onEdge', 'onFace', 'onCircle', 'onCircleDisk', 'onCurve', 'coplanar3Pts', 'onSphere', 'onCone', 'onFrustum', 'intersection', 'lineFaceIntersection', 'lineCircleIntersection', 'lineSolidIntersection', 'generatorFaceIntersection', 'lineBasePlaneIntersection', 'planeEdgeIntersection'].includes(pt.rule.type)) tex = texPointConstrained;
+                else if (pt.rule && ['onEdge', 'onFace', 'onCircle', 'onCircleDisk', 'onCurve', 'coplanar3Pts', 'onSphere', 'onCone', 'onFrustum', 'onRevolve', 'intersection', 'lineFaceIntersection', 'lineCircleIntersection', 'lineSolidIntersection', 'generatorFaceIntersection', 'lineBasePlaneIntersection', 'planeEdgeIntersection'].includes(pt.rule.type)) tex = texPointConstrained;
 
                 const ptGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(pt.x, pt.y, pt.z)]);
                 const ptMat = new THREE.PointsMaterial({
@@ -9235,7 +9767,13 @@
             });
             (geoState.curves || []).forEach(curv => {
                 if (curv.hidden) {
-                    hiddenItems.push({ kind: 'curve', id: curv.id, label: `Đ.cong ${curv.name || '(C)'}`, icon: SVG_ICONS.curveInterp });
+                    const isSurfInter = curv.mode === 'surfaceIntersection';
+                    hiddenItems.push({
+                        kind: 'curve',
+                        id: curv.id,
+                        label: isSurfInter ? (curv.name || 'Giao tuyến') : `Đ.cong ${curv.name || '(C)'}`,
+                        icon: isSurfInter ? SVG_ICONS.intersectSurfaces : SVG_ICONS.curveInterp
+                    });
                 }
             });
             geoState.faces.forEach(face => {
@@ -9442,7 +9980,7 @@
                 hitCircleMeshes.forEach(mesh => {
                     if (!mesh || !mesh.userData) return;
                     if (mesh.userData.isCurve && mesh.userData.curveId) {
-                        const { curveId, sampledPoints, label } = mesh.userData;
+                        const { curveId, branchIdx, sampledPoints, label } = mesh.userData;
                         const curv = (geoState.curves || []).find(c => c.id === curveId);
                         if (!curv || curv.hidden || !Array.isArray(sampledPoints) || sampledPoints.length < 2) return;
                         // Bỏ qua bắt dính vào chính đường cong đang vẽ khi đang dùng công cụ curve-interp để không cản trở chấm điểm mới
@@ -9484,6 +10022,7 @@
                                     target: {
                                         type: 'curve',
                                         curveId,
+                                        branchIdx: branchIdx || 0,
                                         uRatio: bestURatio,
                                         pos: bestPt3,
                                         label: (['delete-obj', 'hide', 'color-obj', 'solid-revolve'].includes(currentTool)) ? `${label}` : `Trên ${label}`
@@ -9702,7 +10241,7 @@
                                     }
                                 }
                             }
-                        } else if (sol.kind === 'revolve' && isSolidObjectTool) {
+                        } else if (sol.kind === 'revolve') {
                             const revGeom = extractRevolveSolidGeometry(sol, 48);
                             if (revGeom && revGeom.stations && revGeom.stations.length >= 2) {
                                 const camDir = viewDir.clone().normalize();
@@ -9719,10 +10258,22 @@
                                         if (segHit && segHit.dist < bestSilDist) {
                                             bestSilDist = segHit.dist;
                                             const exactPos = pA.clone().lerp(pB, segHit.t);
+                                            const uRatio = (i + segHit.t) / (revGeom.stations.length - 1);
+                                            const angle = Math.atan2(sideDir.dot(revGeom.vAxis) * sgn, sideDir.dot(revGeom.uAxis) * sgn);
+                                            const targetObj = isSolidObjectTool
+                                                ? { type: 'solid', solidId: sol.id, solidKind: 'revolve', pos: exactPos, label: solidName }
+                                                : {
+                                                    type: 'revolve',
+                                                    solidId: sol.id,
+                                                    uRatio,
+                                                    angle,
+                                                    pos: exactPos,
+                                                    label: t(`Trên đường sinh ${solidName}`, `On generator of ${solidName}`)
+                                                };
                                             bestSilCand = {
                                                 screenDist: segHit.dist,
                                                 camDepth: exactPos.distanceTo(raycaster.ray.origin),
-                                                target: { type: 'solid', solidId: sol.id, solidKind: 'revolve', pos: exactPos, label: solidName }
+                                                target: targetObj
                                             };
                                         }
                                     }
@@ -10005,6 +10556,19 @@
                                 };
                             }
                         } else if (solidKind === 'revolve' && sol) {
+                            const revGeom = extractRevolveSolidGeometry(sol, 48);
+                            const proj = projectPointOntoRevolveSurface3D(topHit.point, revGeom);
+                            if (proj) {
+                                const rTitle = solidName || t('Mặt tròn xoay', 'Surface of Revolution');
+                                return {
+                                    type: 'revolve',
+                                    solidId,
+                                    uRatio: proj.uRatio,
+                                    angle: proj.angle,
+                                    pos: proj.pos,
+                                    label: t(`Trên bề mặt ${rTitle}`, `On surface of ${rTitle}`)
+                                };
+                            }
                             return {
                                 type: 'solid',
                                 solidId,
@@ -10100,7 +10664,7 @@
             } else if (target.type === 'circle') {
                 rule = { type: 'onCircle', circleId: target.circleId, angle: target.angle };
             } else if (target.type === 'curve') {
-                rule = { type: 'onCurve', curveId: target.curveId, uRatio: target.uRatio };
+                rule = { type: 'onCurve', curveId: target.curveId, branchIdx: target.branchIdx || 0, uRatio: target.uRatio };
             } else if (target.type === 'circleDisk') {
                 rule = { type: 'onCircleDisk', circleId: target.circleId, rRatio: target.rRatio, angle: target.angle };
             } else if (target.type === 'sphere') {
@@ -10109,6 +10673,8 @@
                 rule = { type: 'onCone', solidId: target.solidId, t: target.t, angle: target.angle };
             } else if (target.type === 'frustum') {
                 rule = { type: 'onFrustum', solidId: target.solidId, t: target.t, angle: target.angle };
+            } else if (target.type === 'revolve') {
+                rule = { type: 'onRevolve', solidId: target.solidId, uRatio: target.uRatio, angle: target.angle };
             } else if (target.type === 'face') {
                 rule = { type: 'onFace', faceId: target.faceId, u: target.u, v: target.v };
             } else if (target.type === 'curvePlane' && target.planeInfo) {
@@ -13632,8 +14198,11 @@
                 ? geoState.points.find(p => p.id === target.pointId)
                 : null;
             const draggablePt = (hitPt && canPointBeDragged(hitPt)) ? hitPt : null;
+            const draggablePlaneBorder = (!draggablePt && target && target.type === 'edge' && target.segId)
+                ? findConstructedPlaneBorderEdge(target.segId)
+                : null;
 
-            if (currentTool === 'point3d' && target && !['sphere', 'cone', 'frustum', 'intersection'].includes(target.type)) {
+            if (currentTool === 'point3d' && target && !['sphere', 'cone', 'frustum', 'revolve', 'curve', 'intersection'].includes(target.type)) {
                 isCreating3DPoint = true;
                 drag3DBasePos = target.pos.clone();
                 drag3DCurrentPos = target.pos.clone().add(new THREE.Vector3(0, 3, 0));
@@ -13648,7 +14217,7 @@
                 return;
             }
 
-            // Cho phép tự động Kéo điểm (khi nhấn giữ kéo điểm) hoặc Xoay góc nhìn 3D (khi nhấn giữ kéo khoảng trống)
+            // Cho phép tự động Kéo điểm, Kéo cạnh mặt phẳng chữ nhật (đổi kích thước) hoặc Xoay góc nhìn 3D
             // ngay cả khi đang chọn công cụ dựng hình / đo đạc / xoay / di chuyển; nếu chỉ Click nhẹ (<= 5px) thì thực thi công cụ hoặc chọn thành phần tô màu.
             pendingPointerGesture = {
                 startX: event.clientX,
@@ -13660,7 +14229,8 @@
                     shiftKey: event.shiftKey
                 },
                 target,
-                draggablePt
+                draggablePt,
+                draggablePlaneBorder
             };
             if (controls) {
                 controls.enabled = false;
@@ -13686,7 +14256,7 @@
             if (currentTool === 'animate') {
                 if (target && target.type === 'point') {
                     const pt = geoState.points.find(p => p.id === target.pointId);
-                    if (pt && pt.rule && ['onEdge', 'onFace', 'onCircle', 'onCircleDisk', 'onSphere', 'onCone', 'onFrustum'].includes(pt.rule.type)) {
+                    if (pt && pt.rule && ['onEdge', 'onFace', 'onCircle', 'onCircleDisk', 'onSphere', 'onCone', 'onFrustum', 'onRevolve', 'onCurve'].includes(pt.rule.type)) {
                         isAnimPanelDismissed = false;
                         pt.animating = !pt.animating;
                         pt.animUI = true;
@@ -13784,7 +14354,7 @@
                 return;
             }
 
-            if (currentTool === 'point2d' || (currentTool === 'point3d' && ['sphere', 'cone', 'frustum', 'intersection'].includes(target.type))) {
+            if (currentTool === 'point2d' || (currentTool === 'point3d' && ['sphere', 'cone', 'frustum', 'revolve', 'curve', 'intersection'].includes(target.type))) {
                 if (target.type !== 'point') {
                     saveHistory();
                     const newPtId = createNewPointFromTarget(target);
@@ -13799,13 +14369,13 @@
                             );
                             renderMathInElementSafe(guideSpan);
                         }
-                    } else if (createdPt && ['sphere', 'cone', 'frustum', 'circleDisk', 'circle'].includes(target.type)) {
+                    } else if (createdPt && ['sphere', 'cone', 'frustum', 'revolve', 'circleDisk', 'circle', 'curve'].includes(target.type)) {
                         const guideSpan = document.getElementById('guide-span');
                         if (guideSpan) {
                             const parentDesc = getParentObjectDescription(createdPt);
                             guideSpan.innerHTML = t(
-                                `Đã tạo điểm <b>$${createdPt.name}$</b> thuộc <b>${parentDesc}</b>! Bạn có thể kéo điểm hoặc bấm <b>Chạy điểm</b> để di chuyển trên mặt tròn xoay.`,
-                                `Created point <b>$${createdPt.name}$</b> on <b>${parentDesc}</b>! You can drag or <b>Animate</b> this point on the surface of revolution.`
+                                `Đã tạo điểm <b>$${createdPt.name}$</b> thuộc <b>${parentDesc}</b>! Bạn có thể kéo điểm hoặc bấm <b>Chạy điểm</b> để di chuyển trên đối tượng.`,
+                                `Created point <b>$${createdPt.name}$</b> on <b>${parentDesc}</b>! You can drag or <b>Animate</b> this point on the parent object.`
                             );
                             renderMathInElementSafe(guideSpan);
                         }
@@ -14573,7 +15143,7 @@
                     name: '(P)'
                 };
             }
-            if ((target.type === 'solid' || ['sphere', 'cone', 'frustum'].includes(target.type)) && target.solidId) {
+            if ((target.type === 'solid' || ['sphere', 'cone', 'frustum', 'revolve'].includes(target.type)) && target.solidId) {
                 const sol = (geoState.solids || []).find(s => s.id === target.solidId && !s.hidden);
                 if (!sol) return null;
                 return {
@@ -14581,7 +15151,7 @@
                     key: `solid:${sol.id}`,
                     solidId: sol.id,
                     solidKind: sol.kind,
-                    name: sol.name || (sol.kind === 'sphere' ? t('Mặt cầu', 'Sphere') : (sol.kind === 'cone' ? t('Hình nón', 'Cone') : t('Hình trụ / Nón cụt', 'Cylinder / Frustum')))
+                    name: sol.name || (sol.kind === 'sphere' ? t('Mặt cầu', 'Sphere') : (sol.kind === 'cone' ? t('Hình nón', 'Cone') : (sol.kind === 'revolve' ? t('Mặt tròn xoay', 'Surface of Revolution') : t('Hình trụ / Nón cụt', 'Cylinder / Frustum'))))
                 };
             }
             return null;
@@ -15383,13 +15953,88 @@
                     ));
                     return;
                 }
+
+                if (sol.kind === 'revolve') {
+                    const s1Ref = {
+                        surfType: 'plane',
+                        planeId: planeSurf.planeId,
+                        faceId: planeSurf.faceId || null,
+                        circleId: planeSurf.circleId || null,
+                        name: planeSurf.name
+                    };
+                    const s2Ref = {
+                        surfType: 'solid',
+                        solidId: sol.id,
+                        solidKind: 'revolve',
+                        name: solidSurf.name
+                    };
+                    const branches = computeSurfaceIntersectionPolylines3D(s1Ref, s2Ref);
+                    if (!branches || branches.length === 0) {
+                        setGuideHtml(`<span style="color:#fbbf24;">${t(
+                            `Mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b> không giao nhau!`,
+                            `Plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b> do not intersect!`
+                        )}</span>`);
+                        return;
+                    }
+                    saveHistory();
+                    if (!Array.isArray(geoState.curves)) geoState.curves = [];
+                    const curvId = 'curv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                    geoState.curves.push({
+                        id: curvId,
+                        mode: 'surfaceIntersection',
+                        surf1: s1Ref,
+                        surf2: s2Ref,
+                        name: t(`Giao tuyến ${planeSurf.name} × ${solidSurf.name}`, `Intersection ${planeSurf.name} × ${solidSurf.name}`),
+                        createdOrder: nextCreationOrder(curvId),
+                        hidden: false
+                    });
+                    recomputeAllDependentGeometry();
+                    updateSceneFromState();
+                    setGuideHtml(t(
+                        `Đã dựng <b>Đường giao tuyến</b> của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b> (${branches.length} nhánh)!`,
+                        `Constructed <b>Intersection Curve</b> of plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b> (${branches.length} branch(es))!`
+                    ));
+                    return;
+                }
             }
 
-            // TRƯỜNG HỢP 3: MẶT TRÒN XOAY × MẶT TRÒN XOAY (MẶT CẦU × MẶT CẦU, ...)
+            // TRƯỜNG HỢP 3: MẶT TRÒN XOAY × MẶT TRÒN XOAY (MẶT CẦU, HÌNH NÓN, HÌNH TRỤ, MẶT TRÒN XOAY TỔNG QUÁT)
             if (surf1.surfType === 'solid' && surf2.surfType === 'solid') {
                 const sol1 = (geoState.solids || []).find(s => s.id === surf1.solidId && !s.hidden);
                 const sol2 = (geoState.solids || []).find(s => s.id === surf2.solidId && !s.hidden);
                 if (!sol1 || !sol2) return;
+
+                if (sol1.kind === 'revolve' || sol2.kind === 'revolve') {
+                    const s1Ref = { surfType: 'solid', solidId: sol1.id, solidKind: sol1.kind, name: surf1.name };
+                    const s2Ref = { surfType: 'solid', solidId: sol2.id, solidKind: sol2.kind, name: surf2.name };
+                    const branches = computeSurfaceIntersectionPolylines3D(s1Ref, s2Ref);
+                    if (!branches || branches.length === 0) {
+                        setGuideHtml(`<span style="color:#fbbf24;">${t(
+                            `Hai mặt <b>${surf1.name}</b> và <b>${surf2.name}</b> không giao nhau!`,
+                            `Surfaces <b>${surf1.name}</b> and <b>${surf2.name}</b> do not intersect!`
+                        )}</span>`);
+                        return;
+                    }
+                    saveHistory();
+                    if (!Array.isArray(geoState.curves)) geoState.curves = [];
+                    const curvId = 'curv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                    geoState.curves.push({
+                        id: curvId,
+                        mode: 'surfaceIntersection',
+                        surf1: s1Ref,
+                        surf2: s2Ref,
+                        name: t(`Giao tuyến ${surf1.name} × ${surf2.name}`, `Intersection ${surf1.name} × ${surf2.name}`),
+                        createdOrder: nextCreationOrder(curvId),
+                        hidden: false
+                    });
+                    recomputeAllDependentGeometry();
+                    updateSceneFromState();
+                    setGuideHtml(t(
+                        `Đã dựng <b>Đường giao tuyến</b> của <b>${surf1.name}</b> và <b>${surf2.name}</b> (${branches.length} nhánh)!`,
+                        `Constructed <b>Intersection Curve</b> of <b>${surf1.name}</b> and <b>${surf2.name}</b> (${branches.length} branch(es))!`
+                    ));
+                    return;
+                }
 
                 if (sol1.kind === 'sphere' && sol2.kind === 'sphere') {
                     const g1 = computeSphereGeometry(sol1);
@@ -15645,7 +16290,7 @@
 
         function canPointBeDragged(pt) {
             if (!pt.rule) return true;
-            return ['plane', '3d', 'onEdge', 'onCircle', 'onCircleDisk', 'onSphere', 'onCone', 'onFrustum', 'onFace', 'coplanar3Pts', 'onCurve', 'rectD'].includes(pt.rule.type);
+            return ['plane', '3d', 'onEdge', 'onCircle', 'onCircleDisk', 'onSphere', 'onCone', 'onFrustum', 'onRevolve', 'onFace', 'coplanar3Pts', 'onCurve', 'rectD'].includes(pt.rule.type);
         }
 
         function handleDragExistingPoint(event) {
@@ -15813,6 +16458,28 @@
                     }
                 }
             }
+            else if (rType === 'onRevolve') {
+                const solidHits = raycaster.intersectObjects(hitSolidMeshes.filter(m => m.userData && m.userData.solidId === pt.rule.solidId));
+                let hitPt = solidHits.length > 0 ? solidHits[0].point : null;
+                const sol = (geoState.solids || []).find(s => s.id === pt.rule.solidId && s.kind === 'revolve');
+                if (!hitPt && sol) {
+                    const camDir = new THREE.Vector3();
+                    camera.getWorldDirection(camDir);
+                    dragPlane.setFromNormalAndCoplanarPoint(camDir, new THREE.Vector3(pt.x, pt.y, pt.z));
+                    const fallbackHit = new THREE.Vector3();
+                    if (raycaster.ray.intersectPlane(dragPlane, fallbackHit)) {
+                        hitPt = fallbackHit;
+                    }
+                }
+                if (hitPt && sol) {
+                    const revGeom = extractRevolveSolidGeometry(sol, 48);
+                    const proj = projectPointOntoRevolveSurface3D(hitPt, revGeom);
+                    if (proj) {
+                        pt.rule.uRatio = proj.uRatio;
+                        pt.rule.angle = proj.angle;
+                    }
+                }
+            }
             else if (rType === 'onFace') {
                 const face = geoState.faces.find(f => f.id === pt.rule.faceId);
                 if (face && face.pointIds.length >= 3) {
@@ -15850,26 +16517,194 @@
             }
             else if (rType === 'onCurve') {
                 const curv = (geoState.curves || []).find(c => c.id === pt.rule.curveId);
-                if (curv && Array.isArray(curv.pointIds) && curv.pointIds.length >= 2) {
-                    const cPts = curv.pointIds.map(pid => geoState.points.find(p => p.id === pid)).filter(Boolean);
-                    const polyRes = computeCoplanarInterpolatingPolynomial3D(cPts, 80);
-                    if (polyRes && polyRes.sampledPoints.length >= 2) {
-                        const cPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(polyRes.normal, polyRes.origin);
-                        const hit = new THREE.Vector3();
-                        if (raycaster.ray.intersectPlane(cPlane, hit)) {
-                            let bestIdx = 0;
-                            let bestDist = Infinity;
-                            for (let i = 0; i < polyRes.sampledPoints.length; i++) {
-                                const d = polyRes.sampledPoints[i].distanceTo(hit);
-                                if (d < bestDist) {
-                                    bestDist = d;
-                                    bestIdx = i;
-                                }
+                if (curv) {
+                    const branches = computeCurvePolylines3D(curv);
+                    const bIdx = (typeof pt.rule.branchIdx === 'number' && branches[pt.rule.branchIdx]) ? pt.rule.branchIdx : 0;
+                    const sampled = branches[bIdx] ? branches[bIdx].points : null;
+                    if (sampled && sampled.length >= 2) {
+                        let bestURatio = pt.rule.uRatio ?? 0.5;
+                        let bestDistSq = Infinity;
+                        for (let i = 0; i < sampled.length - 1; i++) {
+                            const pA = sampled[i].clone().project(camera);
+                            const pB = sampled[i + 1].clone().project(camera);
+                            const dx = pB.x - pA.x;
+                            const dy = pB.y - pA.y;
+                            const lenSq = dx * dx + dy * dy;
+                            let tSeg = 0;
+                            if (lenSq > 1e-8) {
+                                tSeg = Math.max(0, Math.min(1, ((mouse.x - pA.x) * dx + (mouse.y - pA.y) * dy) / lenSq));
                             }
-                            pt.rule.uRatio = bestIdx / Math.max(1, polyRes.sampledPoints.length - 1);
+                            const px = pA.x + tSeg * dx;
+                            const py = pA.y + tSeg * dy;
+                            const dSq = (mouse.x - px) * (mouse.x - px) + (mouse.y - py) * (mouse.y - py);
+                            if (dSq < bestDistSq) {
+                                bestDistSq = dSq;
+                                bestURatio = (i + tSeg) / (sampled.length - 1);
+                            }
                         }
+                        pt.rule.uRatio = bestURatio;
                     }
                 }
+            }
+
+            updateSceneFromState();
+        }
+
+        function findConstructedPlaneBorderEdge(segId) {
+            if (!segId) return null;
+            const seg = (geoState.segments || []).find(s => s.id === segId && !s.hidden);
+            if (!seg || !seg.isConstructedPlaneBorder) return null;
+            for (const face of (geoState.faces || [])) {
+                if (!face || face.hidden || !face.isConstructedPlanePatch || !face.constructedPlaneSpec) continue;
+                if (!Array.isArray(face.pointIds) || face.pointIds.length !== 4) continue;
+                for (let idx = 0; idx < 4; idx++) {
+                    const a = face.pointIds[idx];
+                    const b = face.pointIds[(idx + 1) % 4];
+                    if ((seg.p1Id === a && seg.p2Id === b) || (seg.p1Id === b && seg.p2Id === a)) {
+                        return { face, seg, edgeIndex: idx };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function computePlaneBorderResizeCursor(borderInfo) {
+            if (!borderInfo || !borderInfo.face || !camera || !renderer) return 'grab';
+            const specData = evaluateConstructedPlaneSpec(borderInfo.face.constructedPlaneSpec);
+            if (!specData || !specData.dirA || !specData.dirB) return 'grab';
+            const axisDir = (borderInfo.edgeIndex === 0 || borderInfo.edgeIndex === 2) ? specData.dirB : specData.dirA;
+            const rect = renderer.domElement.getBoundingClientRect();
+            const p0 = specData.patchCenter.clone().project(camera);
+            const p1 = specData.patchCenter.clone().add(axisDir).project(camera);
+            const dx = (p1.x - p0.x) * rect.width * 0.5;
+            const dy = -(p1.y - p0.y) * rect.height * 0.5;
+            if (Math.hypot(dx, dy) < 1e-3) return 'move';
+            let deg = Math.atan2(dy, dx) * (180 / Math.PI);
+            deg = ((deg % 180) + 180) % 180;
+            if (deg < 22.5 || deg >= 157.5) return 'ew-resize';
+            if (deg < 67.5) return 'nwse-resize';
+            if (deg < 112.5) return 'ns-resize';
+            return 'nesw-resize';
+        }
+
+        function startPlaneBorderDrag(borderInfo, downEvent) {
+            if (!borderInfo || !borderInfo.face || !borderInfo.seg) return false;
+            const specData = evaluateConstructedPlaneSpec(borderInfo.face.constructedPlaneSpec);
+            if (!specData || !specData.normal || !specData.dirA || !specData.dirB || !specData.patchBounds) return false;
+
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((downEvent.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((downEvent.clientY - rect.top) / rect.height) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const resizePlane = new THREE.Plane().setFromNormalAndCoplanarPoint(specData.normal, specData.origin);
+            const initHit = new THREE.Vector3();
+            let grabOffsetCoord = 0;
+            if (Math.abs(raycaster.ray.direction.dot(specData.normal)) > 0.025 && raycaster.ray.intersectPlane(resizePlane, initHit)) {
+                const coords = computePlaneAffineCoords2D(initHit, specData.patchCenter, specData.dirA, specData.dirB);
+                if (coords) {
+                    const b = specData.patchBounds;
+                    if (borderInfo.edgeIndex === 0) grabOffsetCoord = b.vMax - coords.v;
+                    else if (borderInfo.edgeIndex === 1) grabOffsetCoord = b.uMin - coords.u;
+                    else if (borderInfo.edgeIndex === 2) grabOffsetCoord = b.vMin - coords.v;
+                    else if (borderInfo.edgeIndex === 3) grabOffsetCoord = b.uMax - coords.u;
+                }
+            }
+
+            isDraggingPlaneBorder = true;
+            draggedPlaneBorder = {
+                faceId: borderInfo.face.id,
+                segId: borderInfo.seg.id,
+                edgeIndex: borderInfo.edgeIndex,
+                grabOffsetCoord
+            };
+            container.style.cursor = computePlaneBorderResizeCursor(borderInfo);
+            return true;
+        }
+
+        function handleDragPlaneBorderEdge(event) {
+            if (!isDraggingPlaneBorder || !draggedPlaneBorder) return;
+            const face = (geoState.faces || []).find(f => f.id === draggedPlaneBorder.faceId && f.isConstructedPlanePatch);
+            if (!face || !face.constructedPlaneSpec) return;
+            const specData = evaluateConstructedPlaneSpec(face.constructedPlaneSpec);
+            if (!specData || !specData.normal || !specData.dirA || !specData.dirB || !specData.patchBounds) return;
+
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            if (Math.abs(raycaster.ray.direction.dot(specData.normal)) <= 0.025) return;
+            const resizePlane = new THREE.Plane().setFromNormalAndCoplanarPoint(specData.normal, specData.origin);
+            const hitPt = new THREE.Vector3();
+            if (!raycaster.ray.intersectPlane(resizePlane, hitPt)) return;
+            if (hitPt.distanceTo(specData.patchCenter) > 65) return;
+
+            const edgeIdx = draggedPlaneBorder.edgeIndex;
+            const offset = draggedPlaneBorder.grabOffsetCoord || 0;
+            const adjustedHit = hitPt.clone();
+            if (edgeIdx === 0 || edgeIdx === 2) {
+                adjustedHit.addScaledVector(specData.dirB, offset);
+            } else {
+                adjustedHit.addScaledVector(specData.dirA, offset);
+            }
+
+            const resized = computeResizedPlanePatchBounds3D(
+                specData.patchCenter,
+                specData.dirA,
+                specData.dirB,
+                specData.patchBounds,
+                edgeIdx,
+                adjustedHit,
+                0.6,
+                40
+            );
+            if (!resized) return;
+
+            // Lưu vị trí 3D hiện tại của các điểm nằm trên mặt phẳng (onFace) để giữ chúng đứng yên khi kéo dãn khung hình chữ nhật
+            const anchoredOnFacePts = (geoState.points || [])
+                .filter(pt => pt && pt.rule && pt.rule.type === 'onFace' && pt.rule.faceId === face.id)
+                .map(pt => ({ pt, pos: new THREE.Vector3(pt.x, pt.y, pt.z) }));
+
+            face.constructedPlaneSpec.patchBounds = { ...resized.bounds };
+            if (Array.isArray(face.pointIds)) {
+                face.pointIds.forEach((pid, idx) => {
+                    const cpt = geoState.points.find(p => p.id === pid);
+                    if (cpt) {
+                        if (cpt.rule && cpt.rule.type === 'constructedPlaneCorner' && cpt.rule.planeSpec) {
+                            cpt.rule.planeSpec.patchBounds = { ...resized.bounds };
+                        }
+                        if (resized.corners[idx]) {
+                            cpt.x = resized.corners[idx].x;
+                            cpt.y = resized.corners[idx].y;
+                            cpt.z = resized.corners[idx].z;
+                        }
+                    }
+                });
+            }
+
+            // Cập nhật lại tham số (u, v) cho các điểm onFace của mặt phẳng này để giữ nguyên vị trí 3D thực tế
+            if (anchoredOnFacePts.length > 0 && Array.isArray(face.pointIds) && face.pointIds.length >= 3) {
+                const cA = geoState.points.find(p => p.id === face.pointIds[0]);
+                const cB = geoState.points.find(p => p.id === face.pointIds[1]);
+                const cC = geoState.points.find(p => p.id === face.pointIds[2]);
+                if (cA && cB && cC) {
+                    anchoredOnFacePts.forEach(({ pt, pos }) => {
+                        const coords = computePlanarCoords(pos, cA, cB, cC);
+                        pt.rule.u = coords.u;
+                        pt.rule.v = coords.v;
+                    });
+                }
+            }
+
+            const spanU = (resized.bounds.uMax - resized.bounds.uMin).toFixed(1);
+            const spanV = (resized.bounds.vMax - resized.bounds.vMin).toFixed(1);
+            const guideSpan = document.getElementById('guide-span');
+            if (guideSpan) {
+                guideSpan.innerHTML = t(
+                    `Đang thay đổi kích thước mặt phẳng <b>${face.name || '(α)'}</b>: <b>${spanU} × ${spanV}</b> (Thả chuột để hoàn tất)`,
+                    `Resizing plane <b>${face.name || '(α)'}</b>: <b>${spanU} × ${spanV}</b> (Release to finish)`
+                );
             }
 
             updateSceneFromState();
@@ -15878,6 +16713,11 @@
         function onPointerMove(event) {
             if (isDraggingExistingPoint && draggedPointId) {
                 handleDragExistingPoint(event);
+                return;
+            }
+
+            if (isDraggingPlaneBorder && draggedPlaneBorder) {
+                handleDragPlaneBorderEdge(event);
                 return;
             }
 
@@ -15915,6 +16755,18 @@
                         snapBadge.style.display = 'none';
                         handleDragExistingPoint(event);
                         return;
+                    } else if (gesture.draggablePlaneBorder) {
+                        saveHistory();
+                        if (controls) {
+                            controls.enabled = false;
+                            if (typeof controls.cancelInteraction === 'function') controls.cancelInteraction();
+                        }
+                        if (snapIndicator) snapIndicator.visible = false;
+                        snapBadge.style.display = 'none';
+                        if (startPlaneBorderDrag(gesture.draggablePlaneBorder, gesture.downEvent)) {
+                            handleDragPlaneBorderEdge(event);
+                            return;
+                        }
                     } else {
                         if (controls) {
                             controls.enabled = true;
@@ -15933,17 +16785,45 @@
             const newHoverId = (target && target.type === 'point') ? target.pointId : null;
             const newHoverCirId = (target && target.type === 'circle') ? target.circleId : null;
             const newHoverCurvId = (target && target.type === 'curve') ? target.curveId : null;
-            if (newHoverId !== hoveredPointId || newHoverCirId !== hoveredCircleId || newHoverCurvId !== hoveredCurveId) {
+            const hoverPlaneBorder = (target && target.type === 'edge' && target.segId)
+                ? findConstructedPlaneBorderEdge(target.segId)
+                : null;
+            const newHoverPlaneBorderSegId = hoverPlaneBorder ? hoverPlaneBorder.seg.id : null;
+            if (
+                newHoverId !== hoveredPointId ||
+                newHoverCirId !== hoveredCircleId ||
+                newHoverCurvId !== hoveredCurveId ||
+                newHoverPlaneBorderSegId !== hoveredPlaneBorderSegId
+            ) {
                 hoveredPointId = newHoverId;
                 hoveredCircleId = newHoverCirId;
                 hoveredCurveId = newHoverCurvId;
+                hoveredPlaneBorderSegId = newHoverPlaneBorderSegId;
                 updateSceneFromState();
             }
 
             if (currentTool === 'view' || currentTool === 'move') {
-                container.style.cursor = (target && target.type === 'point') ? 'grab' : 'default';
-                snapIndicator.visible = false;
-                snapBadge.style.display = 'none';
+                if (target && target.type === 'point') {
+                    container.style.cursor = 'grab';
+                    snapIndicator.visible = false;
+                    snapBadge.style.display = 'none';
+                } else if (hoverPlaneBorder) {
+                    container.style.cursor = computePlaneBorderResizeCursor(hoverPlaneBorder);
+                    snapIndicator.visible = false;
+                    snapBadge.classList.remove('delete-target', 'intersection');
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    snapBadge.textContent = t(
+                        `Kéo cạnh để đổi kích thước mặt phẳng ${hoverPlaneBorder.face.name || '(α)'}`,
+                        `Drag edge to resize plane ${hoverPlaneBorder.face.name || '(α)'}`
+                    );
+                    snapBadge.style.left = `${event.clientX - rect.left}px`;
+                    snapBadge.style.top = `${event.clientY - rect.top}px`;
+                    snapBadge.style.display = 'block';
+                } else {
+                    container.style.cursor = 'default';
+                    snapIndicator.visible = false;
+                    snapBadge.style.display = 'none';
+                }
                 return;
             }
 
@@ -15981,7 +16861,9 @@
                 return;
             }
 
-            container.style.cursor = (target && target.type === 'point') ? 'pointer' : 'crosshair';
+            container.style.cursor = (target && target.type === 'point')
+                ? 'pointer'
+                : (hoverPlaneBorder ? computePlaneBorderResizeCursor(hoverPlaneBorder) : 'crosshair');
             snapBadge.classList.remove('delete-target');
 
             if (target && target.type !== 'point') {
@@ -16002,7 +16884,12 @@
                 snapIndicator.visible = true;
 
                 const rect = renderer.domElement.getBoundingClientRect();
-                snapBadge.textContent = target.label;
+                snapBadge.textContent = hoverPlaneBorder
+                    ? t(
+                        `Cạnh mặt phẳng ${hoverPlaneBorder.face.name || '(α)'} (Kéo cạnh để đổi kích thước)`,
+                        `Plane ${hoverPlaneBorder.face.name || '(α)'} edge (Drag edge to resize)`
+                    )
+                    : target.label;
                 snapBadge.style.left = `${event.clientX - rect.left}px`;
                 snapBadge.style.top = `${event.clientY - rect.top}px`;
                 snapBadge.style.display = 'block';
@@ -16025,6 +16912,31 @@
                 isDraggingExistingPoint = false;
                 draggedPointId = null;
                 if (controls) controls.enabled = (currentTool === 'view' || currentTool === 'move');
+                return;
+            }
+
+            if (isDraggingPlaneBorder) {
+                const finishedFace = draggedPlaneBorder
+                    ? (geoState.faces || []).find(f => f.id === draggedPlaneBorder.faceId)
+                    : null;
+                isDraggingPlaneBorder = false;
+                draggedPlaneBorder = null;
+                container.style.cursor = (currentTool === 'view' || currentTool === 'move') ? 'default' : 'crosshair';
+                if (controls) controls.enabled = (currentTool === 'view' || currentTool === 'move');
+                const guideSpan = document.getElementById('guide-span');
+                if (guideSpan && finishedFace && finishedFace.constructedPlaneSpec && finishedFace.constructedPlaneSpec.patchBounds) {
+                    const b = finishedFace.constructedPlaneSpec.patchBounds;
+                    const specEval = evaluateConstructedPlaneSpec(finishedFace.constructedPlaneSpec);
+                    const lenA = specEval && specEval.dirA ? specEval.dirA.length() : 1;
+                    const lenB = specEval && specEval.dirB ? specEval.dirB.length() : 1;
+                    const spanU = ((b.uMax - b.uMin) * lenA).toFixed(1);
+                    const spanV = ((b.vMax - b.vMin) * lenB).toFixed(1);
+                    guideSpan.innerHTML = t(
+                        `Đã cập nhật kích thước mặt phẳng <b>${finishedFace.name || '(α)'}</b>: <b>${spanU} × ${spanV}</b>`,
+                        `Updated plane <b>${finishedFace.name || '(α)'}</b> size: <b>${spanU} × ${spanV}</b>`
+                    );
+                }
+                updateSceneFromState();
                 return;
             }
 
@@ -16320,6 +17232,11 @@
                 }
             } else {
                 const customName = getNextConstructedPlaneName();
+                const faceId = 'face_plane_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+                const specWithBounds = JSON.parse(JSON.stringify(planeSpec));
+                if (specData.patchBounds) {
+                    specWithBounds.patchBounds = { ...specData.patchBounds };
+                }
                 const cornerPtIds = [];
                 for (let idx = 0; idx < 4; idx++) {
                     const c = specData.corners[idx];
@@ -16336,7 +17253,7 @@
                         rule: {
                             type: 'constructedPlaneCorner',
                             cornerIndex: idx,
-                            planeSpec: JSON.parse(JSON.stringify(planeSpec))
+                            planeSpec: JSON.parse(JSON.stringify(specWithBounds))
                         }
                     };
                     geoState.points.push(cpt);
@@ -16351,17 +17268,19 @@
                         p1Id: u,
                         p2Id: v,
                         isLine: false,
-                        isConstructedPlaneBorder: true
+                        isConstructedPlaneBorder: true,
+                        planeFaceId: faceId,
+                        planeEdgeIndex: idx
                     });
                 }
 
                 createdFace = {
-                    id: 'face_plane_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    id: faceId,
                     pointIds: cornerPtIds,
                     name: customName,
                     customName,
                     isConstructedPlanePatch: true,
-                    constructedPlaneSpec: JSON.parse(JSON.stringify(planeSpec)),
+                    constructedPlaneSpec: JSON.parse(JSON.stringify(specWithBounds)),
                     perpLineSpec: planeSpec.mode === 'perpLine'
                         ? {
                             aId: planeSpec.aId,
@@ -19179,8 +20098,23 @@
                             if (pt.rule.t <= -1.5) { pt.animDir = 1; directionFlipped = true; }
                         }
                         anyPointAnimated = true;
-                    } else if (pt.rule.type === 'onCircle' || pt.rule.type === 'onCircleDisk' || pt.rule.type === 'onCone' || pt.rule.type === 'onFrustum') {
+                    } else if (pt.rule.type === 'onCircle' || pt.rule.type === 'onCircleDisk' || pt.rule.type === 'onCone' || pt.rule.type === 'onFrustum' || pt.rule.type === 'onRevolve') {
                         pt.rule.angle = (pt.rule.angle || 0) + 0.022 * mult * dir;
+                        anyPointAnimated = true;
+                    } else if (pt.rule.type === 'onCurve') {
+                        const curv = (geoState.curves || []).find(c => c.id === pt.rule.curveId);
+                        const branches = curv ? computeCurvePolylines3D(curv) : [];
+                        const bIdx = (typeof pt.rule.branchIdx === 'number' && branches[pt.rule.branchIdx]) ? pt.rule.branchIdx : 0;
+                        const isClosed = Boolean(branches[bIdx] && branches[bIdx].closed);
+                        const step = 0.005 * mult * dir;
+                        let nextU = (typeof pt.rule.uRatio === 'number' ? pt.rule.uRatio : 0.5) + step;
+                        if (isClosed) {
+                            nextU = ((nextU % 1) + 1) % 1;
+                        } else {
+                            if (nextU >= 0.99) { nextU = 0.99; pt.animDir = -1; directionFlipped = true; }
+                            if (nextU <= 0.01) { nextU = 0.01; pt.animDir = 1; directionFlipped = true; }
+                        }
+                        pt.rule.uRatio = nextU;
                         anyPointAnimated = true;
                     } else if (pt.rule.type === 'onSphere') {
                         pt.rule.theta = (pt.rule.theta || 0) + 0.022 * mult * dir;
@@ -19649,7 +20583,7 @@
                 if (rType === 'perpLinePoint' || rType === 'perpFacePoint') {
                     return { vi: `Dựng hình chiếu vuông góc ${name}`, en: `Construct orthogonal projection ${name}` };
                 }
-                if (rType === 'onEdge' || rType === 'onCircle' || rType === 'onFace' || rType === 'onCurve') {
+                if (rType === 'onEdge' || rType === 'onCircle' || rType === 'onFace' || rType === 'onCurve' || rType === 'onRevolve' || rType === 'onSphere' || rType === 'onCone' || rType === 'onFrustum') {
                     return { vi: `Lấy điểm ${name}`, en: `Pick point ${name}` };
                 }
                 if (typeof pt.y === 'number' && Math.abs(pt.y) > 0.25) {
@@ -19731,7 +20665,8 @@
             }
 
             for (const curv of curves) {
-                if (curv.hidden || !Array.isArray(curv.pointIds) || curv.pointIds.length < 2) continue;
+                if (curv.hidden) continue;
+                if (curv.mode !== 'surfaceIntersection' && (!Array.isArray(curv.pointIds) || curv.pointIds.length < 2)) continue;
                 allEvents.push({ kind: 'curve', order: curvOrderMap.get(curv.id), item: curv });
             }
 
@@ -19879,6 +20814,21 @@
                 } else if (ev.kind === 'curve') {
                     const curv = ev.item;
                     if (claimedCurvIds.has(curv.id)) continue;
+                    if (curv.mode === 'surfaceIntersection') {
+                        pushStep({
+                            kind: 'curve',
+                            titleVi: `Dựng ${curv.name || 'giao tuyến'}`,
+                            titleEn: `Construct ${curv.name || 'intersection curve'}`,
+                            pointIds: [],
+                            segmentIds: [],
+                            circleIds: [],
+                            curveIds: [curv.id],
+                            solidIds: [],
+                            faceIds: [],
+                            measurementIds: []
+                        });
+                        continue;
+                    }
                     const curvPts = [];
                     for (const pid of (curv.pointIds || [])) {
                         if (pid && !claimedPtIds.has(pid) && !curvPts.includes(pid)) {
