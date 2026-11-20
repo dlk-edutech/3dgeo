@@ -5938,6 +5938,70 @@
             };
         }
 
+        function refineRevolveProfileAtAxisCrossings3D(profilePoints, axisP1, axisP2, keyRingIndices = null, axisSnapTol = 5e-4) {
+            if (!Array.isArray(profilePoints) || profilePoints.length < 2 || !axisP1 || !axisP2) {
+                return {
+                    points: Array.isArray(profilePoints) ? profilePoints.map(p => new THREE.Vector3(p.x, p.y, p.z)) : [],
+                    keyRingIndices: keyRingIndices ? Array.from(keyRingIndices) : []
+                };
+            }
+            const axisOrigin = new THREE.Vector3(axisP1.x, axisP1.y, axisP1.z);
+            const axisVec = new THREE.Vector3(axisP2.x - axisP1.x, axisP2.y - axisP1.y, axisP2.z - axisP1.z);
+            const axisLen = axisVec.length();
+            if (axisLen < 1e-7) {
+                return {
+                    points: profilePoints.map(p => new THREE.Vector3(p.x, p.y, p.z)),
+                    keyRingIndices: keyRingIndices ? Array.from(keyRingIndices) : []
+                };
+            }
+            const axisDir = axisVec.divideScalar(axisLen);
+            const inputKeySet = new Set(keyRingIndices ? Array.from(keyRingIndices) : []);
+            const radialOf = (pt) => {
+                const rel = new THREE.Vector3().subVectors(pt, axisOrigin);
+                const h = rel.dot(axisDir);
+                const foot = axisOrigin.clone().addScaledVector(axisDir, h);
+                const w = new THREE.Vector3().subVectors(pt, foot);
+                return { h, foot, w, r: w.length() };
+            };
+
+            const refined = [];
+            const remappedKeys = new Set();
+
+            for (let i = 0; i < profilePoints.length; i++) {
+                const p0 = new THREE.Vector3(profilePoints[i].x, profilePoints[i].y, profilePoints[i].z);
+                const info0 = radialOf(p0);
+                const emittedP0 = info0.r <= axisSnapTol ? info0.foot.clone() : p0;
+                if (inputKeySet.has(i)) {
+                    remappedKeys.add(refined.length);
+                }
+                refined.push(emittedP0);
+
+                if (i < profilePoints.length - 1) {
+                    const p1 = new THREE.Vector3(profilePoints[i + 1].x, profilePoints[i + 1].y, profilePoints[i + 1].z);
+                    const info1 = radialOf(p1);
+                    const dw = new THREE.Vector3().subVectors(info1.w, info0.w);
+                    const dwLenSq = dw.lengthSq();
+                    if (dwLenSq > 1e-12) {
+                        const tStar = -info0.w.dot(dw) / dwLenSq;
+                        if (tStar > 1e-6 && tStar < 1 - 1e-6) {
+                            const wStar = info0.w.clone().addScaledVector(dw, tStar);
+                            const rStar = wStar.length();
+                            const hStar = info0.h + tStar * (info1.h - info0.h);
+                            const pStar = rStar <= axisSnapTol
+                                ? axisOrigin.clone().addScaledVector(axisDir, hStar)
+                                : p0.clone().lerp(p1, tStar);
+                            refined.push(pStar);
+                        }
+                    }
+                }
+            }
+
+            return {
+                points: refined,
+                keyRingIndices: Array.from(remappedKeys).sort((a, b) => a - b)
+            };
+        }
+
         function computeRevolvedProfileGeometry3D(profilePoints, axisP1, axisP2, radialSegments = 72) {
             if (!Array.isArray(profilePoints) || profilePoints.length < 2 || !axisP1 || !axisP2) return null;
             const axisOrigin = new THREE.Vector3(axisP1.x, axisP1.y, axisP1.z);
@@ -5947,25 +6011,28 @@
             const axisDir = axisVec.divideScalar(axisLen);
             const { canonU: uAxis, canonV: vAxis } = computeCanonicalCircleBasisFromNormal(axisDir);
 
+            const refinedProfile = refineRevolveProfileAtAxisCrossings3D(profilePoints, axisP1, axisP2).points;
             const nRad = Math.max(16, Math.min(180, Math.round(radialSegments)));
             const stations = [];
             const rings = [];
             let maxRadius = 0;
 
-            for (const rawPt of profilePoints) {
+            for (const rawPt of refinedProfile) {
                 const pt = new THREE.Vector3(rawPt.x, rawPt.y, rawPt.z);
                 const rel = new THREE.Vector3().subVectors(pt, axisOrigin);
                 const axialCoord = rel.dot(axisDir);
                 const axisFoot = axisOrigin.clone().addScaledVector(axisDir, axialCoord);
                 const radialVec = new THREE.Vector3().subVectors(pt, axisFoot);
-                const radius = radialVec.length();
+                const rawRadius = radialVec.length();
+                const isOnAxis = rawRadius <= 5e-4;
+                const radius = isOnAxis ? 0 : rawRadius;
                 if (radius > maxRadius) maxRadius = radius;
                 const xComp = radialVec.dot(uAxis);
                 const yComp = radialVec.dot(vAxis);
                 const startAngle = radius > 1e-6 ? Math.atan2(yComp, xComp) : 0;
 
                 stations.push({
-                    sourcePoint: pt,
+                    sourcePoint: isOnAxis ? axisFoot.clone() : pt,
                     axisFoot,
                     axialCoord,
                     radius,
@@ -6079,6 +6146,11 @@
                     keyRingIndices.add(profilePoints.length - 1);
                 }
             }
+
+            const refinedProfileRes = refineRevolveProfileAtAxisCrossings3D(profilePoints, axisP1, axisP2, keyRingIndices);
+            profilePoints = refinedProfileRes.points;
+            keyRingIndices.clear();
+            refinedProfileRes.keyRingIndices.forEach(idx => keyRingIndices.add(idx));
 
             const revGeom = computeRevolvedProfileGeometry3D(profilePoints, axisP1, axisP2, radialSegments);
             if (!revGeom) return null;
@@ -9015,12 +9087,16 @@
                         const r2 = revGeom.rings[i + 1];
                         const rad1 = revGeom.stations[i].radius;
                         const rad2 = revGeom.stations[i + 1].radius;
-                        if (rad1 < 1e-5 && rad2 < 1e-5) continue;
+                        if (rad1 < 1e-6 && rad2 < 1e-6) continue;
                         for (let j = 0; j < nRad; j++) {
                             const a1 = r1[j], b1 = r1[j + 1];
                             const a2 = r2[j], b2 = r2[j + 1];
-                            vertices.push(a1.x, a1.y, a1.z, b1.x, b1.y, b1.z, b2.x, b2.y, b2.z);
-                            vertices.push(a1.x, a1.y, a1.z, b2.x, b2.y, b2.z, a2.x, a2.y, a2.z);
+                            if (rad1 >= 1e-6) {
+                                vertices.push(a1.x, a1.y, a1.z, b1.x, b1.y, b1.z, b2.x, b2.y, b2.z);
+                            }
+                            if (rad2 >= 1e-6) {
+                                vertices.push(a1.x, a1.y, a1.z, b2.x, b2.y, b2.z, a2.x, a2.y, a2.z);
+                            }
                         }
                     }
 
