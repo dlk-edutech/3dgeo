@@ -3179,6 +3179,9 @@
                 selectTool(tool.id);
             } else if (tool.type === 'action' && tool.actionFn) {
                 tool.actionFn();
+                if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                    document.activeElement.blur();
+                }
             }
             renderToolTrays();
         }
@@ -4616,26 +4619,43 @@
             });
         }
 
-        function saveAutoStateToStorage() {
+        let isApplyingRemoteSync = false;
+        let lastSavedSerializedState = null;
+        let lastLocalMutationStamp = 0;
+
+        function isPinSyncParticipating() {
+            return Boolean(isInsideDocPiPChild || (activeDocPiPWindow && !activeDocPiPWindow.closed));
+        }
+
+        function saveAutoStateToStorage(forceWrite = false) {
             try {
+                if (isApplyingRemoteSync) return;
                 if (!geoState || !Array.isArray(geoState.points)) return;
-                localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(geoState));
-                if (typeof broadcastPinSyncState === 'function') {
-                    broadcastPinSyncState();
+                const serialized = JSON.stringify(geoState);
+                if (!forceWrite && lastSavedSerializedState !== null && serialized === lastSavedSerializedState) {
+                    return;
+                }
+                lastSavedSerializedState = serialized;
+                localStorage.setItem(AUTOSAVE_STORAGE_KEY, serialized);
+                if (typeof broadcastPinSyncState === 'function' && isPinSyncParticipating()) {
+                    broadcastPinSyncState(serialized);
                 }
             } catch (e) {}
         }
 
         function scheduleAutoSaveState() {
+            if (isApplyingRemoteSync) return;
+            lastLocalMutationStamp = Math.max(lastLocalMutationStamp + 1, Date.now());
             if (autoSaveTimer) clearTimeout(autoSaveTimer);
             autoSaveTimer = setTimeout(() => {
-                saveAutoStateToStorage();
+                autoSaveTimer = null;
+                saveAutoStateToStorage(false);
             }, 180);
         }
 
-        function restoreAutoSavedState() {
+        function restoreAutoSavedState(rawOverride = null) {
             try {
-                const raw = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+                const raw = typeof rawOverride === 'string' ? rawOverride : localStorage.getItem(AUTOSAVE_STORAGE_KEY);
                 if (!raw) return false;
                 const parsed = JSON.parse(raw);
                 if (!parsed || !Array.isArray(parsed.points) || parsed.points.length === 0) return false;
@@ -4656,6 +4676,7 @@
                     textBoxes: Array.isArray(parsed.textBoxes) ? parsed.textBoxes : [],
                     bgImages: Array.isArray(parsed.bgImages) ? parsed.bgImages : []
                 };
+                lastSavedSerializedState = JSON.stringify(geoState);
                 return true;
             } catch (e) {
                 return false;
@@ -5133,7 +5154,7 @@
                     removeBackgroundImage(activeBgImageId);
                     return;
                 }
-                if (!isEditingInput && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                if (!isEditingInput && (e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
                     e.preventDefault();
                     undo();
                 } else if (!isEditingInput && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
@@ -20186,6 +20207,7 @@
                 segments: [],
                 faces: [],
                 circles: [],
+                curves: [],
                 solids: [],
                 measureScale: null,
                 measurements: [],
@@ -20325,6 +20347,7 @@
         let activeDocPiPWindow = null;
         let isInsideDocPiPChild = false;
         let isCompactPinnedUI = false;
+        const PIN_SYNC_INSTANCE_ID = 'tab_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
         let pinSyncChannel = null;
         let lastBroadcastStamp = 0;
 
@@ -20347,11 +20370,28 @@
                     pinSyncChannel = new BroadcastChannel('ez3d_pin_sync_v1');
                     pinSyncChannel.onmessage = (ev) => {
                         const data = ev?.data;
-                        if (!data || data.type !== 'STATE_SYNC' || !data.stamp || data.stamp <= lastBroadcastStamp) return;
+                        if (!isPinSyncParticipating()) return;
+                        if (!data || data.type !== 'STATE_SYNC') return;
+                        if (!data.senderId || data.senderId === PIN_SYNC_INSTANCE_ID) return;
+                        if (typeof data.stamp !== 'number' || !Number.isFinite(data.stamp) || data.stamp <= lastBroadcastStamp) return;
+                        if (autoSaveTimer !== null && data.stamp <= lastLocalMutationStamp) return;
+                        if (typeof data.serialized === 'string' && lastSavedSerializedState !== null && data.serialized === lastSavedSerializedState) {
+                            lastBroadcastStamp = data.stamp;
+                            return;
+                        }
                         lastBroadcastStamp = data.stamp;
-                        if (restoreAutoSavedState()) {
-                            updateSceneFromState();
-                            updateAnimationControlPanel();
+                        if (autoSaveTimer) {
+                            clearTimeout(autoSaveTimer);
+                            autoSaveTimer = null;
+                        }
+                        isApplyingRemoteSync = true;
+                        try {
+                            if (restoreAutoSavedState(typeof data.serialized === 'string' ? data.serialized : null)) {
+                                updateSceneFromState();
+                                updateAnimationControlPanel();
+                            }
+                        } finally {
+                            isApplyingRemoteSync = false;
                         }
                     };
                 }
@@ -20363,12 +20403,17 @@
             }
         }
 
-        function broadcastPinSyncState() {
+        function broadcastPinSyncState(serialized = null) {
             try {
-                if (!pinSyncChannel) return;
-                const stamp = Date.now();
+                if (!pinSyncChannel || !isPinSyncParticipating()) return;
+                const stamp = Math.max(lastBroadcastStamp + 1, Date.now());
                 lastBroadcastStamp = stamp;
-                pinSyncChannel.postMessage({ type: 'STATE_SYNC', stamp });
+                pinSyncChannel.postMessage({
+                    type: 'STATE_SYNC',
+                    senderId: PIN_SYNC_INSTANCE_ID,
+                    stamp,
+                    serialized: typeof serialized === 'string' ? serialized : JSON.stringify(geoState)
+                });
             } catch (e) {}
         }
 
@@ -20449,7 +20494,7 @@
                 return;
             }
 
-            saveAutoStateToStorage();
+            saveAutoStateToStorage(true);
 
             // 1. Bật ngay giao diện Ghim phần bản vẽ tương tác (ẩn header & footer, hiển thị trọn vẹn bản vẽ + các khay công cụ + nút Bỏ ghim)
             setCompactPinnedMode(true);
@@ -20477,9 +20522,18 @@
 
                     pipWin.addEventListener('pagehide', () => {
                         activeDocPiPWindow = null;
-                        if (restoreAutoSavedState()) {
-                            updateSceneFromState();
-                            updateAnimationControlPanel();
+                        if (autoSaveTimer) {
+                            clearTimeout(autoSaveTimer);
+                            autoSaveTimer = null;
+                        }
+                        isApplyingRemoteSync = true;
+                        try {
+                            if (restoreAutoSavedState()) {
+                                updateSceneFromState();
+                                updateAnimationControlPanel();
+                            }
+                        } finally {
+                            isApplyingRemoteSync = false;
                         }
                         if (isCompactPinnedUI) {
                             setCompactPinnedMode(false);
@@ -20508,7 +20562,7 @@
                 activeDocPiPWindow = null;
             }
             if (isInsideDocPiPChild) {
-                saveAutoStateToStorage();
+                saveAutoStateToStorage(true);
                 try { window.close(); } catch (e) {}
             }
             if (isCompactPinnedUI) {
