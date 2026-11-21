@@ -2631,13 +2631,13 @@
             'solid-revolve': {
                 vi: {
                     name: 'Mặt tròn xoay (Chọn Đường sinh & Trục quay)',
-                    tip: '<b>Mặt tròn xoay:</b> Lần lượt chọn <b>Đường sinh</b> (đoạn/đường thẳng, đường gấp khúc hoặc đường cong nội suy) rồi chọn <b>Trục quay</b>',
-                    guide: 'Mặt tròn xoay: <b>Bước 1:</b> Chọn <b>Đường sinh</b> (1 đoạn/đường thẳng, các đoạn nối tiếp của đường gấp khúc, hoặc 1 đường cong nội suy) $\\to$ <b>Bước 2:</b> Chọn <b>Trục quay</b> (1 đoạn/đường thẳng hoặc 2 điểm)'
+                    tip: '<b>Mặt tròn xoay:</b> Chọn <b>Đường sinh</b> (đoạn/đường thẳng, đường gấp khúc, cung/đường tròn, đường cong hoặc đa giác) rồi chọn <b>Trục quay</b>',
+                    guide: 'Mặt tròn xoay: <b>B1:</b> Chọn <b>Đường sinh</b> (đoạn/đường thẳng, đường gấp khúc, cung/đường tròn, đường cong, đa giác) $\\to$ <b>B2:</b> Chọn <b>Trục quay</b>'
                 },
                 en: {
                     name: 'Surface of Revolution (Generatrix & Axis)',
-                    tip: '<b>Surface of Revolution:</b> Sequentially select <b>Generatrix</b> (line/segment, broken line, or interpolating curve) then select <b>Axis of Revolution</b>',
-                    guide: 'Surface of Revolution: <b>Step 1:</b> Select <b>Generatrix</b> (segment/line, connected broken-line segments, or interpolating curve) $\\to$ <b>Step 2:</b> Select <b>Axis of Revolution</b> (segment/line or 2 points)'
+                    tip: '<b>Surface of Revolution:</b> Select <b>Generatrix</b> (segment/line, broken line, arc/circle, curve, or polygon) then <b>Axis of Revolution</b>',
+                    guide: 'Surface of Revolution: <b>Step 1:</b> Select <b>Generatrix</b> (segment/line, broken line, arc/circle, curve, polygon) $\\to$ <b>Step 2:</b> Select <b>Axis</b>'
                 }
             },
             'measure-scale': {
@@ -4245,7 +4245,8 @@
                     const depOnSeg = (sol.axisSegId && delSegs.has(sol.axisSegId)) ||
                                      (Array.isArray(sol.segmentIds) && sol.segmentIds.some(sid => delSegs.has(sid)));
                     const depOnCurv = Boolean(sol.curveId && delCurves.has(sol.curveId));
-                    if (depOnCir || depOnPt || depOnSeg || depOnCurv) {
+                    const depOnFace = Boolean(sol.faceId && delFaces.has(sol.faceId));
+                    if (depOnCir || depOnPt || depOnSeg || depOnCurv || depOnFace) {
                         delSolids.add(sol.id);
                         changed = true;
                     }
@@ -6343,17 +6344,30 @@
 
             if (maxRadius < 1e-5) return null;
 
-            let volume = 0;
+            let signedVolume = 0;
+            let unsignedVolume = 0;
             let lateralArea = 0;
             for (let i = 0; i < stations.length - 1; i++) {
                 const s1 = stations[i];
                 const s2 = stations[i + 1];
-                const dh = Math.abs(s2.axialCoord - s1.axialCoord);
+                const dhSigned = s2.axialCoord - s1.axialCoord;
+                const dh = Math.abs(dhSigned);
                 const dr = s2.radius - s1.radius;
                 const slant = Math.hypot(dh, dr);
-                volume += (Math.PI * dh / 3) * (s1.radius * s1.radius + s1.radius * s2.radius + s2.radius * s2.radius);
+                const rQuad = s1.radius * s1.radius + s1.radius * s2.radius + s2.radius * s2.radius;
+                signedVolume += (Math.PI * dhSigned / 3) * rQuad;
+                unsignedVolume += (Math.PI * dh / 3) * rQuad;
                 lateralArea += Math.PI * (s1.radius + s2.radius) * slant;
             }
+
+            if (lateralArea < 1e-5) return null;
+
+            const firstSrcPt = stations[0].sourcePoint;
+            const lastSrcPt = stations[stations.length - 1].sourcePoint;
+            const isClosedProfile = stations.length >= 4 && firstSrcPt.distanceTo(lastSrcPt) < 1e-3;
+            const volume = isClosedProfile
+                ? (Math.abs(signedVolume) > 1e-4 ? Math.abs(signedVolume) : 0.5 * unsignedVolume)
+                : unsignedVolume;
 
             return {
                 axisOrigin,
@@ -6366,6 +6380,145 @@
                 volume,
                 lateralArea
             };
+        }
+
+        function sampleCircleOrArcGeneratrix3D(geom, axisP1, axisP2, options = {}) {
+            if (!geom || !geom.center || !Number.isFinite(geom.radius) || geom.radius < 1e-5) return null;
+            if (!axisP1 || !axisP2) return null;
+            const axOrigin = new THREE.Vector3(axisP1.x, axisP1.y, axisP1.z);
+            const axVec = new THREE.Vector3(axisP2.x - axisP1.x, axisP2.y - axisP1.y, axisP2.z - axisP1.z);
+            const axLen = axVec.length();
+            if (axLen < 1e-6) return null;
+            const axDir = axVec.divideScalar(axLen);
+            const normalUnit = geom.normal.clone().normalize();
+
+            const centerRel = new THREE.Vector3().subVectors(geom.center, axOrigin);
+            const centerAxial = centerRel.dot(axDir);
+            const centerFoot = axOrigin.clone().addScaledVector(axDir, centerAxial);
+            const centerDistToAxis = geom.center.distanceTo(centerFoot);
+            const normalAxisAlign = Math.abs(normalUnit.dot(axDir));
+
+            // Đường tròn/cung tròn nằm trong mặt phẳng vuông góc với trục quay và có tâm nằm trên trục -> tự quay tại chỗ
+            if (centerDistToAxis < 1e-3 && normalAxisAlign > 1 - 1e-4) {
+                return { points: [], isClosed: !geom.isArc, keyRingIndices: [], isDegenerateSelfRotation: true };
+            }
+
+            const fullSamples = Math.max(48, Math.round(options.fullCircleSamples || 96));
+
+            if (geom.isArc) {
+                const sweep = Math.max(1e-4, Math.min(Math.PI * 2, typeof geom.sweepAngle === 'number' ? geom.sweepAngle : Math.PI));
+                const minArcSamples = Math.max(32, Math.round(options.arcSamples || 64));
+                const steps = Math.max(minArcSamples, Math.ceil((sweep / (Math.PI * 2)) * fullSamples));
+                const points = [];
+                for (let i = 0; i <= steps; i++) {
+                    const theta = (i / steps) * sweep;
+                    points.push(
+                        geom.center.clone()
+                            .addScaledVector(geom.uAxis, geom.radius * Math.cos(theta))
+                            .addScaledVector(geom.vAxis, geom.radius * Math.sin(theta))
+                    );
+                }
+                const isClosed = sweep >= Math.PI * 2 - 1e-4;
+                return {
+                    points,
+                    isClosed,
+                    keyRingIndices: isClosed ? [] : [0, points.length - 1],
+                    isDegenerateSelfRotation: false
+                };
+            }
+
+            // Đường tròn đầy đủ có trục quay đi qua đường kính -> lấy đúng 1 nửa đường tròn để tạo mặt cầu đơn lớp chuẩn
+            if (centerDistToAxis < 1e-3 && normalAxisAlign < 1e-3) {
+                const diamU = axDir.clone();
+                const rawV = new THREE.Vector3().crossVectors(normalUnit, diamU);
+                const diamV = rawV.length() > 1e-6 ? rawV.normalize() : geom.uAxis.clone();
+                const steps = Math.max(48, Math.round(fullSamples / 2));
+                const points = [];
+                for (let i = 0; i <= steps; i++) {
+                    const theta = (i / steps) * Math.PI;
+                    points.push(
+                        geom.center.clone()
+                            .addScaledVector(diamU, geom.radius * Math.cos(theta))
+                            .addScaledVector(diamV, geom.radius * Math.sin(theta))
+                    );
+                }
+                return {
+                    points,
+                    isClosed: false,
+                    keyRingIndices: [0, points.length - 1],
+                    isDegenerateSelfRotation: false
+                };
+            }
+
+            // Đường tròn đầy đủ tổng quát (hình xuyến / torus, spindle torus...)
+            const points = [];
+            for (let i = 0; i <= fullSamples; i++) {
+                const theta = (i / fullSamples) * Math.PI * 2;
+                points.push(
+                    geom.center.clone()
+                        .addScaledVector(geom.uAxis, geom.radius * Math.cos(theta))
+                        .addScaledVector(geom.vAxis, geom.radius * Math.sin(theta))
+                );
+            }
+            return {
+                points,
+                isClosed: true,
+                keyRingIndices: [],
+                isDegenerateSelfRotation: false
+            };
+        }
+
+        function samplePolygonFaceGeneratrix3D(vertices, subSteps = 12) {
+            if (!Array.isArray(vertices) || vertices.length < 3) return null;
+            const steps = Math.max(4, Math.round(subSteps));
+            const points = [];
+            const keyRingIndices = [];
+            const n = vertices.length;
+            for (let i = 0; i < n; i++) {
+                const vA = new THREE.Vector3(vertices[i].x, vertices[i].y, vertices[i].z);
+                const vB = new THREE.Vector3(vertices[(i + 1) % n].x, vertices[(i + 1) % n].y, vertices[(i + 1) % n].z);
+                if (i === 0) {
+                    keyRingIndices.push(0);
+                    points.push(vA.clone());
+                }
+                for (let step = 1; step <= steps; step++) {
+                    points.push(vA.clone().lerp(vB, step / steps));
+                }
+                keyRingIndices.push(points.length - 1);
+            }
+            return { points, isClosed: true, keyRingIndices, isDegenerateSelfRotation: false };
+        }
+
+        function computeCurvedGeneratrixKeyRings3D(stations, baseKeyRingIndices, isClosedLoop) {
+            const keySet = new Set(Array.isArray(baseKeyRingIndices) ? baseKeyRingIndices : Array.from(baseKeyRingIndices || []));
+            const n = stations.length;
+            if (n <= 4) return Array.from(keySet).sort((a, b) => a - b);
+
+            let maxIdx = -1;
+            let maxR = -1;
+            let minIdx = -1;
+            let minR = Infinity;
+            for (let i = 1; i < n - 1; i++) {
+                const r = stations[i].radius;
+                if (r > maxR) { maxR = r; maxIdx = i; }
+                if (r < minR) { minR = r; minIdx = i; }
+            }
+
+            if (isClosedLoop) {
+                if (maxIdx > 0 && maxR > 0.15 && maxR - minR > 0.12) {
+                    keySet.add(maxIdx);
+                }
+            } else {
+                const rStart = stations[0].radius;
+                const rEnd = stations[n - 1].radius;
+                if (maxIdx > 2 && maxIdx < n - 3 && maxR > Math.max(rStart, rEnd) + 0.15) {
+                    keySet.add(maxIdx);
+                }
+                if (minIdx > 2 && minIdx < n - 3 && minR > 0.12 && minR < Math.min(rStart, rEnd) - 0.15) {
+                    keySet.add(minIdx);
+                }
+            }
+            return Array.from(keySet).sort((a, b) => a - b);
         }
 
         function computeRevolveSilhouetteSegments3D(revGeom, viewDir, keyRingIndices = null) {
@@ -6394,6 +6547,7 @@
             const stations = revGeom.stations;
             const n = stations.length;
             const bandCos = new Array(n - 1).fill(null);
+            const rawBandCos = new Array(n - 1).fill(null);
 
             for (let i = 0; i < n - 1; i++) {
                 const s0 = stations[i];
@@ -6402,11 +6556,24 @@
                 const dh = s1.axialCoord - s0.axialCoord;
                 const dr = s1.radius - s0.radius;
                 if (Math.hypot(dh, dr) < 1e-7) continue;
-                if (Math.abs(dh) <= 1e-7) continue;
+                if (Math.abs(dh) <= 1e-7) {
+                    if (Math.abs(dr) > 1e-7 && Math.abs(tanElev) > 1e-7) {
+                        rawBandCos[i] = Math.sign(dr * tanElev) * 1e6;
+                    }
+                    continue;
+                }
                 const cosPhi = (dr / dh) * tanElev;
-                if (!Number.isFinite(cosPhi) || Math.abs(cosPhi) >= 1 - 1e-6) continue;
+                if (!Number.isFinite(cosPhi)) continue;
+                rawBandCos[i] = cosPhi;
+                if (Math.abs(cosPhi) >= 1 - 1e-6) continue;
                 bandCos[i] = cosPhi;
             }
+
+            const isClosedLoop =
+                n >= 4 &&
+                !keySet.has(0) &&
+                !keySet.has(n - 1) &&
+                stations[0].sourcePoint.distanceTo(stations[n - 1].sourcePoint) < 1e-3;
 
             const branch1 = [];
             const branch2 = [];
@@ -6420,19 +6587,83 @@
                 let cos0 = cBand;
                 let cos1 = cBand;
 
-                if (i > 0 && !keySet.has(i) && s0.radius > 1e-4 && bandCos[i - 1] !== null) {
-                    const prevC = bandCos[i - 1];
-                    if (Math.abs(cBand - prevC) < 0.25) {
-                        const avg = 0.5 * (prevC + cBand);
-                        if (Math.abs(avg) < 1 - 1e-6) cos0 = avg;
+                const prevBandIdx = i > 0 ? i - 1 : (isClosedLoop ? n - 2 : -1);
+                const nextBandIdx = i + 1 < n - 1 ? i + 1 : (isClosedLoop ? 0 : -1);
+
+                let capStartSign = null;
+                let capEndSign = null;
+
+                if (prevBandIdx >= 0 && !keySet.has(i) && s0.radius > 1e-4) {
+                    if (bandCos[prevBandIdx] !== null) {
+                        const prevC = bandCos[prevBandIdx];
+                        if (Math.abs(cBand - prevC) < 0.25) {
+                            const avg = 0.5 * (prevC + cBand);
+                            if (Math.abs(avg) < 1 - 1e-6) cos0 = avg;
+                        }
+                    } else if (rawBandCos[prevBandIdx] !== null) {
+                        const prevRaw = rawBandCos[prevBandIdx];
+                        if (Math.abs(prevRaw) >= 1 - 1e-6 && Math.sign(prevRaw) === Math.sign(cBand) && Math.abs(cBand) > 0.35) {
+                            capStartSign = Math.sign(prevRaw);
+                        }
                     }
                 }
-                if (i + 1 < n - 1 && !keySet.has(i + 1) && s1.radius > 1e-4 && bandCos[i + 1] !== null) {
-                    const nextC = bandCos[i + 1];
-                    if (Math.abs(nextC - cBand) < 0.25) {
-                        const avg = 0.5 * (cBand + nextC);
-                        if (Math.abs(avg) < 1 - 1e-6) cos1 = avg;
+                if (nextBandIdx >= 0 && !keySet.has(i + 1) && s1.radius > 1e-4) {
+                    if (bandCos[nextBandIdx] !== null) {
+                        const nextC = bandCos[nextBandIdx];
+                        if (Math.abs(nextC - cBand) < 0.25) {
+                            const avg = 0.5 * (cBand + nextC);
+                            if (Math.abs(avg) < 1 - 1e-6) cos1 = avg;
+                        }
+                    } else if (rawBandCos[nextBandIdx] !== null) {
+                        const nextRaw = rawBandCos[nextBandIdx];
+                        if (Math.abs(nextRaw) >= 1 - 1e-6 && Math.sign(nextRaw) === Math.sign(cBand) && Math.abs(cBand) > 0.35) {
+                            capEndSign = Math.sign(nextRaw);
+                        }
                     }
+                }
+
+                const pushHorizonCap = (fromSt, towardSt, fromCos, capSign, rawBeyond, reverseOrder) => {
+                    const denom = rawBeyond - fromCos;
+                    const uCap = Math.abs(rawBeyond) < 1e5 && Math.abs(denom) > 1e-6
+                        ? Math.max(0.05, Math.min(0.95, (capSign - fromCos) / denom))
+                        : 0.45;
+                    const tCap = Math.max(0, Math.min(0.65, uCap * 0.65));
+                    const hCap = fromSt.axialCoord + tCap * (towardSt.axialCoord - fromSt.axialCoord);
+                    const rCap = Math.max(0, fromSt.radius + tCap * (towardSt.radius - fromSt.radius));
+                    const phiStart = Math.acos(Math.max(-1, Math.min(1, fromCos)));
+                    const phiEnd = capSign > 0 ? 0 : Math.PI;
+                    const cosSpan = capSign - fromCos;
+                    const capSteps = 6;
+                    const pts1 = [];
+                    const pts2 = [];
+                    for (let k = 0; k <= capSteps; k++) {
+                        const alpha = k / capSteps;
+                        const phiK = phiStart + (phiEnd - phiStart) * alpha;
+                        const cosK = k === capSteps ? capSign : Math.cos(phiK);
+                        const sinK = k === capSteps ? 0 : Math.sqrt(Math.max(0, 1 - cosK * cosK));
+                        const frac = Math.abs(cosSpan) > 1e-7
+                            ? Math.max(0, Math.min(1, (cosK - fromCos) / cosSpan))
+                            : alpha;
+                        const hK = fromSt.axialCoord + frac * (hCap - fromSt.axialCoord);
+                        const rK = fromSt.radius + frac * (rCap - fromSt.radius);
+                        const footK = fromSt.axisFoot.clone().addScaledVector(axisDir, hK - fromSt.axialCoord);
+                        const dirP = frontDir.clone().multiplyScalar(cosK).addScaledVector(sideDir, sinK);
+                        const dirM = frontDir.clone().multiplyScalar(cosK).addScaledVector(sideDir, -sinK);
+                        pts1.push({ p: footK.clone().addScaledVector(dirP, rK), d: dirP });
+                        pts2.push({ p: footK.clone().addScaledVector(dirM, rK), d: dirM });
+                    }
+                    if (reverseOrder) {
+                        pts1.reverse();
+                        pts2.reverse();
+                    }
+                    for (let k = 0; k < capSteps; k++) {
+                        branch1.push({ bandIndex: i, p0: pts1[k].p, p1: pts1[k + 1].p, dir0: pts1[k].d, dir1: pts1[k + 1].d });
+                        branch2.push({ bandIndex: i, p0: pts2[k].p, p1: pts2[k + 1].p, dir0: pts2[k].d, dir1: pts2[k + 1].d });
+                    }
+                };
+
+                if (capStartSign !== null && prevBandIdx >= 0) {
+                    pushHorizonCap(s0, stations[prevBandIdx], cos0, capStartSign, rawBandCos[prevBandIdx], true);
                 }
 
                 const sin0 = Math.sqrt(Math.max(0, 1 - cos0 * cos0));
@@ -6457,6 +6688,11 @@
                     dir0: dir0Minus,
                     dir1: dir1Minus
                 });
+
+                if (capEndSign !== null && nextBandIdx >= 0) {
+                    const nextStation = nextBandIdx + 1 < n ? stations[nextBandIdx + 1] : stations[1];
+                    pushHorizonCap(s1, nextStation, cos1, capEndSign, rawBandCos[nextBandIdx], false);
+                }
             }
 
             return { branch1, branch2, frontDir, sideDir };
@@ -6482,18 +6718,65 @@
 
             let profilePoints = [];
             const keyRingIndices = new Set();
+            let isClosedCurvedGeneratrix = false;
+            let isSmoothCurvedGeneratrix = false;
 
-            if (sol.generatrixType === 'curve' && sol.curveId) {
+            if (sol.generatrixType === 'circle' && sol.circleId) {
+                const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
+                const geom = computeCircleGeometry(cir);
+                if (!geom) return null;
+                const sampled = sampleCircleOrArcGeneratrix3D(geom, axisP1, axisP2, {
+                    arcSamples: Math.max(48, axialSubSteps * 4),
+                    fullCircleSamples: Math.max(72, axialSubSteps * 6)
+                });
+                if (!sampled || sampled.isDegenerateSelfRotation || sampled.points.length < 2) return null;
+                profilePoints = sampled.points;
+                sampled.keyRingIndices.forEach(idx => keyRingIndices.add(idx));
+                isClosedCurvedGeneratrix = Boolean(sampled.isClosed);
+                isSmoothCurvedGeneratrix = true;
+            } else if (sol.generatrixType === 'curve' && sol.curveId) {
                 const curv = (geoState.curves || []).find(c => c.id === sol.curveId);
-                if (!curv || !Array.isArray(curv.pointIds) || curv.pointIds.length < 2) return null;
-                const cPts = curv.pointIds.map(pid => geoState.points.find(p => p.id === pid)).filter(Boolean);
-                if (cPts.length < 2) return null;
-                const sampleCount = Math.max(64, axialSubSteps * 3);
-                const polyRes = computeCoplanarInterpolatingPolynomial3D(cPts, sampleCount);
-                if (!polyRes || !polyRes.sampledPoints || polyRes.sampledPoints.length < 2) return null;
-                profilePoints = polyRes.sampledPoints;
-                keyRingIndices.add(0);
-                keyRingIndices.add(profilePoints.length - 1);
+                if (!curv) return null;
+                if (curv.mode === 'surfaceIntersection') {
+                    const branches = computeCurvePolylines3D(curv);
+                    if (!branches || branches.length === 0) return null;
+                    const chosenIdx = Number.isInteger(sol.curveBranchIdx) && sol.curveBranchIdx >= 0 && sol.curveBranchIdx < branches.length
+                        ? sol.curveBranchIdx
+                        : 0;
+                    const branch = branches[chosenIdx] || branches[0];
+                    if (!branch || !Array.isArray(branch.points) || branch.points.length < 2) return null;
+                    profilePoints = branch.points.map(p => new THREE.Vector3(p.x, p.y, p.z));
+                    if (branch.closed && profilePoints[0].distanceTo(profilePoints[profilePoints.length - 1]) > 1e-4) {
+                        profilePoints.push(profilePoints[0].clone());
+                    }
+                    isClosedCurvedGeneratrix = Boolean(branch.closed) ||
+                        (profilePoints.length >= 4 && profilePoints[0].distanceTo(profilePoints[profilePoints.length - 1]) < 1e-3);
+                    if (!isClosedCurvedGeneratrix) {
+                        keyRingIndices.add(0);
+                        keyRingIndices.add(profilePoints.length - 1);
+                    }
+                    isSmoothCurvedGeneratrix = true;
+                } else {
+                    if (!Array.isArray(curv.pointIds) || curv.pointIds.length < 2) return null;
+                    const cPts = curv.pointIds.map(pid => geoState.points.find(p => p.id === pid)).filter(Boolean);
+                    if (cPts.length < 2) return null;
+                    const sampleCount = Math.max(64, axialSubSteps * 3);
+                    const polyRes = computeCoplanarInterpolatingPolynomial3D(cPts, sampleCount);
+                    if (!polyRes || !polyRes.sampledPoints || polyRes.sampledPoints.length < 2) return null;
+                    profilePoints = polyRes.sampledPoints;
+                    keyRingIndices.add(0);
+                    keyRingIndices.add(profilePoints.length - 1);
+                    isSmoothCurvedGeneratrix = true;
+                }
+            } else if (sol.generatrixType === 'face' && sol.faceId) {
+                const face = (geoState.faces || []).find(f => f.id === sol.faceId);
+                if (!face || !Array.isArray(face.pointIds) || face.pointIds.length < 3) return null;
+                const verts = face.pointIds.map(pid => geoState.points.find(p => p.id === pid)).filter(Boolean);
+                if (verts.length < 3) return null;
+                const sampled = samplePolygonFaceGeneratrix3D(verts, Math.max(4, axialSubSteps));
+                if (!sampled || sampled.points.length < 2) return null;
+                profilePoints = sampled.points;
+                sampled.keyRingIndices.forEach(idx => keyRingIndices.add(idx));
             } else {
                 const rawSegs = (sol.segmentIds || [])
                     .map(sid => (geoState.segments || []).find(s => s.id === sid))
@@ -6537,26 +6820,14 @@
             const revGeom = computeRevolvedProfileGeometry3D(profilePoints, axisP1, axisP2, radialSegments);
             if (!revGeom) return null;
 
-            // Nếu là đường cong nội suy có điểm phình/thắt cực trị ở giữa, vẽ thêm đường tròn vĩ tuyến tại bán kính lớn nhất
-            if (sol.generatrixType === 'curve' && revGeom.stations.length > 4) {
-                let maxIdx = 0;
-                let maxR = -1;
-                for (let i = 1; i < revGeom.stations.length - 1; i++) {
-                    if (revGeom.stations[i].radius > maxR) {
-                        maxR = revGeom.stations[i].radius;
-                        maxIdx = i;
-                    }
-                }
-                const rStart = revGeom.stations[0].radius;
-                const rEnd = revGeom.stations[revGeom.stations.length - 1].radius;
-                if (maxIdx > 2 && maxIdx < revGeom.stations.length - 3 && maxR > Math.max(rStart, rEnd) + 0.15) {
-                    keyRingIndices.add(maxIdx);
-                }
+            let finalKeyRings = Array.from(keyRingIndices).sort((a, b) => a - b);
+            if (isSmoothCurvedGeneratrix && revGeom.stations.length > 4) {
+                finalKeyRings = computeCurvedGeneratrixKeyRings3D(revGeom.stations, finalKeyRings, isClosedCurvedGeneratrix);
             }
 
             return {
                 ...revGeom,
-                keyRingIndices: Array.from(keyRingIndices).sort((a, b) => a - b),
+                keyRingIndices: finalKeyRings,
                 axisP1,
                 axisP2
             };
@@ -10160,8 +10431,9 @@
 
                 const isSelectedSurfFace = selectedSurfaceItems.some(s => s.faceId === face.id) ||
                     (currentTool === 'plane-parallel' && planeConstructorPending.faceId === face.id) ||
+                    (currentTool === 'solid-revolve' && typeof revolveBuilderState === 'object' && revolveBuilderState && revolveBuilderState.faceId === face.id) ||
                     (activeColorResolved && activeColorResolved.kind === 'face' && activeColorResolved.faceId === face.id && colorApplyScope !== 'edges' && colorApplyScope !== 'components');
-                const isHoveredTraceFace = (hoveredFaceId === face.id && ['trace', 'hide', 'delete-obj'].includes(currentTool));
+                const isHoveredTraceFace = (hoveredFaceId === face.id && (['trace', 'hide', 'delete-obj'].includes(currentTool) || (currentTool === 'solid-revolve' && !face.isConstructedPlanePatch)));
                 const isTracedFace = Boolean(face.trace);
                 const isPatchFace = Boolean(face.isConstructedPlanePatch);
                 const isColorPatchFace = Boolean(face.isColorPatch);
@@ -10886,8 +11158,9 @@
 
                 const isSelectedCir = selectedCircleIds.includes(cir.id) ||
                     (colorSelection && colorSelection.circleIds && colorSelection.circleIds.includes(cir.id)) ||
-                    (activeColorResolved && activeColorResolved.kind === 'circle' && activeColorResolved.circleId === cir.id);
-                const isHoveredCir = hoveredCircleId === cir.id && ['solid-cone', 'solid-cylinder', 'solid-sphere', 'delete-obj', 'hide', 'color-obj', 'trace'].includes(currentTool);
+                    (activeColorResolved && activeColorResolved.kind === 'circle' && activeColorResolved.circleId === cir.id) ||
+                    (currentTool === 'solid-revolve' && typeof revolveBuilderState === 'object' && revolveBuilderState && revolveBuilderState.circleId === cir.id);
+                const isHoveredCir = hoveredCircleId === cir.id && ['solid-cone', 'solid-cylinder', 'solid-sphere', 'solid-revolve', 'delete-obj', 'hide', 'color-obj', 'trace'].includes(currentTool);
                 const customCirHex = (cir.fillColor || cir.color) ? parseHexColorToInt(cir.fillColor || cir.color, 0x0f172a) : null;
                 const cirColor = isSelectedCir
                     ? 0xdc2626
@@ -10919,10 +11192,13 @@
                 if (isCircleVisuallyUnlocked) {
                     const hitCirMat = new THREE.LineBasicMaterial({ visible: false });
                     const hitCir = new THREE.Line(cirGeo.clone(), hitCirMat);
+                    const cleanArcName = geom.isArc
+                        ? formatCirclePlainLabel(cir)
+                        : (cir.name || '(C)');
                     hitCir.userData = {
                         circleId: cir.id,
                         isArc: Boolean(geom.isArc),
-                        label: geom.isArc ? `cung tròn ${cir.name || 'ABC'}` : `đường tròn ${cir.name || '(C)'}`
+                        label: geom.isArc ? `cung tròn ${cleanArcName}` : `đường tròn ${cleanArcName}`
                     };
                     scene.add(hitCir);
                     hitCircleMeshes.push(hitCir);
@@ -11674,7 +11950,7 @@
                                     circleId,
                                     angle: normAng,
                                     pos: minEval.pt3,
-                                    label: (currentTool === 'delete-obj' || currentTool === 'hide' || currentTool === 'trace' || currentTool === 'color-obj' || prioritizeCircle || currentTool === 'intersect-surfaces' || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
+                                    label: (currentTool === 'delete-obj' || currentTool === 'hide' || currentTool === 'trace' || currentTool === 'color-obj' || prioritizeCircle || currentTool === 'solid-revolve' || currentTool === 'intersect-surfaces' || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
                                 }
                             };
                         }
@@ -11878,8 +12154,8 @@
                     if (curveList.length > 0) bestCurveCand = curveList[0];
                 }
 
-                // 3. Kiểm tra Giao điểm (bỏ qua giao điểm chưa tạo sẵn khi đang ở chế độ xóa, ẩn, tạo vết, chọn/tô màu hoặc xoay hình)
-                if (!['delete-obj', 'hide', 'trace', 'color-obj', 'view', 'move'].includes(currentTool)) {
+                // 3. Kiểm tra Giao điểm (bỏ qua giao điểm chưa tạo sẵn khi đang ở chế độ xóa, ẩn, tạo vết, chọn/tô màu, xoay hình hoặc tạo mặt tròn xoay)
+                if (!['delete-obj', 'hide', 'trace', 'color-obj', 'view', 'move', 'solid-revolve'].includes(currentTool)) {
                     let closestInter = null;
                     let minInterDist = isPointCreationTool ? 9.0 : 11.5;
                     cachedIntersections.forEach(inter => {
@@ -12166,7 +12442,7 @@
                         const angle = Math.atan2(yComp, xComp);
                         const rRatio = Math.min(0.98, Math.hypot(xComp, yComp) / Math.max(1e-5, geom.radius));
                         // Khi dùng công cụ xóa/ẩn/tô màu hoặc chọn đường tròn tạo khối tròn xoay thì chọn trực tiếp đường tròn đó
-                        if (['delete-obj', 'hide', 'trace', 'color-obj', 'solid-cone', 'solid-cylinder'].includes(currentTool) || (currentTool === 'solid-sphere' && selectedPointIds.length === 0)) {
+                        if (['delete-obj', 'hide', 'trace', 'color-obj', 'solid-cone', 'solid-cylinder', 'solid-revolve'].includes(currentTool) || (currentTool === 'solid-sphere' && selectedPointIds.length === 0)) {
                             return {
                                 type: 'circle',
                                 circleId,
@@ -12204,13 +12480,16 @@
                         }
                     }
                     const faceTitle = topHit.object.userData.faceName || t('đa giác', 'polygon');
+                    const isPolygonGeneratrixPick = currentTool === 'solid-revolve' && face && !face.isConstructedPlanePatch;
                     return {
                         type: 'face',
                         faceId, u, v,
                         pos: topHit.point.clone(),
-                        label: (['delete-obj', 'hide', 'trace', 'color-obj', 'intersect-surfaces', 'plane-parallel'].includes(currentTool) || currentTool.startsWith('measure-'))
-                            ? t(`Mặt phẳng ${faceTitle}`, `Polygon face ${faceTitle}`)
-                            : t(`Trên bề mặt ${faceTitle}`, `On face ${faceTitle}`)
+                        label: isPolygonGeneratrixPick
+                            ? t(`Đa giác ${faceTitle}`, `Polygon ${faceTitle}`)
+                            : ((['delete-obj', 'hide', 'trace', 'color-obj', 'intersect-surfaces', 'plane-parallel'].includes(currentTool) || currentTool.startsWith('measure-'))
+                                ? t(`Mặt phẳng ${faceTitle}`, `Polygon face ${faceTitle}`)
+                                : t(`Trên bề mặt ${faceTitle}`, `On face ${faceTitle}`))
                     };
                 }
             }
@@ -18519,7 +18798,8 @@
             const newHoverId = (target && target.type === 'point') ? target.pointId : null;
             const newHoverCirId = (target && (target.type === 'circle' || target.type === 'circleDisk')) ? target.circleId : null;
             const newHoverCurvId = (target && target.type === 'curve') ? target.curveId : null;
-            const newHoverFaceId = (target && target.type === 'face' && ['trace', 'hide', 'delete-obj'].includes(currentTool)) ? target.faceId : null;
+            const hoveredFaceObj = (target && target.type === 'face') ? (geoState.faces || []).find(f => f.id === target.faceId) : null;
+            const newHoverFaceId = (hoveredFaceObj && (['trace', 'hide', 'delete-obj'].includes(currentTool) || (currentTool === 'solid-revolve' && !hoveredFaceObj.isConstructedPlanePatch))) ? target.faceId : null;
             const newHoverSolidId = (target && ['solid', 'sphere', 'cone', 'frustum', 'revolve'].includes(target.type) && ['trace', 'hide', 'delete-obj'].includes(currentTool)) ? target.solidId : null;
             const hoverPlaneBorder = (currentTool !== 'trace' && currentTool !== 'hide' && currentTool !== 'delete-obj' && target && target.type === 'edge' && target.segId)
                 ? findConstructedPlaneBorderEdge(target.segId)
@@ -20484,10 +20764,27 @@
             }
         }
 
+        function formatCirclePlainLabel(cir) {
+            if (!cir) return '(C)';
+            if (cir.mode === 'arcThreePts') {
+                const pA = geoState.points.find(p => p.id === cir.p1Id);
+                const pB = geoState.points.find(p => p.id === cir.p2Id);
+                const pC = geoState.points.find(p => p.id === cir.p3Id);
+                const ptsLabel = [pA, pB, pC].filter(Boolean).map(p => p.name || '').join('');
+                if (ptsLabel) return ptsLabel;
+                const stripped = String(cir.name || '').replace(/\\overset\{\\frown\}\{([^}]*)\}/g, '$1').trim();
+                return stripped || 'ABC';
+            }
+            return cir.name || '(C)';
+        }
+
         let revolveBuilderState = {
             stage: 'generatrix', // 'generatrix' | 'axis'
-            generatrixType: null, // 'segments' | 'curve' | null
+            generatrixType: null, // 'segments' | 'curve' | 'circle' | 'face' | null
             curveId: null,
+            curveBranchIdx: 0,
+            circleId: null,
+            faceId: null,
             segmentIds: [],
             pendingPointIds: [],
             axisPointIds: [],
@@ -20501,6 +20798,9 @@
                 stage: 'generatrix',
                 generatrixType: null,
                 curveId: null,
+                curveBranchIdx: 0,
+                circleId: null,
+                faceId: null,
                 segmentIds: [],
                 pendingPointIds: [],
                 axisPointIds: [],
@@ -20513,15 +20813,34 @@
                 const guideSpan = document.getElementById('guide-span');
                 if (guideSpan) {
                     guideSpan.innerHTML = t(
-                        '<b>Mặt tròn xoay:</b> Bước 1 — Click chọn <b>Đường sinh</b> (đoạn/đường thẳng, các đoạn nối tiếp của đường gấp khúc, hoặc đường cong nội suy). Bước 2 — Click chọn <b>Trục quay</b>.',
-                        '<b>Surface of Revolution:</b> Step 1 — Click to select the <b>Generatrix</b> (line/segment, connected segments of a broken line, or interpolating curve). Step 2 — Click to select the <b>Axis of Revolution</b>.'
+                        '<b>Mặt tròn xoay:</b> B1 — Chọn <b>Đường sinh</b> (đoạn/đường thẳng, đường gấp khúc, cung/đường tròn, đường cong, đa giác) → B2 — Chọn <b>Trục quay</b>.',
+                        '<b>Surface of Revolution:</b> Step 1 — Select <b>Generatrix</b> (segment/line, broken line, arc/circle, curve, polygon) → Step 2 — Select <b>Axis</b>.'
                     );
                 }
                 updateSceneFromState();
             }
         }
 
-        function formatRevolveGeneratrixDisplayName(generatrixType, curveId, segmentIds) {
+        function formatRevolveGeneratrixDisplayName(generatrixType, curveId, segmentIds, circleId = null, faceId = null) {
+            if (generatrixType === 'circle' && circleId) {
+                const cir = (geoState.circles || []).find(c => c.id === circleId);
+                if (!cir) return '(C)';
+                if (cir.mode === 'arcThreePts' || cir.isArc) {
+                    return `${t('cung', 'arc')} ${formatCirclePlainLabel(cir)}`;
+                }
+                return formatCirclePlainLabel(cir);
+            }
+            if (generatrixType === 'face' && faceId) {
+                const face = (geoState.faces || []).find(f => f.id === faceId);
+                if (!face) return t('đa giác', 'polygon');
+                const vNames = (face.pointIds || [])
+                    .map(pid => {
+                        const pt = geoState.points.find(p => p.id === pid);
+                        return pt ? (pt.name || '') : '';
+                    })
+                    .join('');
+                return face.name || vNames || t('đa giác', 'polygon');
+            }
             if (generatrixType === 'curve' && curveId) {
                 const curv = (geoState.curves || []).find(c => c.id === curveId);
                 return curv ? (curv.name || '(C)') : '(C)';
@@ -20554,7 +20873,13 @@
 
         function formatRevolveSolidDisplayName(sol) {
             if (!sol) return 'Mặt tròn xoay';
-            const genName = formatRevolveGeneratrixDisplayName(sol.generatrixType, sol.curveId, sol.segmentIds);
+            const genName = formatRevolveGeneratrixDisplayName(
+                sol.generatrixType,
+                sol.curveId,
+                sol.segmentIds,
+                sol.circleId,
+                sol.faceId
+            );
             let axisName = 'Δ';
             if (sol.axisSegId) {
                 const axSeg = (geoState.segments || []).find(s => s.id === sol.axisSegId);
@@ -20581,7 +20906,9 @@
             const genName = formatRevolveGeneratrixDisplayName(
                 revolveBuilderState.generatrixType,
                 revolveBuilderState.curveId,
-                revolveBuilderState.segmentIds
+                revolveBuilderState.segmentIds,
+                revolveBuilderState.circleId,
+                revolveBuilderState.faceId
             );
             const guideSpan = document.getElementById('guide-span');
             if (guideSpan) {
@@ -20602,6 +20929,9 @@
                 kind: 'revolve',
                 generatrixType: revolveBuilderState.generatrixType,
                 curveId: revolveBuilderState.generatrixType === 'curve' ? revolveBuilderState.curveId : null,
+                curveBranchIdx: revolveBuilderState.generatrixType === 'curve' ? (revolveBuilderState.curveBranchIdx || 0) : 0,
+                circleId: revolveBuilderState.generatrixType === 'circle' ? revolveBuilderState.circleId : null,
+                faceId: revolveBuilderState.generatrixType === 'face' ? revolveBuilderState.faceId : null,
                 segmentIds: revolveBuilderState.generatrixType === 'segments' ? [...revolveBuilderState.segmentIds] : [],
                 axisSegId: axisSpec.axisSegId || null,
                 axisP1Id: axisSpec.axisP1Id || null,
@@ -20613,7 +20943,26 @@
             if (!geom) {
                 const guideSpan = document.getElementById('guide-span');
                 if (guideSpan) {
-                    guideSpan.innerHTML = `<span style="color:#f87171;">⚠️ Không thể tạo mặt tròn xoay: Đường sinh trùng với trục quay hoặc không hợp lệ!</span>`;
+                    let isCircleSelfRot = false;
+                    if (newSol.generatrixType === 'circle' && newSol.circleId) {
+                        const cir = (geoState.circles || []).find(c => c.id === newSol.circleId);
+                        const cg = computeCircleGeometry(cir);
+                        let ax1 = null, ax2 = null;
+                        if (newSol.axisSegId) {
+                            const s = (geoState.segments || []).find(sg => sg.id === newSol.axisSegId);
+                            if (s) { ax1 = geoState.points.find(p => p.id === s.p1Id); ax2 = geoState.points.find(p => p.id === s.p2Id); }
+                        } else if (newSol.axisP1Id && newSol.axisP2Id) {
+                            ax1 = geoState.points.find(p => p.id === newSol.axisP1Id);
+                            ax2 = geoState.points.find(p => p.id === newSol.axisP2Id);
+                        }
+                        if (cg && ax1 && ax2) {
+                            const chk = sampleCircleOrArcGeneratrix3D(cg, ax1, ax2);
+                            if (chk && chk.isDegenerateSelfRotation) isCircleSelfRot = true;
+                        }
+                    }
+                    guideSpan.innerHTML = isCircleSelfRot
+                        ? `<span style="color:#f87171;">⚠️ ${t('Không thể tạo mặt tròn xoay: Cung tròn / đường tròn nằm trong mặt phẳng vuông góc với trục quay và có tâm nằm trên trục nên chỉ tự quay trên chính nó!', 'Cannot create surface of revolution: The circle/arc lies perpendicular to and centered on the axis (self-rotation)!')}</span>`
+                        : `<span style="color:#f87171;">⚠️ ${t('Không thể tạo mặt tròn xoay: Đường sinh trùng với trục quay hoặc không hợp lệ!', 'Cannot create surface of revolution: Generatrix coincides with the axis or is invalid!')}</span>`;
                 }
                 return null;
             }
@@ -20643,14 +20992,58 @@
             if (!target) return;
             const guideSpan = document.getElementById('guide-span');
 
-            // 1. CLICK VÀO ĐƯỜNG CONG NỘI SUY -> CHỌN LÀM ĐƯỜNG SINH
+            // 0. CLICK VÀO CUNG TRÒN HOẶC ĐƯỜNG TRÒN -> CHỌN LÀM ĐƯỜNG SINH
+            if ((target.type === 'circle' || target.type === 'circleDisk') && target.circleId) {
+                const cir = (geoState.circles || []).find(c => c.id === target.circleId);
+                if (!cir) return;
+                const cirGeom = computeCircleGeometry(cir);
+                if (!cirGeom) return;
+                const isArc = Boolean(cirGeom.isArc || cir.mode === 'arcThreePts');
+                revolveBuilderState = {
+                    stage: 'axis',
+                    generatrixType: 'circle',
+                    curveId: null,
+                    curveBranchIdx: 0,
+                    circleId: cir.id,
+                    faceId: null,
+                    segmentIds: [],
+                    pendingPointIds: [],
+                    axisPointIds: [],
+                    lastCreatedSolidId: null,
+                    lastGeneratrixSegIds: [],
+                    lastAxisSegId: null
+                };
+                selectedPointIds = [];
+                const cleanLabel = formatCirclePlainLabel(cir);
+                const mathLabel = isArc ? `$\\overset{\\frown}{${cleanLabel}}$` : cleanLabel;
+                if (guideSpan) {
+                    guideSpan.innerHTML = isArc
+                        ? t(
+                            `Đã chọn đường sinh là <b>cung tròn ${mathLabel}</b> $\\to$ <b>Bước 2:</b> Hãy click chọn <b>Trục quay</b> (1 đoạn/đường thẳng hoặc lần lượt 2 điểm)!`,
+                            `Selected circular arc <b>${mathLabel}</b> as generatrix $\\to$ <b>Step 2:</b> Click to select the <b>Axis of Revolution</b> (a line/segment or 2 points)!`
+                        )
+                        : t(
+                            `Đã chọn đường sinh là <b>đường tròn ${mathLabel}</b> $\\to$ <b>Bước 2:</b> Hãy click chọn <b>Trục quay</b> (1 đoạn/đường thẳng hoặc lần lượt 2 điểm)!`,
+                            `Selected circle <b>${mathLabel}</b> as generatrix $\\to$ <b>Step 2:</b> Click to select the <b>Axis of Revolution</b> (a line/segment or 2 points)!`
+                        );
+                    renderMathInElementSafe(guideSpan);
+                }
+                updateSceneFromState();
+                return;
+            }
+
+            // 1. CLICK VÀO ĐƯỜNG CONG NỘI SUY HOẶC ĐƯỜNG GIAO TUYẾN -> CHỌN LÀM ĐƯỜNG SINH
             if (target.type === 'curve' && target.curveId) {
                 const curv = (geoState.curves || []).find(c => c.id === target.curveId);
                 if (!curv) return;
+                const isSurfInter = curv.mode === 'surfaceIntersection';
                 revolveBuilderState = {
                     stage: 'axis',
                     generatrixType: 'curve',
                     curveId: curv.id,
+                    curveBranchIdx: Number.isInteger(target.branchIdx) ? target.branchIdx : 0,
+                    circleId: null,
+                    faceId: null,
                     segmentIds: [],
                     pendingPointIds: [],
                     axisPointIds: [],
@@ -20660,9 +21053,45 @@
                 };
                 selectedPointIds = [];
                 if (guideSpan) {
+                    guideSpan.innerHTML = isSurfInter
+                        ? t(
+                            `Đã chọn đường sinh là <b>${curv.name || 'giao tuyến'}</b> $\\to$ <b>Bước 2:</b> Hãy click chọn <b>Trục quay</b> (1 đoạn/đường thẳng hoặc lần lượt 2 điểm)!`,
+                            `Selected intersection curve <b>${curv.name || 'curve'}</b> as generatrix $\\to$ <b>Step 2:</b> Click to select the <b>Axis of Revolution</b> (a line/segment or 2 points)!`
+                        )
+                        : t(
+                            `Đã chọn đường sinh là <b>đường cong nội suy ${curv.name || '(C)'}</b> $\\to$ <b>Bước 2:</b> Hãy click chọn <b>Trục quay</b> (1 đoạn/đường thẳng hoặc lần lượt 2 điểm)!`,
+                            `Selected interpolating curve <b>${curv.name || '(C)'}</b> as generatrix $\\to$ <b>Step 2:</b> Click to select the <b>Axis of Revolution</b> (a line/segment or 2 points)!`
+                        );
+                    renderMathInElementSafe(guideSpan);
+                }
+                updateSceneFromState();
+                return;
+            }
+
+            // 1b. CLICK VÀO ĐA GIÁC (KHÔNG PHẢI MẶT PHẲNG DỰNG VÔ HẠN) -> CHỌN BIÊN ĐA GIÁC LÀM ĐƯỜNG SINH
+            if (target.type === 'face' && target.faceId) {
+                const face = (geoState.faces || []).find(f => f.id === target.faceId);
+                if (!face || face.isConstructedPlanePatch || !Array.isArray(face.pointIds) || face.pointIds.length < 3) return;
+                revolveBuilderState = {
+                    stage: 'axis',
+                    generatrixType: 'face',
+                    curveId: null,
+                    curveBranchIdx: 0,
+                    circleId: null,
+                    faceId: face.id,
+                    segmentIds: [],
+                    pendingPointIds: [],
+                    axisPointIds: [],
+                    lastCreatedSolidId: null,
+                    lastGeneratrixSegIds: [],
+                    lastAxisSegId: null
+                };
+                selectedPointIds = [];
+                const faceName = formatRevolveGeneratrixDisplayName('face', null, [], null, face.id);
+                if (guideSpan) {
                     guideSpan.innerHTML = t(
-                        `Đã chọn đường sinh là <b>đường cong nội suy ${curv.name || '(C)'}</b> $\\to$ <b>Bước 2:</b> Hãy click chọn <b>Trục quay</b> (1 đoạn/đường thẳng hoặc lần lượt 2 điểm)!`,
-                        `Selected interpolating curve <b>${curv.name || '(C)'}</b> as generatrix $\\to$ <b>Step 2:</b> Click to select the <b>Axis of Revolution</b> (a line/segment or 2 points)!`
+                        `Đã chọn đường sinh là <b>đa giác ${faceName}</b> $\\to$ <b>Bước 2:</b> Hãy click chọn <b>Trục quay</b> (1 cạnh/đường thẳng hoặc lần lượt 2 điểm)!`,
+                        `Selected polygon <b>${faceName}</b> as generatrix $\\to$ <b>Step 2:</b> Click to select the <b>Axis of Revolution</b> (an edge/line or 2 points)!`
                     );
                     renderMathInElementSafe(guideSpan);
                 }
@@ -20738,6 +21167,9 @@
                         stage: 'generatrix',
                         generatrixType: 'segments',
                         curveId: null,
+                        curveBranchIdx: 0,
+                        circleId: null,
+                        faceId: null,
                         segmentIds: [segId],
                         pendingPointIds: [],
                         axisPointIds: [],
@@ -20772,6 +21204,9 @@
                             stage: 'generatrix',
                             generatrixType: null,
                             curveId: null,
+                            curveBranchIdx: 0,
+                            circleId: null,
+                            faceId: null,
                             segmentIds: [],
                             pendingPointIds: [],
                             axisPointIds: [],
@@ -22784,6 +23219,7 @@
                     const solSegs = [];
                     const solCirs = [];
                     const solCurvs = [];
+                    const solFaces = [];
                     if (sol.apexId && !claimedPtIds.has(sol.apexId)) solPts.push(sol.apexId);
                     if (sol.centerId && !claimedPtIds.has(sol.centerId) && !solPts.includes(sol.centerId)) solPts.push(sol.centerId);
                     if (sol.radiusPointId && !claimedPtIds.has(sol.radiusPointId) && !solPts.includes(sol.radiusPointId)) {
@@ -22807,6 +23243,7 @@
                     if (sol.circleId && !claimedCirIds.has(sol.circleId)) solCirs.push(sol.circleId);
                     if (sol.circle1Id && !claimedCirIds.has(sol.circle1Id) && !solCirs.includes(sol.circle1Id)) solCirs.push(sol.circle1Id);
                     if (sol.circle2Id && !claimedCirIds.has(sol.circle2Id) && !solCirs.includes(sol.circle2Id)) solCirs.push(sol.circle2Id);
+                    if (sol.faceId && !claimedFaceIds.has(sol.faceId)) solFaces.push(sol.faceId);
 
                     const sName =
                         sol.name ||
@@ -22826,7 +23263,7 @@
                         circleIds: solCirs,
                         curveIds: solCurvs,
                         solidIds: [sol.id],
-                        faceIds: [],
+                        faceIds: solFaces,
                         measurementIds: []
                     });
                 } else if (ev.kind === 'plane') {
