@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>EZ3D - GEOMETRY | Chạm không gian - Xoay góc nhìn - Mở tri thức</title>
     <meta name="description" id="meta-description" content="EZ3D - GEOMETRY | Chạm không gian - Xoay góc nhìn - Mở tri thức. Phần mềm vẽ và mô phỏng Hình học không gian 3D động (Đa diện, Hình nón, Hình trụ, Hình nón cụt, Mặt cầu) chuẩn SGK Toán THPT, hoạt động Offline.">
     <meta name="slogan" id="meta-slogan" content="Chạm không gian - Xoay góc nhìn - Mở tri thức">
@@ -25,11 +25,14 @@
     </script>
 
     <style>
-        * { box-sizing: border-box; user-select: none; }
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+        html, body {
+            overscroll-behavior: none;
+        }
         body {
             margin: 0; overflow: hidden;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            display: flex; flex-direction: column; height: 100vh;
+            display: flex; flex-direction: column; height: 100vh; height: 100dvh;
             background-color: #ffffff;
         }
         /* Quy chuẩn chung cho tất cả SVG Icon nội tuyến */
@@ -1347,8 +1350,90 @@
         /* Footer */
         footer {
             background-color: #0f172a; color: #94a3b8;
-            text-align: center; padding: 6px; font-size: 12.5px;
+            text-align: center; padding: 6px; padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+            font-size: 12.5px;
             font-weight: 500; z-index: 20; border-top: 1px solid #1e293b;
+        }
+
+        /* =========================================================================
+           TỐI ƯU THIẾT BỊ CẢM ỨNG (IPAD / TABLET / ĐIỆN THOẠI / BẢNG TƯƠNG TÁC)
+           ========================================================================= */
+        #workspace, #canvas-container, #canvas-container canvas {
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        button, .tool-btn, .header-btn, .pt-opt-quick-btn, .tray-mini-action-btn, .style-step-btn, .measure-mini-btn {
+            touch-action: manipulation;
+        }
+        .tool-tray-header, .ftb-header, .ftb-resize-handle, .bg-img-frame, .bg-img-corner-handle, .bg-img-edge-crop {
+            touch-action: none;
+        }
+        input, textarea, select {
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        @media (pointer: coarse) {
+            .tool-btn {
+                min-width: 42px;
+                min-height: 42px;
+            }
+            .tool-tray-header {
+                min-height: 40px;
+                padding: 8px 12px;
+            }
+            .header-btn {
+                min-height: 36px;
+                padding: 6px 11px;
+            }
+            .style-step-btn {
+                width: 34px;
+                height: 34px;
+                font-size: 16px;
+            }
+            .pt-opt-quick-btn {
+                min-height: 40px;
+                padding: 9px 12px;
+            }
+            .ftb-resize-handle {
+                width: 24px !important;
+                height: 24px !important;
+            }
+            .bg-img-corner-handle {
+                width: 20px !important;
+                height: 20px !important;
+            }
+            .bg-img-edge-crop[data-edge="n"],
+            .bg-img-edge-crop[data-edge="s"] {
+                height: 16px !important;
+            }
+            .bg-img-edge-crop[data-edge="e"],
+            .bg-img-edge-crop[data-edge="w"] {
+                width: 16px !important;
+            }
+        }
+        @media (max-width: 768px) {
+            header {
+                padding: 6px 10px;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+            .status-bar {
+                order: 3;
+                flex-basis: 100%;
+                padding: 4px 10px;
+                font-size: 11.5px;
+            }
+            .header-btn {
+                padding: 5px 8px;
+                font-size: 11.5px;
+            }
+            footer {
+                font-size: 11px;
+                padding: 4px 8px;
+                padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+            }
         }
     </style>
 </head>
@@ -1773,6 +1858,75 @@
         // =========================================================================
         // 1. NHÚNG TRỰC TIẾP ORBITCONTROLS (HOẠT ĐỘNG OFFLINE KHÔNG CẦN FILE RỜI)
         // =========================================================================
+        function computeTwoFingerPinchPanDelta(prevA, prevB, currA, currB) {
+            const prevDist = Math.hypot(prevB.x - prevA.x, prevB.y - prevA.y);
+            const currDist = Math.hypot(currB.x - currA.x, currB.y - currA.y);
+            const prevMidX = 0.5 * (prevA.x + prevB.x);
+            const prevMidY = 0.5 * (prevA.y + prevB.y);
+            const currMidX = 0.5 * (currA.x + currB.x);
+            const currMidY = 0.5 * (currA.y + currB.y);
+            let scaleRatio = 1;
+            if (prevDist > 4 && currDist > 4) {
+                scaleRatio = Math.max(0.5, Math.min(2.0, prevDist / currDist));
+            }
+            return {
+                valid: prevDist > 1e-3 || currDist > 1e-3,
+                scaleRatio,
+                panDeltaX: currMidX - prevMidX,
+                panDeltaY: currMidY - prevMidY,
+                midX: currMidX,
+                midY: currMidY
+            };
+        }
+
+        function computeAdaptivePointerThresholds(pointerType, basePointSize = 9, isPointCreationTool = false, isRevolveTool = false) {
+            const ptSize = Number.isFinite(basePointSize) ? basePointSize : 9;
+            if (pointerType === 'touch') {
+                const pointHitPx = (isPointCreationTool || isRevolveTool)
+                    ? Math.min(13.5, Math.max(9.0, ptSize * 1.15))
+                    : Math.max(24.0, ptSize + 15.0);
+                return {
+                    dragThresholdPx: 10,
+                    pointHitPx,
+                    curveSnapPx: isPointCreationTool ? 18.0 : 20.0,
+                    trayDragThresholdPx: 10
+                };
+            }
+            if (pointerType === 'pen') {
+                const pointHitPx = (isPointCreationTool || isRevolveTool)
+                    ? Math.min(8.5, Math.max(6.0, ptSize * 0.8))
+                    : Math.max(16.0, ptSize + 7.5);
+                return {
+                    dragThresholdPx: 7,
+                    pointHitPx,
+                    curveSnapPx: isPointCreationTool ? 13.0 : 14.5,
+                    trayDragThresholdPx: 7
+                };
+            }
+            const pointHitPx = (isPointCreationTool || isRevolveTool)
+                ? Math.min(6.0, Math.max(4.5, ptSize * 0.6))
+                : Math.max(12.5, ptSize + 4.5);
+            return {
+                dragThresholdPx: 5,
+                pointHitPx,
+                curveSnapPx: isPointCreationTool ? 9.5 : 10.5,
+                trayDragThresholdPx: 5
+            };
+        }
+
+        function evaluateDoubleTapGesture(lastTap, currTap, maxDelayMs = 360, maxDistPx = 28) {
+            if (
+                lastTap &&
+                currTap.timeMs >= lastTap.timeMs &&
+                currTap.timeMs - lastTap.timeMs <= maxDelayMs &&
+                Math.hypot(currTap.x - lastTap.x, currTap.y - lastTap.y) <= maxDistPx &&
+                (!lastTap.targetKey || !currTap.targetKey || lastTap.targetKey === currTap.targetKey)
+            ) {
+                return { isDoubleTap: true, nextLastTap: null };
+            }
+            return { isDoubleTap: false, nextLastTap: currTap };
+        }
+
         function ensureOrbitControlsInline() {
             if (typeof THREE === 'undefined' || THREE.OrbitControls) return;
 
@@ -1785,13 +1939,19 @@
                 this.enableDamping = true;
                 this.dampingFactor = 0.08;
 
+                if (domElement && domElement.style) {
+                    domElement.style.touchAction = 'none';
+                }
+
                 const scope = this;
                 const spherical = new THREE.Spherical();
                 const sphericalDelta = new THREE.Spherical();
                 let scale = 1;
                 const panOffset = new THREE.Vector3();
 
-                let state = -1; // -1: none, 0: rotate, 2: pan
+                let state = -1; // -1: none, 0: rotate, 2: pan, 3: 2-finger pinch + pan
+                let primaryPointerId = null;
+                const activePointers = new Map(); // pointerId -> { x, y, pointerType }
                 const rotateStart = new THREE.Vector2();
                 const rotateEnd = new THREE.Vector2();
                 const rotateDelta = new THREE.Vector2();
@@ -1804,16 +1964,31 @@
                 const quatInverse = quat.clone().invert();
 
                 this.cancelInteraction = function () {
-                    state = -1;
+                    if (state !== 3) {
+                        state = -1;
+                        primaryPointerId = null;
+                    }
+                };
+
+                this.isMultiTouchActive = function () {
+                    return activePointers.size >= 2 || state === 3;
+                };
+
+                this.getActivePointerCount = function () {
+                    return activePointers.size;
                 };
 
                 this.startOrbitFromEvent = function (e) {
+                    if (activePointers.size >= 2) return;
                     state = 0;
+                    primaryPointerId = (e && e.pointerId !== undefined) ? e.pointerId : null;
                     rotateStart.set(e.clientX, e.clientY);
                 };
 
                 this.startPanFromEvent = function (e) {
+                    if (activePointers.size >= 2) return;
                     state = 2;
+                    primaryPointerId = (e && e.pointerId !== undefined) ? e.pointerId : null;
                     panStart.set(e.clientX, e.clientY);
                 };
 
@@ -1868,6 +2043,7 @@
 
                 function pan(deltaX, deltaY) {
                     const el = scope.domElement;
+                    if (!el || el.clientWidth <= 0 || el.clientHeight <= 0) return;
                     if (scope.object.isOrthographicCamera) {
                         const w = (scope.object.right - scope.object.left) / scope.object.zoom;
                         const h = (scope.object.top - scope.object.bottom) / scope.object.zoom;
@@ -1882,27 +2058,77 @@
                 }
 
                 function onPointerDown(e) {
+                    activePointers.set(e.pointerId, {
+                        x: e.clientX,
+                        y: e.clientY,
+                        pointerType: e.pointerType || 'mouse'
+                    });
+
+                    // Chạm 2 ngón tay cùng lúc: tự động chuyển sang Chụm phóng to/thu nhỏ + Di chuyển khung nhìn (Pan)
+                    if (activePointers.size >= 2) {
+                        if (scope.wheelEnabled !== false) {
+                            state = 3;
+                            primaryPointerId = null;
+                        }
+                        return;
+                    }
+
                     if (e.button === 2 || e.button === 1) {
                         state = 2;
+                        primaryPointerId = e.pointerId;
                         panStart.set(e.clientX, e.clientY);
                         return;
                     }
                     if (!scope.enabled) return;
-                    if (e.button === 0) {
+                    if (e.button === 0 || e.pointerType === 'touch' || e.pointerType === 'pen') {
                         state = 0;
+                        primaryPointerId = e.pointerId;
                         rotateStart.set(e.clientX, e.clientY);
                     }
                 }
 
                 function onPointerMove(e) {
+                    if (state === 3 && activePointers.size >= 2) {
+                        if (!activePointers.has(e.pointerId)) return;
+                        const entries = Array.from(activePointers.entries());
+                        const id0 = entries[0][0];
+                        const id1 = entries[1][0];
+                        const prevA = { x: entries[0][1].x, y: entries[0][1].y };
+                        const prevB = { x: entries[1][1].x, y: entries[1][1].y };
+                        activePointers.set(e.pointerId, {
+                            x: e.clientX,
+                            y: e.clientY,
+                            pointerType: e.pointerType || entries[0][1].pointerType
+                        });
+                        const currA = activePointers.get(id0);
+                        const currB = activePointers.get(id1);
+                        if (currA && currB && scope.wheelEnabled !== false) {
+                            const res = computeTwoFingerPinchPanDelta(prevA, prevB, currA, currB);
+                            if (res.valid) {
+                                scale *= res.scaleRatio;
+                                pan(res.panDeltaX, res.panDeltaY);
+                            }
+                        }
+                        return;
+                    }
+
+                    if (activePointers.has(e.pointerId)) {
+                        activePointers.set(e.pointerId, {
+                            x: e.clientX,
+                            y: e.clientY,
+                            pointerType: e.pointerType || 'mouse'
+                        });
+                    }
+
                     if (state === -1) return;
+                    if (primaryPointerId !== null && e.pointerId !== undefined && e.pointerId !== primaryPointerId) return;
                     const el = scope.domElement;
                     if (state === 0) {
                         if (!scope.enabled) return;
                         rotateEnd.set(e.clientX, e.clientY);
                         rotateDelta.subVectors(rotateEnd, rotateStart).multiplyScalar(0.85);
-                        sphericalDelta.theta -= 2 * Math.PI * rotateDelta.x / el.clientHeight;
-                        sphericalDelta.phi -= 2 * Math.PI * rotateDelta.y / el.clientHeight;
+                        sphericalDelta.theta -= 2 * Math.PI * rotateDelta.x / Math.max(1, el.clientHeight);
+                        sphericalDelta.phi -= 2 * Math.PI * rotateDelta.y / Math.max(1, el.clientHeight);
                         rotateStart.copy(rotateEnd);
                     } else if (state === 2) {
                         panEnd.set(e.clientX, e.clientY);
@@ -1912,7 +2138,24 @@
                     }
                 }
 
-                function onPointerUp() { state = -1; }
+                function onPointerUp(e) {
+                    if (e && e.pointerId !== undefined) {
+                        activePointers.delete(e.pointerId);
+                    } else {
+                        activePointers.clear();
+                    }
+                    if (state === 3) {
+                        if (activePointers.size < 2) {
+                            state = -1;
+                            primaryPointerId = null;
+                        }
+                        return;
+                    }
+                    if (activePointers.size === 0 || primaryPointerId === null || (e && e.pointerId === primaryPointerId)) {
+                        state = -1;
+                        primaryPointerId = null;
+                    }
+                }
 
                 function onWheel(e) {
                     if (scope.wheelEnabled === false) return;
@@ -1927,6 +2170,7 @@
                 domElement.addEventListener('pointerdown', onPointerDown);
                 window.addEventListener('pointermove', onPointerMove);
                 window.addEventListener('pointerup', onPointerUp);
+                window.addEventListener('pointercancel', onPointerUp);
                 domElement.addEventListener('wheel', onWheel, { passive: false });
                 this.update();
             };
@@ -3334,8 +3578,10 @@
 
                 let suppressNextClick = false;
                 headerBtn.addEventListener('pointerdown', (e) => {
-                    if (e.button !== 0) return;
+                    if (e.button !== 0 && e.pointerType === 'mouse') return;
                     e.stopPropagation();
+                    const dragPointerId = e.pointerId;
+                    const dragThreshold = computeAdaptivePointerThresholds(e.pointerType).trayDragThresholdPx;
                     const startX = e.clientX;
                     const startY = e.clientY;
                     const origX = tray.x;
@@ -3343,9 +3589,10 @@
                     let dragged = false;
 
                     const onMove = (ev) => {
+                        if (ev.pointerId !== dragPointerId) return;
                         const dx = ev.clientX - startX;
                         const dy = ev.clientY - startY;
-                        if (!dragged && Math.hypot(dx, dy) > 5) {
+                        if (!dragged && Math.hypot(dx, dy) > dragThreshold) {
                             dragged = true;
                             suppressNextClick = true;
                             if (tooltipEl) tooltipEl.style.display = 'none';
@@ -3363,9 +3610,11 @@
                         }
                     };
 
-                    const onUp = () => {
+                    const onUp = (ev) => {
+                        if (ev && ev.pointerId !== undefined && ev.pointerId !== dragPointerId) return;
                         window.removeEventListener('pointermove', onMove);
                         window.removeEventListener('pointerup', onUp);
+                        window.removeEventListener('pointercancel', onUp);
                         if (dragged) {
                             saveToolbarConfig();
                             setTimeout(() => { suppressNextClick = false; }, 60);
@@ -3374,6 +3623,7 @@
 
                     window.addEventListener('pointermove', onMove);
                     window.addEventListener('pointerup', onUp);
+                    window.addEventListener('pointercancel', onUp);
                 });
 
                 headerBtn.addEventListener('click', (e) => {
@@ -4468,6 +4718,11 @@
         let dragStartMouseY = 0;
         let dragStartPointY = 0;
         let pendingPointerGesture = null;
+        let lastPointerType = 'mouse';
+        const activeCanvasPointers = new Map();
+        let activeCanvasPrimaryPointerId = null;
+        let suppressCanvasTapUntilClear = false;
+        let lastTouchTapRecord = null;
 
         let raycaster, mouse;
         const container = document.getElementById('canvas-container');
@@ -5098,9 +5353,13 @@
             controls.dampingFactor = 0.08;
 
             const dom = renderer.domElement;
+            dom.style.touchAction = 'none';
             dom.addEventListener('pointerdown', onPointerDown);
             dom.addEventListener('pointermove', onPointerMove);
             dom.addEventListener('pointerup', onPointerUp);
+            dom.addEventListener('pointercancel', onPointerCancel);
+            window.addEventListener('pointerup', onWindowPointerUpFallback);
+            window.addEventListener('pointercancel', onPointerCancel);
             dom.addEventListener('dblclick', onDoubleClick);
 
             // Tự động bảo vệ & khôi phục ngữ cảnh WebGL nếu GPU bị quá tải tạm thời
@@ -5224,7 +5483,11 @@
         }
 
         function positionTooltipSmart(btn) {
-            if (!btn) return;
+            if (!btn || !tooltipEl) return;
+            if (lastPointerType === 'touch') {
+                tooltipEl.style.display = 'none';
+                return;
+            }
             const tipContent = btn.getAttribute('data-tip');
             if (!tipContent) return;
 
@@ -11179,7 +11442,14 @@
 
             const frustumH = (camera && camera.userData && camera.userData.frustumSize) ? camera.userData.frustumSize : 12.0;
             const pixelsPerWorldUnit = (rect.height * ((camera && camera.zoom) || 1)) / frustumH;
-            const maxCurveSnapPx = isPointCreationTool ? 9.5 : 10.5;
+            const activePtrType = (event && event.pointerType) || lastPointerType || 'mouse';
+            const ptrThresholds = computeAdaptivePointerThresholds(
+                activePtrType,
+                visualStyle.pointSize || 9,
+                isPointCreationTool,
+                currentTool === 'solid-revolve'
+            );
+            const maxCurveSnapPx = ptrThresholds.curveSnapPx;
             raycaster.params.Line.threshold = maxCurveSnapPx / Math.max(8, pixelsPerWorldUnit);
             raycaster.setFromCamera(mouse, camera);
 
@@ -11196,13 +11466,9 @@
             const isSurfacePickOnly = false;
 
             if (!isSurfacePickOnly) {
-                // 1. Kiểm tra Điểm hiện có:
-                // Khi đang ở công cụ tạo điểm (point2d / point3d) hoặc chọn đường sinh/trục quay (solid-revolve), thu hẹp bán kính bắt dính đỉnh có sẵn (~5.5px)
-                // để không chiếm quyền khi người dùng muốn chọn cạnh/đường cong nằm sát một đỉnh.
+                // 1. Kiểm tra Điểm hiện có (tự động mở rộng vùng bắt điểm trên thiết bị cảm ứng / bút cảm ứng):
                 let closestPt = null;
-                let minScreenDist = (isPointCreationTool || currentTool === 'solid-revolve')
-                    ? Math.min(6.0, Math.max(4.5, (visualStyle.pointSize || 9) * 0.6))
-                    : Math.max(12.5, (visualStyle.pointSize || 9) + 4.5);
+                let minScreenDist = ptrThresholds.pointHitPx;
 
                 geoState.points.forEach(pt => {
                     if (pt.hidden) return;
@@ -15170,6 +15436,30 @@
             updateAnimationControlPanel();
         }
 
+        function quickTogglePoint3DModeFromModal(pointId) {
+            const pt = geoState.points.find(p => p.id === pointId);
+            if (!pt) return;
+            const curType = pt.rule ? pt.rule.type : 'plane';
+            if (curType !== 'plane' && curType !== '3d') return;
+            ensurePointModalHistory();
+            if (!pt.rule) pt.rule = { type: 'plane' };
+            if (curType === 'plane') {
+                pt.rule.type = '3d';
+                if (Math.abs(pt.y) < 1e-4) pt.y = 1.5;
+            } else {
+                pt.rule.type = 'plane';
+                pt.y = 0;
+            }
+            recomputeAllDependentGeometry();
+            updateSceneFromState();
+            updateAnimationControlPanel();
+            const btn = document.getElementById('pt-quick-toggle-3d-btn');
+            if (btn) {
+                const is3dNow = pt.rule.type === '3d';
+                btn.innerHTML = `${SVG_ICONS.point3d}<span>${is3dNow ? t('Đưa về mặt phẳng (P)', 'Snap to Base Plane (P)') : t('Chuyển sang điểm 3D tự do', 'Lift to Free 3D Space')}</span>`;
+            }
+        }
+
         function openPointOptionsModal(pt) {
             if (!pt) return;
             pointModalState = {
@@ -15179,6 +15469,8 @@
             };
             const isThisLabelHidden = Boolean(pt.hideLabel);
             const isThisPointHidden = Boolean(pt.hidden);
+            const ptRuleType = pt.rule ? pt.rule.type : 'plane';
+            const canToggle3D = (ptRuleType === 'plane' || ptRuleType === '3d');
             const initialAllLabelsHidden = geoState.points.length > 0 && geoState.points.every(p => Boolean(p.hideLabel));
             const initialAllPointsHidden = geoState.points.length > 0 && geoState.points.every(p => Boolean(p.hidden));
 
@@ -15200,6 +15492,10 @@
                             ${SVG_ICONS.eyeSlash}
                             <span>${isThisPointHidden ? t('Hiện điểm này', 'Show This Point') : t('Ẩn điểm này', 'Hide This Point')}</span>
                         </button>
+                        ${canToggle3D ? `<button type="button" class="pt-opt-quick-btn" id="pt-quick-toggle-3d-btn" style="grid-column:1 / -1;" onclick="quickTogglePoint3DModeFromModal('${pt.id}')">
+                            ${SVG_ICONS.point3d}
+                            <span>${ptRuleType === '3d' ? t('Đưa về mặt phẳng (P)', 'Snap to Base Plane (P)') : t('Chuyển sang điểm 3D tự do', 'Lift to Free 3D Space')}</span>
+                        </button>` : ''}
                     </div>
                     <label class="pt-opt-check-row" for="pt-opt-hide-label">
                         <input type="checkbox" id="pt-opt-hide-label" ${initialAllLabelsHidden ? 'checked' : ''} onchange="toggleAllPointsLabelFromModal(this.checked)">
@@ -15501,8 +15797,45 @@
             }
         }
 
+        function abortActiveCanvasSinglePointerGestures() {
+            pendingPointerGesture = null;
+            if (isDraggingExistingPoint) {
+                isDraggingExistingPoint = false;
+                draggedPointId = null;
+            }
+            if (isDraggingPlaneBorder) {
+                isDraggingPlaneBorder = false;
+                draggedPlaneBorder = null;
+            }
+            if (isCreating3DPoint) {
+                isCreating3DPoint = false;
+                drag3DBasePos = null;
+                drag3DCurrentPos = null;
+                clearHelpers();
+            }
+            if (snapIndicator) snapIndicator.visible = false;
+            if (snapBadge) snapBadge.style.display = 'none';
+        }
+
         function onPointerDown(event) {
-            if (event.button !== 0) return;
+            const pType = event.pointerType || 'mouse';
+            lastPointerType = pType;
+            if (pType === 'mouse' && event.button !== 0) return;
+
+            if (event.pointerId !== undefined) {
+                activeCanvasPointers.set(event.pointerId, { x: event.clientX, y: event.clientY, pointerType: pType });
+            }
+
+            // Khi có từ 2 ngón tay trở lên: hủy mọi thao tác 1 ngón đang chờ để OrbitControls chụm phóng to/thu nhỏ + pan 2 ngón mượt mà!
+            if (activeCanvasPointers.size >= 2) {
+                suppressCanvasTapUntilClear = true;
+                activeCanvasPrimaryPointerId = null;
+                abortActiveCanvasSinglePointerGestures();
+                return;
+            }
+
+            suppressCanvasTapUntilClear = false;
+            activeCanvasPrimaryPointerId = (event.pointerId !== undefined) ? event.pointerId : null;
 
             const target = computeSmartTarget(event);
             const hitPt = (target && target.type === 'point')
@@ -15529,15 +15862,19 @@
             }
 
             // Cho phép tự động Kéo điểm, Kéo cạnh mặt phẳng chữ nhật (đổi kích thước) hoặc Xoay góc nhìn 3D
-            // ngay cả khi đang chọn công cụ dựng hình / đo đạc / xoay / di chuyển; nếu chỉ Click nhẹ (<= 5px) thì thực thi công cụ hoặc chọn thành phần tô màu.
+            // ngay cả khi đang chọn công cụ dựng hình / đo đạc / xoay / di chuyển; nếu chỉ Click/Chạm nhẹ thì thực thi công cụ hoặc chọn thành phần tô màu.
             pendingPointerGesture = {
                 startX: event.clientX,
                 startY: event.clientY,
+                pointerId: activeCanvasPrimaryPointerId,
+                pointerType: pType,
                 downEvent: {
                     clientX: event.clientX,
                     clientY: event.clientY,
                     button: 0,
-                    shiftKey: event.shiftKey
+                    pointerId: activeCanvasPrimaryPointerId,
+                    pointerType: pType,
+                    shiftKey: Boolean(event.shiftKey)
                 },
                 target,
                 draggablePt,
@@ -18087,6 +18424,22 @@
         }
 
         function onPointerMove(event) {
+            const pType = event.pointerType || lastPointerType || 'mouse';
+            if (event.pointerId !== undefined && activeCanvasPointers.has(event.pointerId)) {
+                activeCanvasPointers.set(event.pointerId, { x: event.clientX, y: event.clientY, pointerType: pType });
+            }
+
+            // Đang chụm phóng to / dịch chuyển 2 ngón -> không xử lý kéo điểm hoặc hover 1 ngón
+            if (activeCanvasPointers.size >= 2 || (controls && typeof controls.isMultiTouchActive === 'function' && controls.isMultiTouchActive())) {
+                if (snapIndicator) snapIndicator.visible = false;
+                if (snapBadge) snapBadge.style.display = 'none';
+                return;
+            }
+
+            if (activeCanvasPrimaryPointerId !== null && event.pointerId !== undefined && event.pointerId !== activeCanvasPrimaryPointerId) {
+                return;
+            }
+
             if (isDraggingExistingPoint && draggedPointId) {
                 handleDragExistingPoint(event);
                 return;
@@ -18114,7 +18467,8 @@
                     event.clientX - pendingPointerGesture.startX,
                     event.clientY - pendingPointerGesture.startY
                 );
-                if (moveDist > 5) {
+                const dragThresholdPx = computeAdaptivePointerThresholds(pendingPointerGesture.pointerType).dragThresholdPx;
+                if (moveDist > dragThresholdPx) {
                     const gesture = pendingPointerGesture;
                     pendingPointerGesture = null;
                     if (gesture.draggablePt) {
@@ -18155,7 +18509,11 @@
                         return;
                     }
                 }
+                if (pType === 'touch') return;
             }
+
+            // Trên cảm ứng khi không có ngón tay nào chạm, không cần hiển thị hover badge
+            if (pType === 'touch' && activeCanvasPointers.size === 0) return;
 
             const target = computeSmartTarget(event);
             const newHoverId = (target && target.type === 'point') ? target.pointId : null;
@@ -18328,7 +18686,54 @@
             }
         }
 
+        function onPointerCancel(event) {
+            if (event && event.pointerId !== undefined) {
+                activeCanvasPointers.delete(event.pointerId);
+            } else {
+                activeCanvasPointers.clear();
+            }
+            abortActiveCanvasSinglePointerGestures();
+            if (activeCanvasPointers.size === 0) {
+                activeCanvasPrimaryPointerId = null;
+                suppressCanvasTapUntilClear = false;
+            }
+            if (controls) {
+                controls.enabled = (currentTool === 'view' || currentTool === 'move');
+            }
+        }
+
+        function onWindowPointerUpFallback(event) {
+            if (!event || (renderer && event.target === renderer.domElement)) return;
+            if (event.pointerId !== undefined && activeCanvasPointers.has(event.pointerId)) {
+                onPointerUp(event);
+            }
+        }
+
         function onPointerUp(event) {
+            const pType = (event && event.pointerType) || lastPointerType || 'mouse';
+            if (event && event.pointerId !== undefined) {
+                activeCanvasPointers.delete(event.pointerId);
+            }
+
+            if (suppressCanvasTapUntilClear) {
+                if (activeCanvasPointers.size === 0) {
+                    suppressCanvasTapUntilClear = false;
+                    activeCanvasPrimaryPointerId = null;
+                    if (controls) controls.enabled = (currentTool === 'view' || currentTool === 'move');
+                }
+                return;
+            }
+
+            if (activeCanvasPrimaryPointerId !== null && event && event.pointerId !== undefined && event.pointerId !== activeCanvasPrimaryPointerId) {
+                return;
+            }
+            activeCanvasPrimaryPointerId = null;
+
+            if (pType === 'touch') {
+                if (snapIndicator) snapIndicator.visible = false;
+                if (snapBadge) snapBadge.style.display = 'none';
+            }
+
             if (isDraggingExistingPoint) {
                 isDraggingExistingPoint = false;
                 draggedPointId = null;
@@ -18375,6 +18780,27 @@
             if (pendingPointerGesture) {
                 const gesture = pendingPointerGesture;
                 pendingPointerGesture = null;
+
+                // Trên thiết bị cảm ứng: nhận diện chạm đúp (double-tap) trên Điểm để mở bảng đổi tên / chuyển 2D-3D / ẩn điểm
+                if (gesture.pointerType === 'touch' && gesture.target && gesture.target.type === 'point' && (currentTool === 'view' || currentTool === 'move')) {
+                    const dblRes = evaluateDoubleTapGesture(lastTouchTapRecord, {
+                        timeMs: Date.now(),
+                        x: gesture.startX,
+                        y: gesture.startY,
+                        targetKey: `pt:${gesture.target.pointId}`
+                    });
+                    lastTouchTapRecord = dblRes.nextLastTap;
+                    if (dblRes.isDoubleTap) {
+                        const pt = geoState.points.find(p => p.id === gesture.target.pointId);
+                        if (pt) {
+                            openPointOptionsModal(pt);
+                            return;
+                        }
+                    }
+                } else if (gesture.pointerType === 'touch') {
+                    lastTouchTapRecord = null;
+                }
+
                 executeToolClickAction(gesture.downEvent, gesture.target);
                 return;
             }
@@ -20926,27 +21352,35 @@
                     });
 
                     const previewEl = boxEl.querySelector('.ftb-preview');
-                    previewEl.addEventListener('dblclick', (e) => {
-                        e.stopPropagation();
+                    let lastPreviewTap = null;
+                    const enterPreviewEditMode = () => {
                         if (box.previewOnly) {
                             box.previewOnly = false;
                             renderFloatingTextBoxesDOM();
                             const editTa = boxEl.querySelector('.ftb-textarea');
                             if (editTa) editTa.focus();
                         }
+                    };
+                    previewEl.addEventListener('dblclick', (e) => {
+                        e.stopPropagation();
+                        enterPreviewEditMode();
                     });
 
                     const startDragBox = (e) => {
-                        if (e.button !== 0) return;
+                        if (e.button !== 0 && e.pointerType === 'mouse') return;
                         if (e.target.closest('button') || e.target.closest('.ftb-resize-handle')) return;
                         e.preventDefault();
                         e.stopPropagation();
                         setFocusBox();
+                        const dragPointerId = e.pointerId;
                         const startX = e.clientX;
                         const startY = e.clientY;
                         const origX = box.x;
                         const origY = box.y;
+                        let movedDist = 0;
                         const onMove = (ev) => {
+                            if (ev.pointerId !== dragPointerId) return;
+                            movedDist = Math.max(movedDist, Math.hypot(ev.clientX - startX, ev.clientY - startY));
                             const wsW = container.clientWidth || window.innerWidth;
                             const wsH = container.clientHeight || window.innerHeight;
                             box.x = Math.max(4, Math.min(wsW - 60, Math.round(origX + (ev.clientX - startX))));
@@ -20954,13 +21388,29 @@
                             boxEl.style.left = `${box.x}px`;
                             boxEl.style.top = `${box.y}px`;
                         };
-                        const onUp = () => {
+                        const onUp = (ev) => {
+                            if (ev && ev.pointerId !== undefined && ev.pointerId !== dragPointerId) return;
                             window.removeEventListener('pointermove', onMove);
                             window.removeEventListener('pointerup', onUp);
+                            window.removeEventListener('pointercancel', onUp);
+                            if (e.pointerType === 'touch' && box.previewOnly && movedDist <= 10) {
+                                const dblRes = evaluateDoubleTapGesture(lastPreviewTap, {
+                                    timeMs: Date.now(),
+                                    x: startX,
+                                    y: startY,
+                                    targetKey: `ftb:${box.id}`
+                                });
+                                lastPreviewTap = dblRes.nextLastTap;
+                                if (dblRes.isDoubleTap) {
+                                    enterPreviewEditMode();
+                                    return;
+                                }
+                            }
                             scheduleAutoSaveState();
                         };
                         window.addEventListener('pointermove', onMove);
                         window.addEventListener('pointerup', onUp);
+                        window.addEventListener('pointercancel', onUp);
                     };
 
                     boxEl.querySelector('.ftb-header').addEventListener('pointerdown', startDragBox);
@@ -20969,28 +21419,33 @@
                     });
 
                     boxEl.querySelector('.ftb-resize-handle').addEventListener('pointerdown', (e) => {
-                        if (e.button !== 0) return;
+                        if (e.button !== 0 && e.pointerType === 'mouse') return;
                         e.preventDefault();
                         e.stopPropagation();
                         setFocusBox();
+                        const dragPointerId = e.pointerId;
                         const startX = e.clientX;
                         const startY = e.clientY;
                         const origW = box.width;
                         const origH = box.height;
                         const onMove = (ev) => {
+                            if (ev.pointerId !== dragPointerId) return;
                             const minH = box.previewOnly ? 68 : 120;
                             box.width = Math.max(160, Math.min(900, Math.round(origW + (ev.clientX - startX))));
                             box.height = Math.max(minH, Math.min(720, Math.round(origH + (ev.clientY - startY))));
                             boxEl.style.width = `${box.width}px`;
                             boxEl.style.height = `${box.height}px`;
                         };
-                        const onUp = () => {
+                        const onUp = (ev) => {
+                            if (ev && ev.pointerId !== undefined && ev.pointerId !== dragPointerId) return;
                             window.removeEventListener('pointermove', onMove);
                             window.removeEventListener('pointerup', onUp);
+                            window.removeEventListener('pointercancel', onUp);
                             scheduleAutoSaveState();
                         };
                         window.addEventListener('pointermove', onMove);
                         window.addEventListener('pointerup', onUp);
+                        window.addEventListener('pointercancel', onUp);
                     });
                 }
 
@@ -21318,36 +21773,42 @@
                     };
 
                     frameEl.addEventListener('pointerdown', (e) => {
-                        if (e.button !== 0) return;
+                        if (e.button !== 0 && e.pointerType === 'mouse') return;
                         if (e.target.closest('.bg-img-corner-handle') || e.target.closest('.bg-img-edge-crop')) return;
                         e.preventDefault();
                         e.stopPropagation();
                         activeBgImageId = bg.id;
                         renderBackgroundImagesDOM();
+                        const dragPointerId = e.pointerId;
                         const startX = e.clientX;
                         const startY = e.clientY;
                         const origX = bg.x;
                         const origY = bg.y;
                         const onMove = (ev) => {
+                            if (ev.pointerId !== dragPointerId) return;
                             bg.x = Math.round(origX + (ev.clientX - startX));
                             bg.y = Math.round(origY + (ev.clientY - startY));
                             syncFramePos();
                         };
-                        const onUp = () => {
+                        const onUp = (ev) => {
+                            if (ev && ev.pointerId !== undefined && ev.pointerId !== dragPointerId) return;
                             window.removeEventListener('pointermove', onMove);
                             window.removeEventListener('pointerup', onUp);
+                            window.removeEventListener('pointercancel', onUp);
                             scheduleAutoSaveState();
                         };
                         window.addEventListener('pointermove', onMove);
                         window.addEventListener('pointerup', onUp);
+                        window.addEventListener('pointercancel', onUp);
                     });
 
                     frameEl.querySelectorAll('.bg-img-edge-crop').forEach(edgeEl => {
                         edgeEl.addEventListener('pointerdown', (e) => {
-                            if (e.button !== 0) return;
+                            if (e.button !== 0 && e.pointerType === 'mouse') return;
                             e.preventDefault();
                             e.stopPropagation();
                             activeBgImageId = bg.id;
+                            const dragPointerId = e.pointerId;
                             const edge = edgeEl.getAttribute('data-edge') || 'e';
                             const startX = e.clientX;
                             const startY = e.clientY;
@@ -21359,6 +21820,7 @@
                                 cropBottom: bg.cropBottom || 0
                             };
                             const onMove = (ev) => {
+                                if (ev.pointerId !== dragPointerId) return;
                                 const next = computeEdgeCropRectInline(
                                     startRect,
                                     startCrop,
@@ -21378,28 +21840,33 @@
                                 bg.aspectRatio = next.aspectRatio;
                                 syncFramePos();
                             };
-                            const onUp = () => {
+                            const onUp = (ev) => {
+                                if (ev && ev.pointerId !== undefined && ev.pointerId !== dragPointerId) return;
                                 window.removeEventListener('pointermove', onMove);
                                 window.removeEventListener('pointerup', onUp);
+                                window.removeEventListener('pointercancel', onUp);
                                 scheduleAutoSaveState();
                             };
                             window.addEventListener('pointermove', onMove);
                             window.addEventListener('pointerup', onUp);
+                            window.addEventListener('pointercancel', onUp);
                         });
                     });
 
                     frameEl.querySelectorAll('.bg-img-corner-handle').forEach(hEl => {
                         hEl.addEventListener('pointerdown', (e) => {
-                            if (e.button !== 0) return;
+                            if (e.button !== 0 && e.pointerType === 'mouse') return;
                             e.preventDefault();
                             e.stopPropagation();
                             activeBgImageId = bg.id;
+                            const dragPointerId = e.pointerId;
                             const handle = hEl.getAttribute('data-handle') || 'se';
                             const startX = e.clientX;
                             const startY = e.clientY;
                             const startRect = { x: bg.x, y: bg.y, width: bg.width, height: bg.height };
                             const ratio = bg.width / Math.max(1, bg.height);
                             const onMove = (ev) => {
+                                if (ev.pointerId !== dragPointerId) return;
                                 const next = computeAspectLockedRect(
                                     startRect,
                                     ratio,
@@ -21416,13 +21883,16 @@
                                 bg.aspectRatio = next.width / Math.max(1, next.height);
                                 syncFramePos();
                             };
-                            const onUp = () => {
+                            const onUp = (ev) => {
+                                if (ev && ev.pointerId !== undefined && ev.pointerId !== dragPointerId) return;
                                 window.removeEventListener('pointermove', onMove);
                                 window.removeEventListener('pointerup', onUp);
+                                window.removeEventListener('pointercancel', onUp);
                                 scheduleAutoSaveState();
                             };
                             window.addEventListener('pointermove', onMove);
                             window.addEventListener('pointerup', onUp);
+                            window.addEventListener('pointercancel', onUp);
                         });
                     });
                 }
