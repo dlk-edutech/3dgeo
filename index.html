@@ -2194,14 +2194,14 @@
             },
             'intersect-surfaces': {
                 vi: {
-                    name: 'Giao tuyến của 2 mặt (Mặt phẳng / Mặt tròn xoay)',
-                    tip: '<b>Giao tuyến 2 mặt:</b> Chọn Mặt 1 rồi Mặt 2 (click bề mặt, hoặc chọn 3 điểm / 1 điểm + 1 đường / 2 đường)',
-                    guide: 'Giao tuyến 2 mặt: Xác định <b>Mặt thứ nhất</b> (Click bề mặt / khối tròn xoay, hoặc chọn <b>3 điểm</b>, hoặc <b>1 điểm + 1 đường</b>, hoặc <b>2 đường đồng phẳng</b>) $\\to$ Xác định <b>Mặt thứ hai</b>'
+                    name: 'Giao tuyến của 2 mặt (Mặt phẳng / Phần mặt phẳng / Mặt tròn xoay)',
+                    tip: '<b>Giao tuyến 2 mặt:</b> Chọn Mặt 1 rồi Mặt 2 (click đa giác / phần mặt phẳng (α) / hình tròn / mặt tròn xoay, hoặc chọn 3 điểm / 1 điểm + 1 đường / 2 đường)',
+                    guide: 'Giao tuyến 2 mặt: Chọn <b>Mặt thứ nhất</b> (Click <b>phần mặt phẳng / đa giác / hình tròn</b> để lấy giao tuyến giới hạn trong miền, hoặc mặt phẳng $(P)$ / mặt tròn xoay) $\\to$ Chọn <b>Mặt thứ hai</b>'
                 },
                 en: {
-                    name: 'Intersection of 2 Surfaces (Planes / Solids)',
-                    tip: '<b>Intersection of 2 Surfaces:</b> Select Surface 1 then Surface 2 (click surface, or pick 3 pts / pt + line / 2 lines)',
-                    guide: 'Intersection of 2 Surfaces: Define <b>First Surface</b> (Click surface/solid, or select <b>3 points</b>, <b>1 point + 1 line</b>, or <b>2 coplanar lines</b>) $\\to$ Define <b>Second Surface</b>'
+                    name: 'Intersection of 2 Surfaces (Planes / Bounded Regions / Solids)',
+                    tip: '<b>Intersection of 2 Surfaces:</b> Select Surface 1 then Surface 2 (click polygon / plane patch (α) / circular disk / solid of revolution, or 3 pts / pt + line / 2 lines)',
+                    guide: 'Intersection of 2 Surfaces: Define <b>First Surface</b> (Click a <b>bounded polygon / plane patch / disk</b> to clip to that region, or base plane $(P)$ / solid) $\\to$ Define <b>Second Surface</b>'
                 }
             },
             'plane-perp': {
@@ -2483,13 +2483,13 @@
             'trace': {
                 vi: {
                     name: 'Bật / Tắt Tạo vết (Trace)',
-                    tip: '<b>Tạo vết quỹ tích:</b> Click điểm hoặc đoạn thẳng để bật/tắt để lại vết khi di chuyển',
-                    guide: 'Bật / Tắt Tạo vết (Trace): Click vào <b>Điểm</b> hoặc <b>Đoạn thẳng</b> để để lại vết quỹ tích khi đối tượng di chuyển'
+                    tip: '<b>Tạo vết quỹ tích:</b> Click bất kỳ đối tượng nào (Điểm, Đoạn/Đường thẳng, Đường tròn/Cung tròn, Giao tuyến/Đường cong, Bề mặt hoặc Khối tròn xoay) để bật/tắt để lại vết khi di chuyển',
+                    guide: 'Bật / Tắt Tạo vết (Trace): Click vào <b>bất kỳ đối tượng nào</b> (Điểm, Đoạn/Đường thẳng, Đường tròn, Giao tuyến/Đường cong, Mặt phẳng hoặc Khối tròn xoay) để để lại vết quỹ tích khi di chuyển'
                 },
                 en: {
                     name: 'Toggle Locus Trace',
-                    tip: '<b>Locus Trace:</b> Click a point or segment to toggle its movement trail',
-                    guide: 'Toggle Trace: Click a <b>Point</b> or <b>Segment</b> to leave a locus trail as it moves'
+                    tip: '<b>Locus Trace:</b> Click any object (Point, Segment/Line, Circle/Arc, Intersection/Curve, Face/Plane, or Solid) to toggle its movement trail',
+                    guide: 'Toggle Trace: Click <b>any object</b> (Point, Segment/Line, Circle/Arc, Intersection/Curve, Face/Plane, or Solid) to leave a locus trail as it moves'
                 }
             },
             'clear-traces': {
@@ -4076,6 +4076,8 @@
             if (hoveredPointId && delPoints.has(hoveredPointId)) hoveredPointId = null;
             if (hoveredCircleId && delCircles.has(hoveredCircleId)) hoveredCircleId = null;
             if (hoveredCurveId && delCurves.has(hoveredCurveId)) hoveredCurveId = null;
+            if (hoveredFaceId && delFaces.has(hoveredFaceId)) hoveredFaceId = null;
+            if (hoveredSolidId && delSolids.has(hoveredSolidId)) hoveredSolidId = null;
 
             // Hiển thị thông báo ngắn trên thanh trạng thái về số lượng đối tượng đã xóa
             const totalDeleted = delPoints.size + delSegs.size + delCircles.size + delCurves.size + delFaces.size + delSolids.size;
@@ -4448,6 +4450,8 @@
         let hoveredPointId = null;
         let hoveredCircleId = null;
         let hoveredCurveId = null;
+        let hoveredFaceId = null;
+        let hoveredSolidId = null;
         let hoveredPlaneBorderSegId = null;
         let activeInterpCurveState = { curveId: null, lockedPlaneSpec: null };
 
@@ -6611,13 +6615,560 @@
             return null;
         }
 
+        function buildPlaneOrthonormalBasis3D(normal) {
+            if (!normal) return null;
+            const nLen = Math.hypot(normal.x, normal.y, normal.z);
+            if (nLen < 1e-9) return null;
+            const n = new THREE.Vector3(normal.x / nLen, normal.y / nLen, normal.z / nLen);
+            const ref = Math.abs(n.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+            const uAxis = new THREE.Vector3().crossVectors(ref, n);
+            if (uAxis.lengthSq() < 1e-12) return null;
+            uAxis.normalize();
+            const vAxis = new THREE.Vector3().crossVectors(n, uAxis).normalize();
+            return { uAxis, vAxis, n };
+        }
+
+        function stitchClippedBranchSegments3D(keptSegments, wasClosedAndUncut) {
+            if (!keptSegments || keptSegments.length === 0) return [];
+            const chains = [];
+            const mergeTol = 1e-4;
+            for (const seg of keptSegments) {
+                if (!seg || !seg.a || !seg.b) continue;
+                const aV = (seg.a instanceof THREE.Vector3) ? seg.a.clone() : new THREE.Vector3(seg.a.x, seg.a.y, seg.a.z);
+                const bV = (seg.b instanceof THREE.Vector3) ? seg.b.clone() : new THREE.Vector3(seg.b.x, seg.b.y, seg.b.z);
+                if (aV.distanceTo(bV) < 1e-6) continue;
+                const lastChain = chains.length > 0 ? chains[chains.length - 1] : null;
+                if (lastChain && lastChain[lastChain.length - 1].distanceTo(aV) <= mergeTol) {
+                    lastChain.push(bV);
+                } else {
+                    chains.push([aV, bV]);
+                }
+            }
+            // Merge wrap-around seam if a closed input loop was clipped elsewhere and split at index 0
+            if (chains.length >= 2) {
+                const first = chains[0];
+                const last = chains[chains.length - 1];
+                if (last[last.length - 1].distanceTo(first[0]) <= mergeTol) {
+                    chains[0] = [...last, ...first.slice(1)];
+                    chains.pop();
+                }
+            }
+            const results = [];
+            for (const pts of chains) {
+                if (pts.length < 2) continue;
+                let totalLen = 0;
+                for (let i = 1; i < pts.length; i++) {
+                    totalLen += pts[i].distanceTo(pts[i - 1]);
+                }
+                if (totalLen < 1e-4) continue;
+                const closed = Boolean(wasClosedAndUncut && chains.length === 1);
+                if (closed) {
+                    if (pts[0].distanceTo(pts[pts.length - 1]) > mergeTol) {
+                        pts.push(pts[0].clone());
+                    } else {
+                        pts[pts.length - 1] = pts[0].clone();
+                    }
+                }
+                results.push({ points: pts, closed });
+            }
+            return results;
+        }
+
+        function clipPolylinesToPolygonRegion3D(branches, polygonVertices, planeOrigin, planeNormal, eps = 1e-3) {
+            if (!Array.isArray(branches) || branches.length === 0) return [];
+            if (!Array.isArray(polygonVertices) || polygonVertices.length < 3) return [];
+            const basis = buildPlaneOrthonormalBasis3D(planeNormal);
+            if (!basis) return [];
+
+            const to2D = (p) => {
+                const rx = p.x - planeOrigin.x;
+                const ry = p.y - planeOrigin.y;
+                const rz = p.z - planeOrigin.z;
+                return {
+                    x: rx * basis.uAxis.x + ry * basis.uAxis.y + rz * basis.uAxis.z,
+                    y: rx * basis.vAxis.x + ry * basis.vAxis.y + rz * basis.vAxis.z
+                };
+            };
+
+            const poly2D = polygonVertices.map(to2D);
+            const nPoly = poly2D.length;
+            const output = [];
+
+            for (const br of branches) {
+                if (!br || !Array.isArray(br.points) || br.points.length < 2) continue;
+                let rawPts = br.points;
+                const isClosedInput = Boolean(br.closed) || (rawPts.length >= 4 && rawPts[0].distanceTo(rawPts[rawPts.length - 1]) <= 1e-3);
+                if (isClosedInput && rawPts.length >= 3 && rawPts[0].distanceTo(rawPts[rawPts.length - 1]) <= 1e-3) {
+                    rawPts = rawPts.slice(0, rawPts.length - 1);
+                }
+                const segCount = isClosedInput ? rawPts.length : rawPts.length - 1;
+                const keptSegments = [];
+                let anyClipped = false;
+
+                for (let i = 0; i < segCount; i++) {
+                    const pA = rawPts[i];
+                    const pB = rawPts[(i + 1) % rawPts.length];
+                    if (!pA || !pB) continue;
+                    if (Math.hypot(pB.x - pA.x, pB.y - pA.y, pB.z - pA.z) < 1e-7) continue;
+
+                    const a2 = to2D(pA);
+                    const b2 = to2D(pB);
+                    const dx = b2.x - a2.x;
+                    const dy = b2.y - a2.y;
+                    const segLenSq2D = dx * dx + dy * dy;
+                    const ts = [0, 1];
+
+                    for (let j = 0; j < nPoly; j++) {
+                        const e1 = poly2D[j];
+                        const e2 = poly2D[(j + 1) % nPoly];
+                        const ex = e2.x - e1.x;
+                        const ey = e2.y - e1.y;
+                        const denom = dx * ey - dy * ex;
+                        const rx = e1.x - a2.x;
+                        const ry = e1.y - a2.y;
+                        if (Math.abs(denom) > 1e-10) {
+                            const t = (rx * ey - ry * ex) / denom;
+                            const u = (rx * dy - ry * dx) / denom;
+                            if (t > 1e-7 && t < 1 - 1e-7 && u >= -1e-6 && u <= 1 + 1e-6) {
+                                ts.push(t);
+                            }
+                        } else if (segLenSq2D > 1e-10) {
+                            const crossR = Math.abs(rx * dy - ry * dx) / Math.sqrt(segLenSq2D);
+                            if (crossR <= eps) {
+                                for (const ev of [e1, e2]) {
+                                    const tProj = ((ev.x - a2.x) * dx + (ev.y - a2.y) * dy) / segLenSq2D;
+                                    if (tProj > 1e-7 && tProj < 1 - 1e-7) ts.push(tProj);
+                                }
+                            }
+                        }
+                    }
+
+                    ts.sort((x, y) => x - y);
+                    const uniqTs = [ts[0]];
+                    for (let k = 1; k < ts.length; k++) {
+                        if (ts[k] - uniqTs[uniqTs.length - 1] > 1e-7) uniqTs.push(ts[k]);
+                    }
+                    if (uniqTs[uniqTs.length - 1] < 1) uniqTs[uniqTs.length - 1] = 1;
+
+                    for (let k = 0; k < uniqTs.length - 1; k++) {
+                        const t0 = uniqTs[k];
+                        const t1 = uniqTs[k + 1];
+                        if (t1 - t0 <= 1e-7) continue;
+                        const tm = 0.5 * (t0 + t1);
+                        const mx = a2.x + dx * tm;
+                        const my = a2.y + dy * tm;
+                        if (isPointInPolygon2D(mx, my, poly2D, eps)) {
+                            keptSegments.push({
+                                a: new THREE.Vector3(
+                                    pA.x + (pB.x - pA.x) * t0,
+                                    pA.y + (pB.y - pA.y) * t0,
+                                    pA.z + (pB.z - pA.z) * t0
+                                ),
+                                b: new THREE.Vector3(
+                                    pA.x + (pB.x - pA.x) * t1,
+                                    pA.y + (pB.y - pA.y) * t1,
+                                    pA.z + (pB.z - pA.z) * t1
+                                )
+                            });
+                        } else {
+                            anyClipped = true;
+                        }
+                    }
+                }
+
+                const stitched = stitchClippedBranchSegments3D(keptSegments, isClosedInput && !anyClipped);
+                output.push(...stitched);
+            }
+            return output;
+        }
+
+        function clipPolylinesToCircleDiskRegion3D(branches, diskCenter, diskRadius, planeNormal, eps = 1e-3) {
+            if (!Array.isArray(branches) || branches.length === 0 || !(diskRadius > 1e-6)) return [];
+            const basis = buildPlaneOrthonormalBasis3D(planeNormal);
+            if (!basis) return [];
+
+            const to2D = (p) => {
+                const rx = p.x - diskCenter.x;
+                const ry = p.y - diskCenter.y;
+                const rz = p.z - diskCenter.z;
+                return {
+                    x: rx * basis.uAxis.x + ry * basis.uAxis.y + rz * basis.uAxis.z,
+                    y: rx * basis.vAxis.x + ry * basis.vAxis.y + rz * basis.vAxis.z
+                };
+            };
+
+            const rLimitSq = (diskRadius + eps) * (diskRadius + eps);
+            const rSq = diskRadius * diskRadius;
+            const output = [];
+
+            for (const br of branches) {
+                if (!br || !Array.isArray(br.points) || br.points.length < 2) continue;
+                let rawPts = br.points;
+                const isClosedInput = Boolean(br.closed) || (rawPts.length >= 4 && rawPts[0].distanceTo(rawPts[rawPts.length - 1]) <= 1e-3);
+                if (isClosedInput && rawPts.length >= 3 && rawPts[0].distanceTo(rawPts[rawPts.length - 1]) <= 1e-3) {
+                    rawPts = rawPts.slice(0, rawPts.length - 1);
+                }
+                const segCount = isClosedInput ? rawPts.length : rawPts.length - 1;
+                const keptSegments = [];
+                let anyClipped = false;
+
+                for (let i = 0; i < segCount; i++) {
+                    const pA = rawPts[i];
+                    const pB = rawPts[(i + 1) % rawPts.length];
+                    if (!pA || !pB) continue;
+                    if (Math.hypot(pB.x - pA.x, pB.y - pA.y, pB.z - pA.z) < 1e-7) continue;
+
+                    const a2 = to2D(pA);
+                    const b2 = to2D(pB);
+                    const dx = b2.x - a2.x;
+                    const dy = b2.y - a2.y;
+                    const A = dx * dx + dy * dy;
+                    const B = 2 * (a2.x * dx + a2.y * dy);
+                    const C = a2.x * a2.x + a2.y * a2.y - rSq;
+                    const ts = [0, 1];
+                    if (A > 1e-12) {
+                        const disc = B * B - 4 * A * C;
+                        if (disc >= 0) {
+                            const sqrtD = Math.sqrt(disc);
+                            const r1 = (-B - sqrtD) / (2 * A);
+                            const r2 = (-B + sqrtD) / (2 * A);
+                            if (r1 > 1e-7 && r1 < 1 - 1e-7) ts.push(r1);
+                            if (r2 > 1e-7 && r2 < 1 - 1e-7) ts.push(r2);
+                        }
+                    }
+
+                    ts.sort((x, y) => x - y);
+                    const uniqTs = [ts[0]];
+                    for (let k = 1; k < ts.length; k++) {
+                        if (ts[k] - uniqTs[uniqTs.length - 1] > 1e-7) uniqTs.push(ts[k]);
+                    }
+                    if (uniqTs[uniqTs.length - 1] < 1) uniqTs[uniqTs.length - 1] = 1;
+
+                    for (let k = 0; k < uniqTs.length - 1; k++) {
+                        const t0 = uniqTs[k];
+                        const t1 = uniqTs[k + 1];
+                        if (t1 - t0 <= 1e-7) continue;
+                        const tm = 0.5 * (t0 + t1);
+                        const mx = a2.x + dx * tm;
+                        const my = a2.y + dy * tm;
+                        if (mx * mx + my * my <= rLimitSq) {
+                            keptSegments.push({
+                                a: new THREE.Vector3(
+                                    pA.x + (pB.x - pA.x) * t0,
+                                    pA.y + (pB.y - pA.y) * t0,
+                                    pA.z + (pB.z - pA.z) * t0
+                                ),
+                                b: new THREE.Vector3(
+                                    pA.x + (pB.x - pA.x) * t1,
+                                    pA.y + (pB.y - pA.y) * t1,
+                                    pA.z + (pB.z - pA.z) * t1
+                                )
+                            });
+                        } else {
+                            anyClipped = true;
+                        }
+                    }
+                }
+
+                const stitched = stitchClippedBranchSegments3D(keptSegments, isClosedInput && !anyClipped);
+                output.push(...stitched);
+            }
+            return output;
+        }
+
+        function computePlaneSphereIntersectionPolyline3D(center, radius, planeOrigin, planeNormal, samples = 160) {
+            if (!center || !(radius > 1e-6)) return [];
+            const basis = buildPlaneOrthonormalBasis3D(planeNormal);
+            if (!basis) return [];
+            const signedD = (center.x - planeOrigin.x) * basis.n.x +
+                (center.y - planeOrigin.y) * basis.n.y +
+                (center.z - planeOrigin.z) * basis.n.z;
+            const absD = Math.abs(signedD);
+            if (absD >= radius - 1e-5) return [];
+            const rSec = Math.sqrt(Math.max(0, radius * radius - signedD * signedD));
+            if (rSec < 1e-5) return [];
+            const hCenter = new THREE.Vector3(
+                center.x - signedD * basis.n.x,
+                center.y - signedD * basis.n.y,
+                center.z - signedD * basis.n.z
+            );
+            const N = Math.max(36, Math.round(samples));
+            const pts = [];
+            for (let i = 0; i <= N; i++) {
+                const th = (i / N) * Math.PI * 2;
+                const c = Math.cos(th) * rSec;
+                const s = Math.sin(th) * rSec;
+                pts.push(new THREE.Vector3(
+                    hCenter.x + c * basis.uAxis.x + s * basis.vAxis.x,
+                    hCenter.y + c * basis.uAxis.y + s * basis.vAxis.y,
+                    hCenter.z + c * basis.uAxis.z + s * basis.vAxis.z
+                ));
+            }
+            pts[pts.length - 1] = pts[0].clone();
+            return [{ points: pts, closed: true }];
+        }
+
+        function sampleRuledSurfacePlaneIntersection3D(evalGenerator, planeOrigin, planeNormal, samples = 180) {
+            const basis = buildPlaneOrthonormalBasis3D(planeNormal);
+            if (!basis) return [];
+            const n = basis.n;
+            const evalT = (theta) => {
+                const { p0, p1 } = evalGenerator(theta);
+                const d0 = (p0.x - planeOrigin.x) * n.x + (p0.y - planeOrigin.y) * n.y + (p0.z - planeOrigin.z) * n.z;
+                const d1 = (p1.x - planeOrigin.x) * n.x + (p1.y - planeOrigin.y) * n.y + (p1.z - planeOrigin.z) * n.z;
+                const denom = d1 - d0;
+                if (Math.abs(denom) < 1e-8) return { valid: false, t: NaN, pos: null, d0, d1 };
+                const t = -d0 / denom;
+                if (t >= -1e-5 && t <= 1 + 1e-5) {
+                    const tc = Math.max(0, Math.min(1, t));
+                    return {
+                        valid: true,
+                        t: tc,
+                        pos: new THREE.Vector3(
+                            p0.x + (p1.x - p0.x) * tc,
+                            p0.y + (p1.y - p0.y) * tc,
+                            p0.z + (p1.z - p0.z) * tc
+                        ),
+                        d0,
+                        d1
+                    };
+                }
+                return { valid: false, t, pos: null, d0, d1 };
+            };
+
+            const N = Math.max(48, Math.round(samples));
+            const step = (Math.PI * 2) / N;
+            const evals = [];
+            for (let i = 0; i < N; i++) {
+                evals.push({ theta: i * step, ...evalT(i * step) });
+            }
+
+            // Detect coplanar generatrices (plane through cone apex or vertical plane parallel to cylinder axis)
+            const evalSignedD0 = (th) => {
+                const { p0 } = evalGenerator(th);
+                return (p0.x - planeOrigin.x) * n.x + (p0.y - planeOrigin.y) * n.y + (p0.z - planeOrigin.z) * n.z;
+            };
+            const evalSignedD1 = (th) => {
+                const { p1 } = evalGenerator(th);
+                return (p1.x - planeOrigin.x) * n.x + (p1.y - planeOrigin.y) * n.y + (p1.z - planeOrigin.z) * n.z;
+            };
+            const bisectAngleZero = (thA, thB, fn) => {
+                let lo = thA, hi = thB, fLo = fn(lo);
+                for (let iter = 0; iter < 18; iter++) {
+                    const mid = 0.5 * (lo + hi);
+                    const fMid = fn(mid);
+                    if ((fLo <= 0 && fMid <= 0) || (fLo >= 0 && fMid >= 0)) {
+                        lo = mid;
+                        fLo = fMid;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                return 0.5 * (lo + hi);
+            };
+            const allD0NearZero = evals.every(e => Math.abs(e.d0) < 1e-4);
+            const allD1NearZero = evals.every(e => Math.abs(e.d1) < 1e-4);
+            const allParallelGen = evals.every(e => Math.abs(e.d1 - e.d0) < 1e-4);
+            if (allD0NearZero || allD1NearZero || allParallelGen) {
+                const fn = allD0NearZero ? evalSignedD1 : evalSignedD0;
+                const foundThetas = [];
+                for (let i = 0; i < N; i++) {
+                    const thA = i * step;
+                    const thB = (i + 1) * step;
+                    const vA = allD0NearZero ? evals[i].d1 : evals[i].d0;
+                    const vB = allD0NearZero ? evals[(i + 1) % N].d1 : evals[(i + 1) % N].d0;
+                    if (Math.abs(vA) < 1e-6) foundThetas.push(thA);
+                    else if ((vA < 0 && vB > 0) || (vA > 0 && vB < 0)) foundThetas.push(bisectAngleZero(thA, thB, fn));
+                }
+                const dedupThetas = [];
+                for (const th of foundThetas) {
+                    const normTh = ((th % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+                    if (!dedupThetas.some(t0 => Math.min(Math.abs(t0 - normTh), Math.PI * 2 - Math.abs(t0 - normTh)) < 1e-3)) {
+                        dedupThetas.push(normTh);
+                    }
+                }
+                const coplanarBranches = [];
+                for (const th of dedupThetas) {
+                    const { p0, p1 } = evalGenerator(th);
+                    if (Math.abs(evalSignedD0(th)) < 1e-3 && Math.abs(evalSignedD1(th)) < 1e-3 && p0.distanceTo(p1) > 1e-5) {
+                        coplanarBranches.push({ points: [p0.clone(), p1.clone()], closed: false });
+                    }
+                }
+                if (coplanarBranches.length > 0) return coplanarBranches;
+            }
+
+            const refineBoundary = (thIn, thOut) => {
+                let lo = thIn, hi = thOut, bestPos = evalT(lo).pos;
+                for (let iter = 0; iter < 14; iter++) {
+                    const mid = 0.5 * (lo + hi);
+                    const res = evalT(mid);
+                    if (res.valid && res.pos) {
+                        lo = mid;
+                        bestPos = res.pos;
+                    } else {
+                        hi = mid;
+                    }
+                }
+                return bestPos;
+            };
+
+            if (evals.every(e => e.valid && e.pos)) {
+                const pts = evals.map(e => e.pos);
+                let span = 0;
+                for (let i = 1; i < pts.length; i++) span += pts[i].distanceTo(pts[i - 1]);
+                if (span <= 1e-4) return [];
+                pts.push(pts[0].clone());
+                return [{ points: pts, closed: true }];
+            }
+
+            const chains = [];
+            let cur = [];
+            for (let i = 0; i < N; i++) {
+                const prev = evals[(i - 1 + N) % N];
+                const curr = evals[i];
+                if (curr.valid && curr.pos) {
+                    if (!prev.valid) {
+                        if (cur.length >= 2) chains.push(cur);
+                        cur = [];
+                        const entryPt = refineBoundary(curr.theta, curr.theta - step);
+                        if (entryPt) cur.push(entryPt);
+                    }
+                    const tail = cur.length > 0 ? cur[cur.length - 1] : null;
+                    if (!tail || tail.distanceTo(curr.pos) > 1e-5) cur.push(curr.pos);
+                } else if (prev.valid) {
+                    const exitPt = refineBoundary(prev.theta, prev.theta + step);
+                    if (exitPt) {
+                        const tail = cur.length > 0 ? cur[cur.length - 1] : null;
+                        if (!tail || tail.distanceTo(exitPt) > 1e-5) cur.push(exitPt);
+                    }
+                    if (cur.length >= 2) chains.push(cur);
+                    cur = [];
+                }
+            }
+            if (cur.length >= 2) chains.push(cur);
+
+            if (chains.length >= 2 && evals[0].valid && evals[N - 1].valid) {
+                const first = chains[0];
+                const last = chains[chains.length - 1];
+                chains[0] = [...last, ...first];
+                chains.pop();
+            }
+
+            return chains.filter(pts => pts.length >= 2).map(pts => ({ points: pts, closed: false }));
+        }
+
+        function computePlaneConeIntersectionPolylines3D(apex, baseCenter, baseRadius, baseU, baseV, planeOrigin, planeNormal, samples = 180) {
+            if (!apex || !baseCenter || !(baseRadius > 1e-6)) return [];
+            const vApex = new THREE.Vector3(apex.x, apex.y, apex.z);
+            return sampleRuledSurfacePlaneIntersection3D((theta) => {
+                const c = Math.cos(theta) * baseRadius;
+                const s = Math.sin(theta) * baseRadius;
+                return {
+                    p0: vApex,
+                    p1: new THREE.Vector3(
+                        baseCenter.x + c * baseU.x + s * baseV.x,
+                        baseCenter.y + c * baseU.y + s * baseV.y,
+                        baseCenter.z + c * baseU.z + s * baseV.z
+                    )
+                };
+            }, planeOrigin, planeNormal, samples);
+        }
+
+        function computePlaneFrustumIntersectionPolylines3D(c1, r1, u1, v1, c2, r2, n2, planeOrigin, planeNormal, samples = 180) {
+            if (!c1 || !c2 || (r1 <= 1e-6 && r2 <= 1e-6)) return [];
+            // Align base-2 basis (u2, v2) to base-1 (u1, v1) to guarantee untwisted generatrices
+            const n2Unit = n2.clone().normalize();
+            let u2 = u1.clone().addScaledVector(n2Unit, -u1.dot(n2Unit));
+            if (u2.lengthSq() < 1e-8) u2 = u1.clone();
+            else u2.normalize();
+            let v2 = new THREE.Vector3().crossVectors(n2Unit, u2).normalize();
+            if (v2.dot(v1) < 0) v2.negate();
+            return sampleRuledSurfacePlaneIntersection3D((theta) => {
+                const c = Math.cos(theta);
+                const s = Math.sin(theta);
+                return {
+                    p0: new THREE.Vector3(
+                        c1.x + r1 * (c * u1.x + s * v1.x),
+                        c1.y + r1 * (c * u1.y + s * v1.y),
+                        c1.z + r1 * (c * u1.z + s * v1.z)
+                    ),
+                    p1: new THREE.Vector3(
+                        c2.x + r2 * (c * u2.x + s * v2.x),
+                        c2.y + r2 * (c * u2.y + s * v2.y),
+                        c2.z + r2 * (c * u2.z + s * v2.z)
+                    )
+                };
+            }, planeOrigin, planeNormal, samples);
+        }
+
+        function isPointInsideBoundedPlaneRegion3D(pt, planeSurf) {
+            if (!pt || !planeSurf || planeSurf.surfType !== 'plane') return false;
+            if (planeSurf.clipToRegion === false || planeSurf.planeId === '__base_plane__') return true;
+            const face = (planeSurf.faceId ? geoState.faces.find(f => f.id === planeSurf.faceId) : null) ||
+                geoState.faces.find(f => f.id === planeSurf.planeId);
+            if (face && face.pointIds && face.pointIds.length >= 3) {
+                const pts = face.pointIds.map(pid => geoState.points.find(p => p.id === pid)).filter(Boolean);
+                const plane = getPlaneDataFromId(face.id);
+                if (pts.length >= 3 && plane) {
+                    const basis = buildPlaneOrthonormalBasis3D(plane.normal);
+                    if (!basis) return false;
+                    const to2D = (p) => {
+                        const rx = p.x - plane.origin.x, ry = p.y - plane.origin.y, rz = p.z - plane.origin.z;
+                        return {
+                            x: rx * basis.uAxis.x + ry * basis.uAxis.y + rz * basis.uAxis.z,
+                            y: rx * basis.vAxis.x + ry * basis.vAxis.y + rz * basis.vAxis.z
+                        };
+                    };
+                    const p2 = to2D(pt);
+                    return isPointInPolygon2D(p2.x, p2.y, pts.map(to2D), 1e-2);
+                }
+            }
+            const cir = (planeSurf.circleId ? (geoState.circles || []).find(c => c.id === planeSurf.circleId) : null) ||
+                (geoState.circles || []).find(c => c.id === planeSurf.planeId);
+            if (cir) {
+                const cGeom = computeCircleGeometry(cir);
+                if (cGeom) {
+                    const rel = new THREE.Vector3(pt.x - cGeom.center.x, pt.y - cGeom.center.y, pt.z - cGeom.center.z);
+                    const planeDist = Math.abs(rel.dot(cGeom.normal));
+                    const radDist = Math.sqrt(Math.max(0, rel.lengthSq() - planeDist * planeDist));
+                    return radDist <= cGeom.radius + 1e-2;
+                }
+            }
+            return true;
+        }
+
+        function clipSurfaceIntersectionBranchesToPlaneRegion3D(branches, planeSurf) {
+            if (!Array.isArray(branches) || branches.length === 0) return [];
+            if (!planeSurf || planeSurf.surfType !== 'plane') return branches;
+            if (planeSurf.clipToRegion === false || planeSurf.planeId === '__base_plane__') return branches;
+
+            const face = (planeSurf.faceId ? geoState.faces.find(f => f.id === planeSurf.faceId) : null) ||
+                geoState.faces.find(f => f.id === planeSurf.planeId);
+            if (face && face.pointIds && face.pointIds.length >= 3) {
+                const pts = face.pointIds.map(pid => geoState.points.find(p => p.id === pid)).filter(Boolean);
+                const plane = getPlaneDataFromId(face.id);
+                if (pts.length >= 3 && plane) {
+                    return clipPolylinesToPolygonRegion3D(branches, pts, plane.origin, plane.normal, 1e-3);
+                }
+            }
+
+            const cir = (planeSurf.circleId ? (geoState.circles || []).find(c => c.id === planeSurf.circleId) : null) ||
+                (geoState.circles || []).find(c => c.id === planeSurf.planeId);
+            if (cir) {
+                const cGeom = computeCircleGeometry(cir);
+                if (cGeom) {
+                    return clipPolylinesToCircleDiskRegion3D(branches, cGeom.center, cGeom.radius, cGeom.normal, 1e-3);
+                }
+            }
+            return branches;
+        }
+
         function computeSurfaceIntersectionPolylines3D(surf1, surf2) {
             if (!surf1 || !surf2) return [];
             const sol1 = (surf1.surfType === 'solid' && surf1.solidId) ? (geoState.solids || []).find(s => s.id === surf1.solidId) : null;
             const sol2 = (surf2.surfType === 'solid' && surf2.solidId) ? (geoState.solids || []).find(s => s.id === surf2.solidId) : null;
 
-            let gridSol = null;
-            let otherSurf = null;
+            // 1. Mặt tròn xoay (revolve) × Mặt tròn xoay (revolve)
             if (sol1 && sol1.kind === 'revolve' && sol2 && sol2.kind === 'revolve') {
                 const g1 = extractRevolveSolidGeometry(sol1, 96, 36);
                 const g2 = extractRevolveSolidGeometry(sol2, 96, 36);
@@ -6627,7 +7178,46 @@
                 } else {
                     return extractContourPolylinesFromRevolveGrid3D(g2, (p) => computeSignedDistanceToRevolveSurface3D(p, g1, 0.08));
                 }
-            } else if (sol1 && sol1.kind === 'revolve') {
+            }
+
+            // 2. Mặt phẳng (vô hạn hoặc phần mặt phẳng giới hạn bởi đa giác / hình tròn) × Mặt tròn xoay (revolve, sphere, cone, frustum)
+            const planeSurf = surf1.surfType === 'plane' ? surf1 : (surf2.surfType === 'plane' ? surf2 : null);
+            const targetSol = surf1.surfType === 'plane' ? sol2 : (surf2.surfType === 'plane' ? sol1 : null);
+            if (planeSurf && targetSol) {
+                const plane = getPlaneDataFromId(planeSurf.planeId);
+                if (!plane || !plane.origin || !plane.normal) return [];
+                let rawBranches = [];
+                if (targetSol.kind === 'revolve') {
+                    const revGeom = extractRevolveSolidGeometry(targetSol, 96, 36);
+                    if (!revGeom) return [];
+                    const evalFn = buildImplicitSurfaceEvaluator3D(planeSurf);
+                    if (!evalFn) return [];
+                    rawBranches = extractContourPolylinesFromRevolveGrid3D(revGeom, evalFn);
+                } else if (targetSol.kind === 'sphere') {
+                    const sGeom = computeSphereGeometry(targetSol);
+                    if (!sGeom) return [];
+                    rawBranches = computePlaneSphereIntersectionPolyline3D(sGeom.center, sGeom.radius, plane.origin, plane.normal, 160);
+                } else if (targetSol.kind === 'cone') {
+                    const cir = (geoState.circles || []).find(c => c.id === targetSol.circleId);
+                    const S = geoState.points.find(p => p.id === targetSol.apexId);
+                    const geom = computeCircleGeometry(cir);
+                    if (!geom || !S) return [];
+                    rawBranches = computePlaneConeIntersectionPolylines3D(S, geom.center, geom.radius, geom.uAxis, geom.vAxis, plane.origin, plane.normal, 180);
+                } else if (targetSol.kind === 'frustum') {
+                    const cir1 = (geoState.circles || []).find(c => c.id === targetSol.circle1Id);
+                    const cir2 = (geoState.circles || []).find(c => c.id === targetSol.circle2Id);
+                    const g1 = computeCircleGeometry(cir1);
+                    const g2 = computeCircleGeometry(cir2);
+                    if (!g1 || !g2) return [];
+                    rawBranches = computePlaneFrustumIntersectionPolylines3D(g1.center, g1.radius, g1.uAxis, g1.vAxis, g2.center, g2.radius, g2.normal, plane.origin, plane.normal, 180);
+                }
+                return clipSurfaceIntersectionBranchesToPlaneRegion3D(rawBranches, planeSurf);
+            }
+
+            // 3. Mặt tròn xoay (revolve) × Mặt cong cơ bản khác (sphere, cone, frustum)
+            let gridSol = null;
+            let otherSurf = null;
+            if (sol1 && sol1.kind === 'revolve') {
                 gridSol = sol1;
                 otherSurf = surf2;
             } else if (sol2 && sol2.kind === 'revolve') {
@@ -7548,6 +8138,10 @@
 
         const pointTraceMap = new Map();
         const segmentTraceMap = new Map();
+        const circleTraceMap = new Map();
+        const curveTraceMap = new Map();
+        const faceTraceMap = new Map();
+        const solidTraceMap = new Map();
 
         function computeTracedSegmentEndpoints3D(p1, p2, isLine = false, lineHalfExtent = 30) {
             if (!p1 || !p2) return null;
@@ -7654,6 +8248,358 @@
             tracePointsCloud.geometry.computeBoundingSphere();
         }
 
+        function pointToSegmentDistSq3D(p, a, b) {
+            const abx = b.x - a.x;
+            const aby = b.y - a.y;
+            const abz = b.z - a.z;
+            const abLenSq = abx * abx + aby * aby + abz * abz;
+            const apx = p.x - a.x;
+            const apy = p.y - a.y;
+            const apz = p.z - a.z;
+            if (abLenSq <= 1e-12) {
+                return apx * apx + apy * apy + apz * apz;
+            }
+            let t = (apx * abx + apy * aby + apz * abz) / abLenSq;
+            if (t < 0) t = 0;
+            else if (t > 1) t = 1;
+            const dx = apx - t * abx;
+            const dy = apy - t * aby;
+            const dz = apz - t * abz;
+            return dx * dx + dy * dy + dz * dz;
+        }
+
+        function buildPolylineTraceSample3D(branches, targetSamples = 32) {
+            if (!Array.isArray(branches) || branches.length === 0) return null;
+            const validBranches = [];
+            let totalLength = 0;
+            let minX = Infinity, minY = Infinity, minZ = Infinity;
+            let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+
+            for (let bIdx = 0; bIdx < branches.length; bIdx++) {
+                const br = branches[bIdx];
+                if (!br || !Array.isArray(br.points) || br.points.length < 2) continue;
+                const rawPts = [];
+                for (let i = 0; i < br.points.length; i++) {
+                    const p = br.points[i];
+                    if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y) || !Number.isFinite(p.z)) continue;
+                    rawPts.push({ x: p.x, y: p.y, z: p.z });
+                    if (p.x < minX) minX = p.x;
+                    if (p.y < minY) minY = p.y;
+                    if (p.z < minZ) minZ = p.z;
+                    if (p.x > maxX) maxX = p.x;
+                    if (p.y > maxY) maxY = p.y;
+                    if (p.z > maxZ) maxZ = p.z;
+                }
+                if (rawPts.length < 2) continue;
+
+                const closed = Boolean(br.closed);
+                const pts = closed ? [...rawPts, rawPts[0]] : rawPts;
+                const cumLens = [0];
+                let brLen = 0;
+                for (let i = 1; i < pts.length; i++) {
+                    const segLen = Math.hypot(
+                        pts[i].x - pts[i - 1].x,
+                        pts[i].y - pts[i - 1].y,
+                        pts[i].z - pts[i - 1].z
+                    );
+                    brLen += segLen;
+                    cumLens.push(brLen);
+                }
+                if (brLen < 1e-7) continue;
+                totalLength += brLen;
+                validBranches.push({ pts, cumLens, len: brLen, closed });
+            }
+
+            if (validBranches.length === 0 || totalLength < 1e-7) return null;
+
+            const clampedTarget = Math.max(8, Math.min(64, Math.round(targetSamples)));
+            const samplePoints = [];
+            const segments = [];
+
+            for (let bIdx = 0; bIdx < validBranches.length; bIdx++) {
+                const br = validBranches[bIdx];
+                const count = Math.max(
+                    br.closed ? 4 : 2,
+                    Math.round((br.len / totalLength) * clampedTarget)
+                );
+                const brSamples = [];
+                let segIdx = 0;
+                for (let k = 0; k < count; k++) {
+                    const targetD = br.closed
+                        ? (k / count) * br.len
+                        : (count === 1 ? 0 : (k / (count - 1)) * br.len);
+                    while (segIdx < br.cumLens.length - 2 && br.cumLens[segIdx + 1] < targetD) {
+                        segIdx++;
+                    }
+                    const d0 = br.cumLens[segIdx];
+                    const d1 = br.cumLens[segIdx + 1];
+                    const span = d1 - d0;
+                    const t = span > 1e-12 ? Math.max(0, Math.min(1, (targetD - d0) / span)) : 0;
+                    const p0 = br.pts[segIdx];
+                    const p1 = br.pts[segIdx + 1];
+                    const pt = {
+                        x: p0.x + (p1.x - p0.x) * t,
+                        y: p0.y + (p1.y - p0.y) * t,
+                        z: p0.z + (p1.z - p0.z) * t
+                    };
+                    brSamples.push(pt);
+                    samplePoints.push(pt);
+                }
+                for (let i = 0; i < brSamples.length - 1; i++) {
+                    segments.push({ a: brSamples[i], b: brSamples[i + 1] });
+                }
+                if (br.closed && brSamples.length >= 2) {
+                    segments.push({ a: brSamples[brSamples.length - 1], b: brSamples[0] });
+                }
+            }
+
+            if (samplePoints.length === 0 || segments.length === 0) return null;
+            return {
+                samplePoints,
+                segments,
+                minX, minY, minZ,
+                maxX, maxY, maxZ,
+                totalLength,
+                branchCount: validBranches.length
+            };
+        }
+
+        function computePolylineSymmetricDistance3D(a, b) {
+            if (!a || !b || a.samplePoints.length === 0 || b.samplePoints.length === 0) return Infinity;
+            if (a.segments.length === 0 || b.segments.length === 0) return Infinity;
+            let maxDistSq = 0;
+            for (let i = 0; i < a.samplePoints.length; i++) {
+                const p = a.samplePoints[i];
+                let bestSq = Infinity;
+                for (let j = 0; j < b.segments.length; j++) {
+                    const seg = b.segments[j];
+                    const dSq = pointToSegmentDistSq3D(p, seg.a, seg.b);
+                    if (dSq < bestSq) bestSq = dSq;
+                }
+                if (bestSq > maxDistSq) maxDistSq = bestSq;
+            }
+            for (let i = 0; i < b.samplePoints.length; i++) {
+                const p = b.samplePoints[i];
+                let bestSq = Infinity;
+                for (let j = 0; j < a.segments.length; j++) {
+                    const seg = a.segments[j];
+                    const dSq = pointToSegmentDistSq3D(p, seg.a, seg.b);
+                    if (dSq < bestSq) bestSq = dSq;
+                }
+                if (bestSq > maxDistSq) maxDistSq = bestSq;
+            }
+            return Math.sqrt(maxDistSq);
+        }
+
+        function shouldRecordObjectTraceSample3D(branches, history, minStepDist = 0.055, duplicateTol = 0.07) {
+            const sample = buildPolylineTraceSample3D(branches, 32);
+            if (!sample) return { shouldRecord: false, sample: null };
+            if (!history || history.length === 0) {
+                return { shouldRecord: true, sample };
+            }
+            const lastItem = history[history.length - 1];
+            const last = lastItem && lastItem.sample ? lastItem.sample : lastItem;
+            if (last) {
+                const bboxNearLast =
+                    Math.abs(sample.minX - last.minX) <= minStepDist * 1.5 &&
+                    Math.abs(sample.minY - last.minY) <= minStepDist * 1.5 &&
+                    Math.abs(sample.minZ - last.minZ) <= minStepDist * 1.5 &&
+                    Math.abs(sample.maxX - last.maxX) <= minStepDist * 1.5 &&
+                    Math.abs(sample.maxY - last.maxY) <= minStepDist * 1.5 &&
+                    Math.abs(sample.maxZ - last.maxZ) <= minStepDist * 1.5;
+                if (bboxNearLast && computePolylineSymmetricDistance3D(sample, last) < minStepDist) {
+                    return { shouldRecord: false, sample };
+                }
+            }
+            if (duplicateTol > 0 && history.length > 3) {
+                const bboxPad = duplicateTol * 1.5;
+                for (let i = 0; i < history.length - 2; i++) {
+                    const item = history[i];
+                    const prev = item && item.sample ? item.sample : item;
+                    if (!prev) continue;
+                    if (
+                        Math.abs(sample.minX - prev.minX) > bboxPad ||
+                        Math.abs(sample.minY - prev.minY) > bboxPad ||
+                        Math.abs(sample.minZ - prev.minZ) > bboxPad ||
+                        Math.abs(sample.maxX - prev.maxX) > bboxPad ||
+                        Math.abs(sample.maxY - prev.maxY) > bboxPad ||
+                        Math.abs(sample.maxZ - prev.maxZ) > bboxPad
+                    ) {
+                        continue;
+                    }
+                    if (computePolylineSymmetricDistance3D(sample, prev) < duplicateTol) {
+                        return { shouldRecord: false, sample };
+                    }
+                }
+            }
+            return { shouldRecord: true, sample };
+        }
+
+        function disposeTraceObject3D(obj) {
+            if (!obj) return;
+            if (traceLinesGroup && obj.parent === traceLinesGroup) {
+                traceLinesGroup.remove(obj);
+            }
+            if (obj.isGroup && Array.isArray(obj.children)) {
+                while (obj.children.length > 0) {
+                    const ch = obj.children[0];
+                    obj.remove(ch);
+                    if (ch.geometry) ch.geometry.dispose();
+                    if (ch.material) {
+                        if (Array.isArray(ch.material)) ch.material.forEach(m => m && m.dispose());
+                        else ch.material.dispose();
+                    }
+                }
+            } else {
+                if (obj.geometry) obj.geometry.dispose();
+                if (obj.material) {
+                    if (Array.isArray(obj.material)) obj.material.forEach(m => m && m.dispose());
+                    else obj.material.dispose();
+                }
+            }
+        }
+
+        function createLineSegmentsFromBranches3D(branches, colorHex = 0x9333ea, opacity = 0.36) {
+            const positions = [];
+            for (let b = 0; b < branches.length; b++) {
+                const br = branches[b];
+                if (!br || !Array.isArray(br.points) || br.points.length < 2) continue;
+                const pts = br.points;
+                for (let i = 0; i < pts.length - 1; i++) {
+                    const p0 = pts[i];
+                    const p1 = pts[i + 1];
+                    if (!p0 || !p1) continue;
+                    positions.push(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
+                }
+                if (br.closed && pts.length >= 2) {
+                    const pLast = pts[pts.length - 1];
+                    const pFirst = pts[0];
+                    if (pLast && pFirst && Math.hypot(pLast.x - pFirst.x, pLast.y - pFirst.y, pLast.z - pFirst.z) > 1e-6) {
+                        positions.push(pLast.x, pLast.y, pLast.z, pFirst.x, pFirst.y, pFirst.z);
+                    }
+                }
+            }
+            if (positions.length < 6) return null;
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const mat = new THREE.LineBasicMaterial({
+                color: colorHex,
+                transparent: true,
+                opacity,
+                depthWrite: false
+            });
+            const obj = new THREE.LineSegments(geo, mat);
+            obj.renderOrder = 3;
+            return obj;
+        }
+
+        function extractSolidTraceBranches3D(sol) {
+            if (!sol) return [];
+            const branches = [];
+            if (sol.kind === 'cone') {
+                const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
+                const S = geoState.points.find(p => p.id === sol.apexId);
+                const geom = computeCircleGeometry(cir);
+                if (!geom || !S) return [];
+                const ring = [];
+                const radSegs = 48;
+                for (let i = 0; i < radSegs; i++) {
+                    const th = (i / radSegs) * Math.PI * 2;
+                    ring.push({
+                        x: geom.center.x + geom.radius * (Math.cos(th) * geom.uAxis.x + Math.sin(th) * geom.vAxis.x),
+                        y: geom.center.y + geom.radius * (Math.cos(th) * geom.uAxis.y + Math.sin(th) * geom.vAxis.y),
+                        z: geom.center.z + geom.radius * (Math.cos(th) * geom.uAxis.z + Math.sin(th) * geom.vAxis.z)
+                    });
+                }
+                branches.push({ points: ring, closed: true });
+                const vS = { x: S.x, y: S.y, z: S.z };
+                for (let k = 0; k < 8; k++) {
+                    const idx = Math.floor((k / 8) * radSegs);
+                    branches.push({ points: [vS, ring[idx]], closed: false });
+                }
+            } else if (sol.kind === 'frustum') {
+                const cir1 = (geoState.circles || []).find(c => c.id === sol.circle1Id);
+                const cir2 = (geoState.circles || []).find(c => c.id === sol.circle2Id);
+                const g1 = computeCircleGeometry(cir1);
+                const g2 = computeCircleGeometry(cir2);
+                if (!g1 || !g2) return [];
+                const { u2, v2 } = alignSecondCircleBasis(g1.uAxis, g1.vAxis, g1.normal, g2.normal);
+                const radSegs = 48;
+                const r1 = [];
+                const r2 = [];
+                for (let i = 0; i < radSegs; i++) {
+                    const th = (i / radSegs) * Math.PI * 2;
+                    const c = Math.cos(th), s = Math.sin(th);
+                    r1.push({
+                        x: g1.center.x + g1.radius * (c * g1.uAxis.x + s * g1.vAxis.x),
+                        y: g1.center.y + g1.radius * (c * g1.uAxis.y + s * g1.vAxis.y),
+                        z: g1.center.z + g1.radius * (c * g1.uAxis.z + s * g1.vAxis.z)
+                    });
+                    r2.push({
+                        x: g2.center.x + g2.radius * (c * u2.x + s * v2.x),
+                        y: g2.center.y + g2.radius * (c * u2.y + s * v2.y),
+                        z: g2.center.z + g2.radius * (c * u2.z + s * v2.z)
+                    });
+                }
+                branches.push({ points: r1, closed: true });
+                branches.push({ points: r2, closed: true });
+                for (let k = 0; k < 8; k++) {
+                    const idx = Math.floor((k / 8) * radSegs);
+                    branches.push({ points: [r1[idx], r2[idx]], closed: false });
+                }
+            } else if (sol.kind === 'sphere') {
+                const sGeom = computeSphereGeometry(sol);
+                if (!sGeom) return [];
+                const radSegs = 48;
+                const c = sGeom.center;
+                const R = sGeom.radius;
+                const ringXZ = [], ringXY = [], ringYZ = [];
+                for (let i = 0; i < radSegs; i++) {
+                    const th = (i / radSegs) * Math.PI * 2;
+                    const cs = Math.cos(th), sn = Math.sin(th);
+                    ringXZ.push({ x: c.x + R * cs, y: c.y, z: c.z + R * sn });
+                    ringXY.push({ x: c.x + R * cs, y: c.y + R * sn, z: c.z });
+                    ringYZ.push({ x: c.x, y: c.y + R * cs, z: c.z + R * sn });
+                }
+                branches.push({ points: ringXZ, closed: true });
+                branches.push({ points: ringXY, closed: true });
+                branches.push({ points: ringYZ, closed: true });
+            } else if (sol.kind === 'revolve') {
+                const revGeom = extractRevolveSolidGeometry(sol, 32, 16);
+                if (!revGeom || !revGeom.stations || revGeom.stations.length < 2) return [];
+                const ringIndices = new Set(revGeom.keyRingIndices || []);
+                ringIndices.add(0);
+                ringIndices.add(revGeom.stations.length - 1);
+                if (revGeom.stations.length > 4) {
+                    ringIndices.add(Math.floor(revGeom.stations.length / 2));
+                }
+                ringIndices.forEach(idx => {
+                    const st = revGeom.stations[idx];
+                    const ring = revGeom.rings[idx];
+                    if (st && st.radius > 1e-2 && Array.isArray(ring) && ring.length >= 4) {
+                        branches.push({
+                            points: ring.map(p => ({ x: p.x, y: p.y, z: p.z })),
+                            closed: true
+                        });
+                    }
+                });
+                const meridianCount = 8;
+                const ringLen = revGeom.rings[0] ? Math.max(1, revGeom.rings[0].length - 1) : 1;
+                for (let m = 0; m < meridianCount; m++) {
+                    const col = Math.floor((m / meridianCount) * ringLen);
+                    const merPts = [];
+                    for (let sIdx = 0; sIdx < revGeom.rings.length; sIdx++) {
+                        const pt = revGeom.rings[sIdx][col];
+                        if (pt) merPts.push({ x: pt.x, y: pt.y, z: pt.z });
+                    }
+                    if (merPts.length >= 2) {
+                        branches.push({ points: merPts, closed: false });
+                    }
+                }
+            }
+            return branches;
+        }
+
         function recordTraces() {
             if (!tracePointsCloud || !traceLinesGroup) return;
             let pointCloudDirty = false;
@@ -7695,13 +8641,7 @@
                 const seg = geoState.segments.find(s => s.id === segId);
                 if (!seg || !seg.trace || seg.hidden) {
                     const history = segmentTraceMap.get(segId) || [];
-                    history.forEach(item => {
-                        if (item.lineObj) {
-                            traceLinesGroup.remove(item.lineObj);
-                            if (item.lineObj.geometry) item.lineObj.geometry.dispose();
-                            if (item.lineObj.material) item.lineObj.material.dispose();
-                        }
-                    });
+                    history.forEach(item => disposeTraceObject3D(item.lineObj));
                     segmentTraceMap.delete(segId);
                 }
             });
@@ -7722,12 +8662,13 @@
                     }
 
                     if (shouldRecordSegmentTraceSample3D(endpoints.v1, endpoints.v2, history, 0.045, 0.075)) {
+                        const segTraceHex = seg.color ? parseHexColorToInt(seg.color, 0x9333ea) : 0x9333ea;
                         const lineGeo = new THREE.BufferGeometry().setFromPoints([
                             new THREE.Vector3(endpoints.v1.x, endpoints.v1.y, endpoints.v1.z),
                             new THREE.Vector3(endpoints.v2.x, endpoints.v2.y, endpoints.v2.z)
                         ]);
                         const lineMat = new THREE.LineBasicMaterial({
-                            color: 0x9333ea,
+                            color: segTraceHex,
                             transparent: true,
                             opacity: 0.35,
                             depthWrite: false
@@ -7740,11 +8681,186 @@
 
                         if (history.length > 1500) {
                             const oldest = history.shift();
-                            if (oldest && oldest.lineObj) {
-                                traceLinesGroup.remove(oldest.lineObj);
-                                if (oldest.lineObj.geometry) oldest.lineObj.geometry.dispose();
-                                if (oldest.lineObj.material) oldest.lineObj.material.dispose();
-                            }
+                            if (oldest) disposeTraceObject3D(oldest.lineObj);
+                        }
+                    }
+                }
+            });
+
+            // 5. Đường tròn, cung tròn & đường tròn giao tuyến (geoState.circles)
+            Array.from(circleTraceMap.keys()).forEach(cirId => {
+                const cir = (geoState.circles || []).find(c => c.id === cirId);
+                if (!cir || !cir.trace || cir.hidden) {
+                    const history = circleTraceMap.get(cirId) || [];
+                    history.forEach(item => disposeTraceObject3D(item.traceObj));
+                    circleTraceMap.delete(cirId);
+                }
+            });
+            (geoState.circles || []).forEach(cir => {
+                if (!cir || !cir.trace || cir.hidden) return;
+                const geom = computeCircleGeometry(cir);
+                if (!geom || geom.radius < 1e-4) return;
+                const samples = 72;
+                const pts = [];
+                if (geom.isArc && typeof geom.sweepAngle === 'number') {
+                    for (let i = 0; i <= samples; i++) {
+                        const th = (i / samples) * geom.sweepAngle;
+                        pts.push({
+                            x: geom.center.x + geom.radius * (Math.cos(th) * geom.uAxis.x + Math.sin(th) * geom.vAxis.x),
+                            y: geom.center.y + geom.radius * (Math.cos(th) * geom.uAxis.y + Math.sin(th) * geom.vAxis.y),
+                            z: geom.center.z + geom.radius * (Math.cos(th) * geom.uAxis.z + Math.sin(th) * geom.vAxis.z)
+                        });
+                    }
+                } else {
+                    const { canonU, canonV } = computeCanonicalCircleBasisFromNormal(geom.normal);
+                    for (let i = 0; i < samples; i++) {
+                        const th = (i / samples) * Math.PI * 2;
+                        pts.push({
+                            x: geom.center.x + geom.radius * (Math.cos(th) * canonU.x + Math.sin(th) * canonV.x),
+                            y: geom.center.y + geom.radius * (Math.cos(th) * canonU.y + Math.sin(th) * canonV.y),
+                            z: geom.center.z + geom.radius * (Math.cos(th) * canonU.z + Math.sin(th) * canonV.z)
+                        });
+                    }
+                }
+                const branches = [{ points: pts, closed: !geom.isArc }];
+                let history = circleTraceMap.get(cir.id);
+                if (!history) {
+                    history = [];
+                    circleTraceMap.set(cir.id, history);
+                }
+                const check = shouldRecordObjectTraceSample3D(branches, history, 0.055, 0.07);
+                if (check.shouldRecord && check.sample) {
+                    const cirHex = (cir.fillColor || cir.color) ? parseHexColorToInt(cir.fillColor || cir.color, 0x9333ea) : 0x9333ea;
+                    const traceObj = createLineSegmentsFromBranches3D(branches, cirHex, 0.36);
+                    if (traceObj) {
+                        traceObj.userData = { circleId: cir.id };
+                        traceLinesGroup.add(traceObj);
+                        history.push({ sample: check.sample, traceObj });
+                        if (history.length > 400) {
+                            const oldest = history.shift();
+                            if (oldest) disposeTraceObject3D(oldest.traceObj);
+                        }
+                    }
+                }
+            });
+
+            // 6. Đường cong đa thức nội suy & Giao tuyến của mặt tròn xoay với mặt khác (geoState.curves)
+            Array.from(curveTraceMap.keys()).forEach(curvId => {
+                const curv = (geoState.curves || []).find(c => c.id === curvId);
+                if (!curv || !curv.trace || curv.hidden) {
+                    const history = curveTraceMap.get(curvId) || [];
+                    history.forEach(item => disposeTraceObject3D(item.traceObj));
+                    curveTraceMap.delete(curvId);
+                }
+            });
+            (geoState.curves || []).forEach(curv => {
+                if (!curv || !curv.trace || curv.hidden) return;
+                const branches = computeCurvePolylines3D(curv);
+                if (!branches || branches.length === 0) return;
+                let history = curveTraceMap.get(curv.id);
+                if (!history) {
+                    history = [];
+                    curveTraceMap.set(curv.id, history);
+                }
+                const check = shouldRecordObjectTraceSample3D(branches, history, 0.055, 0.07);
+                if (check.shouldRecord && check.sample) {
+                    const curvHex = curv.color ? parseHexColorToInt(curv.color, 0x9333ea) : 0x9333ea;
+                    const traceObj = createLineSegmentsFromBranches3D(branches, curvHex, 0.42);
+                    if (traceObj) {
+                        traceObj.userData = { curveId: curv.id };
+                        traceLinesGroup.add(traceObj);
+                        history.push({ sample: check.sample, traceObj });
+                        if (history.length > 350) {
+                            const oldest = history.shift();
+                            if (oldest) disposeTraceObject3D(oldest.traceObj);
+                        }
+                    }
+                }
+            });
+
+            // 7. Bề mặt đa giác, mặt phẳng dựng sẵn & thiết diện (geoState.faces)
+            Array.from(faceTraceMap.keys()).forEach(faceId => {
+                const face = (geoState.faces || []).find(f => f.id === faceId);
+                if (!face || !face.trace || face.hidden) {
+                    const history = faceTraceMap.get(faceId) || [];
+                    history.forEach(item => disposeTraceObject3D(item.traceObj));
+                    faceTraceMap.delete(faceId);
+                }
+            });
+            (geoState.faces || []).forEach(face => {
+                if (!face || !face.trace || face.hidden) return;
+                const pts = (face.pointIds || []).map(pid => geoState.points.find(p => p.id === pid)).filter(Boolean);
+                if (pts.length < 3) return;
+                const branches = [{ points: pts.map(p => ({ x: p.x, y: p.y, z: p.z })), closed: true }];
+                let history = faceTraceMap.get(face.id);
+                if (!history) {
+                    history = [];
+                    faceTraceMap.set(face.id, history);
+                }
+                const check = shouldRecordObjectTraceSample3D(branches, history, 0.065, 0.085);
+                if (check.shouldRecord && check.sample) {
+                    const faceHex = face.color ? parseHexColorToInt(face.color, 0x9333ea) : 0x9333ea;
+                    const group = new THREE.Group();
+                    group.userData = { faceId: face.id };
+
+                    const verts = [];
+                    for (let i = 1; i < pts.length - 1; i++) {
+                        verts.push(pts[0].x, pts[0].y, pts[0].z, pts[i].x, pts[i].y, pts[i].z, pts[i + 1].x, pts[i + 1].y, pts[i + 1].z);
+                    }
+                    const fillGeo = new THREE.BufferGeometry();
+                    fillGeo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+                    const fillMat = new THREE.MeshBasicMaterial({
+                        color: faceHex,
+                        transparent: true,
+                        opacity: 0.08,
+                        side: THREE.DoubleSide,
+                        depthWrite: false
+                    });
+                    const fillMesh = new THREE.Mesh(fillGeo, fillMat);
+                    fillMesh.renderOrder = 2.5;
+                    group.add(fillMesh);
+
+                    const borderObj = createLineSegmentsFromBranches3D(branches, faceHex, 0.30);
+                    if (borderObj) group.add(borderObj);
+
+                    traceLinesGroup.add(group);
+                    history.push({ sample: check.sample, traceObj: group });
+                    if (history.length > 180) {
+                        const oldest = history.shift();
+                        if (oldest) disposeTraceObject3D(oldest.traceObj);
+                    }
+                }
+            });
+
+            // 8. Khối tròn xoay & Mặt tròn xoay (geoState.solids)
+            Array.from(solidTraceMap.keys()).forEach(solId => {
+                const sol = (geoState.solids || []).find(s => s.id === solId);
+                if (!sol || !sol.trace || sol.hidden) {
+                    const history = solidTraceMap.get(solId) || [];
+                    history.forEach(item => disposeTraceObject3D(item.traceObj));
+                    solidTraceMap.delete(solId);
+                }
+            });
+            (geoState.solids || []).forEach(sol => {
+                if (!sol || !sol.trace || sol.hidden) return;
+                const branches = extractSolidTraceBranches3D(sol);
+                if (!branches || branches.length === 0) return;
+                let history = solidTraceMap.get(sol.id);
+                if (!history) {
+                    history = [];
+                    solidTraceMap.set(sol.id, history);
+                }
+                const check = shouldRecordObjectTraceSample3D(branches, history, 0.075, 0.095);
+                if (check.shouldRecord && check.sample) {
+                    const solHex = sol.color ? parseHexColorToInt(sol.color, 0x9333ea) : 0x9333ea;
+                    const traceObj = createLineSegmentsFromBranches3D(branches, solHex, 0.24);
+                    if (traceObj) {
+                        traceObj.userData = { solidId: sol.id };
+                        traceLinesGroup.add(traceObj);
+                        history.push({ sample: check.sample, traceObj });
+                        if (history.length > 150) {
+                            const oldest = history.shift();
+                            if (oldest) disposeTraceObject3D(oldest.traceObj);
                         }
                     }
                 }
@@ -7754,6 +8870,10 @@
         function clearAllTraces() {
             pointTraceMap.clear();
             segmentTraceMap.clear();
+            circleTraceMap.clear();
+            curveTraceMap.clear();
+            faceTraceMap.clear();
+            solidTraceMap.clear();
             tracePositions = [];
             if (tracePointsCloud) {
                 tracePointsCloud.geometry.setAttribute('position', new THREE.Float32BufferAttribute([], 3));
@@ -7761,9 +8881,7 @@
             if (traceLinesGroup) {
                 while (traceLinesGroup.children.length > 0) {
                     const child = traceLinesGroup.children[0];
-                    traceLinesGroup.remove(child);
-                    if (child.geometry) child.geometry.dispose();
-                    if (child.material) child.material.dispose();
+                    disposeTraceObject3D(child);
                 }
             }
         }
@@ -8780,21 +9898,25 @@
                 const isSelectedSurfFace = selectedSurfaceItems.some(s => s.faceId === face.id) ||
                     (currentTool === 'plane-parallel' && planeConstructorPending.faceId === face.id) ||
                     (activeColorResolved && activeColorResolved.kind === 'face' && activeColorResolved.faceId === face.id && colorApplyScope !== 'edges' && colorApplyScope !== 'components');
+                const isHoveredTraceFace = (hoveredFaceId === face.id && ['trace', 'hide', 'delete-obj'].includes(currentTool));
+                const isTracedFace = Boolean(face.trace);
                 const isPatchFace = Boolean(face.isConstructedPlanePatch);
                 const isColorPatchFace = Boolean(face.isColorPatch);
                 const hasCustomFaceColor = Boolean(face.color) && (!stepFilter || !stepFilter.visibleColoredFaceIds || stepFilter.visibleColoredFaceIds.has(face.id));
-                if (isFaceVisuallyUnlocked && (showFaceTint || isSelectedSurfFace || isPatchFace || isColorPatchFace || hasCustomFaceColor)) {
+                if (isFaceVisuallyUnlocked && (showFaceTint || isSelectedSurfFace || isHoveredTraceFace || isTracedFace || isPatchFace || isColorPatchFace || hasCustomFaceColor)) {
                     const customHex = hasCustomFaceColor ? parseHexColorToInt(face.color, 0xe0f2fe) : null;
                     const customOpacity = typeof face.opacity === 'number' ? face.opacity : 0.45;
                     const tintMat = new THREE.MeshBasicMaterial({
                         color: isSelectedSurfFace
                             ? (hasCustomFaceColor ? customHex : 0xfde68a)
-                            : (hasCustomFaceColor ? customHex : (isPatchFace ? 0xbae6fd : 0xe0f2fe)),
+                            : (isHoveredTraceFace
+                                ? (currentTool === 'delete-obj' ? 0xfca5a5 : 0xfde68a)
+                                : (hasCustomFaceColor ? customHex : (isTracedFace ? 0xd8b4fe : (isPatchFace ? 0xbae6fd : 0xe0f2fe)))),
                         side: THREE.DoubleSide,
                         transparent: true,
-                        opacity: isSelectedSurfFace
+                        opacity: (isSelectedSurfFace || isHoveredTraceFace)
                             ? Math.max(0.42, hasCustomFaceColor ? customOpacity : 0.42)
-                            : (hasCustomFaceColor ? customOpacity : (isPatchFace ? 0.32 : 0.28)),
+                            : (hasCustomFaceColor ? customOpacity : (isTracedFace ? 0.32 : (isPatchFace ? 0.32 : 0.28))),
                         depthTest: false,
                         depthWrite: false
                     });
@@ -8862,13 +9984,17 @@
                 if (sol.hidden) return;
                 const isSolidVisuallyUnlocked = !stepFilter || stepFilter.visibleSolidIds.has(sol.id);
                 const isSelectedColorSolid = activeColorResolved && activeColorResolved.kind === 'solid' && activeColorResolved.solidId === sol.id;
+                const isHoveredTraceSolid = hoveredSolidId === sol.id && ['trace', 'hide', 'delete-obj'].includes(currentTool);
+                const isTracedSolid = Boolean(sol.trace);
                 const hasCustomSolidColor = Boolean(sol.color);
                 const solidTintHex = hasCustomSolidColor
                     ? parseHexColorToInt(sol.color, 0xbae6fd)
-                    : (isSelectedColorSolid ? 0xfde68a : 0xbae6fd);
-                const solidTintOpacity = isSelectedColorSolid
+                    : (isSelectedColorSolid
+                        ? 0xfde68a
+                        : (isHoveredTraceSolid ? (currentTool === 'delete-obj' ? 0xfca5a5 : 0xfde68a) : (isTracedSolid ? 0xd8b4fe : 0xbae6fd)));
+                const solidTintOpacity = (isSelectedColorSolid || isHoveredTraceSolid)
                     ? Math.max(0.38, typeof sol.opacity === 'number' ? sol.opacity : 0.38)
-                    : (hasCustomSolidColor ? (typeof sol.opacity === 'number' ? sol.opacity : 0.38) : 0.22);
+                    : (hasCustomSolidColor ? (typeof sol.opacity === 'number' ? sol.opacity : 0.38) : (isTracedSolid ? 0.28 : 0.22));
 
                 if (sol.kind === 'cone') {
                     const cir = (geoState.circles || []).find(c => c.id === sol.circleId);
@@ -8900,7 +10026,7 @@
                     coneGeo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
                     coneGeo.computeVertexNormals();
 
-                    if (isSolidVisuallyUnlocked && (showFaceTint || hasCustomSolidColor || isSelectedColorSolid)) {
+                    if (isSolidVisuallyUnlocked && (showFaceTint || hasCustomSolidColor || isSelectedColorSolid || isHoveredTraceSolid || isTracedSolid)) {
                         const tintMat = new THREE.MeshBasicMaterial({
                             color: solidTintHex,
                             side: THREE.DoubleSide,
@@ -8994,7 +10120,7 @@
                     frustumGeo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
                     frustumGeo.computeVertexNormals();
 
-                    if (isSolidVisuallyUnlocked && (showFaceTint || hasCustomSolidColor || isSelectedColorSolid)) {
+                    if (isSolidVisuallyUnlocked && (showFaceTint || hasCustomSolidColor || isSelectedColorSolid || isHoveredTraceSolid || isTracedSolid)) {
                         const tintMat = new THREE.MeshBasicMaterial({
                             color: solidTintHex,
                             side: THREE.DoubleSide,
@@ -9062,7 +10188,7 @@
                     const sphereGeo = new THREE.SphereGeometry(sGeom.radius * 0.996, 64, 48);
                     sphereGeo.translate(sGeom.center.x, sGeom.center.y, sGeom.center.z);
 
-                    if (isSolidVisuallyUnlocked && (showFaceTint || hasCustomSolidColor || isSelectedColorSolid)) {
+                    if (isSolidVisuallyUnlocked && (showFaceTint || hasCustomSolidColor || isSelectedColorSolid || isHoveredTraceSolid || isTracedSolid)) {
                         const tintMat = new THREE.MeshBasicMaterial({
                             color: solidTintHex,
                             side: THREE.FrontSide,
@@ -9223,7 +10349,7 @@
                     revolveGeo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
                     revolveGeo.computeVertexNormals();
 
-                    if (isSolidVisuallyUnlocked && (showFaceTint || hasCustomSolidColor || isSelectedColorSolid)) {
+                    if (isSolidVisuallyUnlocked && (showFaceTint || hasCustomSolidColor || isSelectedColorSolid || isHoveredTraceSolid || isTracedSolid)) {
                         const tintMat = new THREE.MeshBasicMaterial({
                             color: solidTintHex,
                             side: THREE.DoubleSide,
@@ -9254,7 +10380,7 @@
 
                     if (isSolidVisuallyUnlocked) {
                         hitSolidMeshes.push(depthMesh);
-                        const strokeColor = hasCustomSolidColor ? solidTintHex : 0x0f172a;
+                        const strokeColor = hasCustomSolidColor ? solidTintHex : (isTracedSolid ? 0x9333ea : 0x0f172a);
 
                         // Vẽ các đường tròn vĩ tuyến tại hai đầu và các nút gấp khúc / cực trị bán kính
                         const renderedRingCenters = [];
@@ -9498,11 +10624,11 @@
                 const isSelectedCir = selectedCircleIds.includes(cir.id) ||
                     (colorSelection && colorSelection.circleIds && colorSelection.circleIds.includes(cir.id)) ||
                     (activeColorResolved && activeColorResolved.kind === 'circle' && activeColorResolved.circleId === cir.id);
-                const isHoveredCir = hoveredCircleId === cir.id && ['solid-cone', 'solid-cylinder', 'solid-sphere', 'delete-obj', 'hide', 'color-obj'].includes(currentTool);
+                const isHoveredCir = hoveredCircleId === cir.id && ['solid-cone', 'solid-cylinder', 'solid-sphere', 'delete-obj', 'hide', 'color-obj', 'trace'].includes(currentTool);
                 const customCirHex = (cir.fillColor || cir.color) ? parseHexColorToInt(cir.fillColor || cir.color, 0x0f172a) : null;
                 const cirColor = isSelectedCir
                     ? 0xdc2626
-                    : (isHoveredCir ? (currentTool === 'delete-obj' ? 0xdc2626 : 0xd97706) : (customCirHex !== null ? customCirHex : 0x0f172a));
+                    : (isHoveredCir ? (currentTool === 'delete-obj' ? 0xdc2626 : 0xd97706) : (customCirHex !== null ? customCirHex : (cir.trace ? 0x9333ea : 0x0f172a)));
 
                 const segmentsCount = 128;
                 const circlePts = [];
@@ -9657,9 +10783,9 @@
                 const isSelectedCurv = (colorSelection && colorSelection.curveIds && colorSelection.curveIds.includes(curv.id)) ||
                     (activeColorResolved && activeColorResolved.kind === 'curve' && activeColorResolved.curveId === curv.id) ||
                     (currentTool === 'solid-revolve' && typeof revolveBuilderState === 'object' && revolveBuilderState && revolveBuilderState.curveId === curv.id);
-                const isHoveredCurv = hoveredCurveId === curv.id && ['delete-obj', 'hide', 'color-obj', 'solid-revolve'].includes(currentTool);
+                const isHoveredCurv = hoveredCurveId === curv.id && ['delete-obj', 'hide', 'color-obj', 'solid-revolve', 'trace'].includes(currentTool);
                 const isActiveBuildingCurv = (currentTool === 'curve-interp' && activeInterpCurveState && activeInterpCurveState.curveId === curv.id);
-                const defaultCurvColor = isSurfIntersect ? 0xbe123c : (isActiveBuildingCurv ? 0x0284c7 : 0x0f172a);
+                const defaultCurvColor = curv.trace ? 0x9333ea : (isSurfIntersect ? 0xbe123c : (isActiveBuildingCurv ? 0x0284c7 : 0x0f172a));
                 const customCurvHex = curv.color ? parseHexColorToInt(curv.color, defaultCurvColor) : null;
                 const curvColor = isSelectedCurv
                     ? 0xdc2626
@@ -10049,7 +11175,7 @@
                 ['measure-scale', 'measure-dist', 'measure-angle', 'measure-area', 'plane-perp', 'plane-parallel', 'solid-revolve'].includes(currentTool) ||
                 (currentTool === 'perp' && selectedPointIds.length === 1)
             );
-            const isSolidObjectTool = ['delete-obj', 'hide', 'measure-volume', 'intersect-surfaces', 'color-obj'].includes(currentTool);
+            const isSolidObjectTool = ['delete-obj', 'hide', 'trace', 'measure-volume', 'intersect-surfaces', 'color-obj'].includes(currentTool);
 
             const frustumH = (camera && camera.userData && camera.userData.frustumSize) ? camera.userData.frustumSize : 12.0;
             const pixelsPerWorldUnit = (rect.height * ((camera && camera.zoom) || 1)) / frustumH;
@@ -10147,7 +11273,7 @@
                                 type: 'edge',
                                 segId, p1Id, p2Id, t,
                                 pos: exactPos,
-                                label: (['delete-obj', 'color-obj', 'intersect-surfaces', 'plane-perp', 'plane-parallel', 'solid-revolve'].includes(currentTool) || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
+                                label: (['delete-obj', 'hide', 'trace', 'color-obj', 'intersect-surfaces', 'plane-perp', 'plane-parallel', 'solid-revolve'].includes(currentTool) || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
                             }
                         };
                     } else if (!bestEdgeCand && dPx <= bestEdgeDist) {
@@ -10159,7 +11285,7 @@
                                 type: 'edge',
                                 segId, p1Id, p2Id, t,
                                 pos: exactPos,
-                                label: (['delete-obj', 'color-obj', 'intersect-surfaces', 'plane-perp', 'plane-parallel', 'solid-revolve'].includes(currentTool) || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
+                                label: (['delete-obj', 'hide', 'trace', 'color-obj', 'intersect-surfaces', 'plane-perp', 'plane-parallel', 'solid-revolve'].includes(currentTool) || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
                             }
                         };
                     }
@@ -10215,7 +11341,7 @@
                                         branchIdx: branchIdx || 0,
                                         uRatio: bestURatio,
                                         pos: bestPt3,
-                                        label: (['delete-obj', 'hide', 'color-obj', 'solid-revolve'].includes(currentTool)) ? `${label}` : `Trên ${label}`
+                                        label: (['delete-obj', 'hide', 'trace', 'color-obj', 'solid-revolve'].includes(currentTool)) ? `${label}` : `Trên ${label}`
                                     }
                                 };
                             }
@@ -10282,7 +11408,7 @@
                                     circleId,
                                     angle: normAng,
                                     pos: minEval.pt3,
-                                    label: (currentTool === 'delete-obj' || currentTool === 'hide' || currentTool === 'color-obj' || prioritizeCircle || currentTool === 'intersect-surfaces' || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
+                                    label: (currentTool === 'delete-obj' || currentTool === 'hide' || currentTool === 'trace' || currentTool === 'color-obj' || prioritizeCircle || currentTool === 'intersect-surfaces' || currentTool.startsWith('measure-')) ? `${label}` : `Trên ${label}`
                                 }
                             };
                         }
@@ -10486,8 +11612,8 @@
                     if (curveList.length > 0) bestCurveCand = curveList[0];
                 }
 
-                // 3. Kiểm tra Giao điểm (bỏ qua giao điểm chưa tạo sẵn khi đang ở chế độ xóa, chọn/tô màu hoặc xoay hình)
-                if (!['delete-obj', 'color-obj', 'view', 'move'].includes(currentTool)) {
+                // 3. Kiểm tra Giao điểm (bỏ qua giao điểm chưa tạo sẵn khi đang ở chế độ xóa, ẩn, tạo vết, chọn/tô màu hoặc xoay hình)
+                if (!['delete-obj', 'hide', 'trace', 'color-obj', 'view', 'move'].includes(currentTool)) {
                     let closestInter = null;
                     let minInterDist = isPointCreationTool ? 9.0 : 11.5;
                     cachedIntersections.forEach(inter => {
@@ -10774,7 +11900,7 @@
                         const angle = Math.atan2(yComp, xComp);
                         const rRatio = Math.min(0.98, Math.hypot(xComp, yComp) / Math.max(1e-5, geom.radius));
                         // Khi dùng công cụ xóa/ẩn/tô màu hoặc chọn đường tròn tạo khối tròn xoay thì chọn trực tiếp đường tròn đó
-                        if (['delete-obj', 'hide', 'color-obj', 'solid-cone', 'solid-cylinder'].includes(currentTool) || (currentTool === 'solid-sphere' && selectedPointIds.length === 0)) {
+                        if (['delete-obj', 'hide', 'trace', 'color-obj', 'solid-cone', 'solid-cylinder'].includes(currentTool) || (currentTool === 'solid-sphere' && selectedPointIds.length === 0)) {
                             return {
                                 type: 'circle',
                                 circleId,
@@ -10816,7 +11942,7 @@
                         type: 'face',
                         faceId, u, v,
                         pos: topHit.point.clone(),
-                        label: (['delete-obj', 'color-obj', 'intersect-surfaces', 'plane-parallel'].includes(currentTool) || currentTool.startsWith('measure-'))
+                        label: (['delete-obj', 'hide', 'trace', 'color-obj', 'intersect-surfaces', 'plane-parallel'].includes(currentTool) || currentTool.startsWith('measure-'))
                             ? t(`Mặt phẳng ${faceTitle}`, `Polygon face ${faceTitle}`)
                             : t(`Trên bề mặt ${faceTitle}`, `On face ${faceTitle}`)
                     };
@@ -14463,13 +15589,37 @@
             }
 
             if (currentTool === 'trace') {
-                if (!target) return;
+                if (!target || target.type === 'plane') return;
+                let toggledObj = null;
+                let objLabel = target.label || t('đối tượng', 'object');
                 if (target.type === 'point') {
-                    const pt = geoState.points.find(p => p.id === target.pointId);
-                    if (pt) pt.trace = !pt.trace;
+                    toggledObj = geoState.points.find(p => p.id === target.pointId);
+                    if (toggledObj) objLabel = t(`Điểm ${toggledObj.name}`, `Point ${toggledObj.name}`);
                 } else if (target.type === 'edge') {
-                    const seg = geoState.segments.find(s => s.id === target.segId);
-                    if (seg) seg.trace = !seg.trace;
+                    toggledObj = geoState.segments.find(s => s.id === target.segId);
+                } else if (target.type === 'circle' || target.type === 'circleDisk') {
+                    toggledObj = (geoState.circles || []).find(c => c.id === target.circleId);
+                } else if (target.type === 'curve') {
+                    toggledObj = (geoState.curves || []).find(c => c.id === target.curveId);
+                } else if (target.type === 'face') {
+                    toggledObj = geoState.faces.find(f => f.id === target.faceId);
+                } else if (['solid', 'sphere', 'cone', 'frustum', 'revolve'].includes(target.type) && target.solidId) {
+                    toggledObj = (geoState.solids || []).find(s => s.id === target.solidId);
+                }
+                if (!toggledObj) return;
+                toggledObj.trace = !toggledObj.trace;
+                const guideSpan = document.getElementById('guide-span');
+                if (guideSpan) {
+                    guideSpan.innerHTML = toggledObj.trace
+                        ? t(
+                            `Đã <b>BẬT</b> tạo vết quỹ tích cho <b>${objLabel}</b>! Hãy di chuyển hoặc chạy đối tượng liên quan để quan sát vết.`,
+                            `Locus trace <b>ENABLED</b> for <b>${objLabel}</b>! Move or animate related objects to see the trail.`
+                        )
+                        : t(
+                            `Đã <b>TẮT</b> tạo vết quỹ tích cho <b>${objLabel}</b>.`,
+                            `Locus trace <b>DISABLED</b> for <b>${objLabel}</b>.`
+                        );
+                    renderMathInElementSafe(guideSpan);
                 }
                 updateSceneFromState();
                 updateAnimationControlPanel();
@@ -15977,13 +17127,97 @@
                 return;
             }
 
-            // TRƯỜNG HỢP 2: MẶT PHẲNG × MẶT TRÒN XOAY (MẶT CẦU, HÌNH NÓN, HÌNH TRỤ / NÓN CỤT)
+            // TRƯỜNG HỢP 2: MẶT PHẲNG (HOẶC PHẦN MẶT PHẲNG GIỚI HẠN BỞI MIỀN) × MẶT TRÒN XOAY (MẶT CẦU, HÌNH NÓN, HÌNH TRỤ / NÓN CỤT, MẶT TRÒN XOAY TỔNG QUÁT)
             if ((surf1.surfType === 'plane' && surf2.surfType === 'solid') || (surf1.surfType === 'solid' && surf2.surfType === 'plane')) {
                 const planeSurf = surf1.surfType === 'plane' ? surf1 : surf2;
                 const solidSurf = surf1.surfType === 'solid' ? surf1 : surf2;
                 const plane = getPlaneDataFromId(planeSurf.planeId);
                 const sol = (geoState.solids || []).find(s => s.id === solidSurf.solidId && !s.hidden);
                 if (!plane || !sol) return;
+
+                const isBoundedPlaneRegion = Boolean(planeSurf.faceId || planeSurf.circleId);
+
+                // Nếu là Mặt tròn xoay tổng quát (revolve) HOẶC phần mặt phẳng giới hạn bởi 1 miền (đa giác / phần mặt phẳng (α) / hình tròn)
+                // -> Dựng đường giao tuyến động (surfaceIntersection) tự động cắt gọn đúng trong miền phẳng đã chọn và cập nhật realtime!
+                if (sol.kind === 'revolve' || isBoundedPlaneRegion) {
+                    const s1Ref = {
+                        surfType: 'plane',
+                        planeId: planeSurf.planeId,
+                        faceId: planeSurf.faceId || null,
+                        circleId: planeSurf.circleId || null,
+                        clipToRegion: isBoundedPlaneRegion,
+                        name: planeSurf.name
+                    };
+                    const s2Ref = {
+                        surfType: 'solid',
+                        solidId: sol.id,
+                        solidKind: sol.kind,
+                        name: solidSurf.name
+                    };
+                    const branches = computeSurfaceIntersectionPolylines3D(s1Ref, s2Ref);
+                    if (!branches || branches.length === 0) {
+                        // Trường hợp đặc biệt: Phần mặt phẳng tiếp xúc mặt cầu tại đúng 1 điểm nằm trong miền
+                        if (sol.kind === 'sphere') {
+                            const sGeom = computeSphereGeometry(sol);
+                            if (sGeom) {
+                                const n = plane.normal.clone().normalize();
+                                const signedDist = new THREE.Vector3().subVectors(sGeom.center, plane.origin).dot(n);
+                                if (Math.abs(Math.abs(signedDist) - sGeom.radius) <= 1e-3) {
+                                    const H = sGeom.center.clone().addScaledVector(n, -signedDist);
+                                    if (isPointInsideBoundedPlaneRegion3D(H, s1Ref)) {
+                                        saveHistory();
+                                        const hId = findOrCreatePointNear3D(H, 'H', {
+                                            type: 'planeSphereCenter',
+                                            solidId: sol.id,
+                                            planeId: planeSurf.planeId
+                                        });
+                                        const hPt = geoState.points.find(p => p.id === hId);
+                                        const hLabel = hPt ? hPt.name : 'H';
+                                        recomputeAllDependentGeometry();
+                                        updateSceneFromState();
+                                        setGuideHtml(t(
+                                            `Phần mặt phẳng <b>${planeSurf.name}</b> tiếp xúc với <b>${solidSurf.name}</b> tại tiếp điểm <b>$${hLabel}$</b>!`,
+                                            `Bounded plane region <b>${planeSurf.name}</b> is tangent to <b>${solidSurf.name}</b> at point <b>$${hLabel}$</b>!`
+                                        ), true);
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                        setGuideHtml(`<span style="color:#fbbf24;">${t(
+                            isBoundedPlaneRegion
+                                ? `Phần mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b> không giao nhau trong miền đã chọn!`
+                                : `Mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b> không giao nhau!`,
+                            isBoundedPlaneRegion
+                                ? `Bounded region <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b> do not intersect within the selected domain!`
+                                : `Plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b> do not intersect!`
+                        )}</span>`);
+                        return;
+                    }
+                    saveHistory();
+                    if (!Array.isArray(geoState.curves)) geoState.curves = [];
+                    const curvId = 'curv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                    geoState.curves.push({
+                        id: curvId,
+                        mode: 'surfaceIntersection',
+                        surf1: s1Ref,
+                        surf2: s2Ref,
+                        name: t(`Giao tuyến ${planeSurf.name} × ${solidSurf.name}`, `Intersection ${planeSurf.name} × ${solidSurf.name}`),
+                        createdOrder: nextCreationOrder(curvId),
+                        hidden: false
+                    });
+                    recomputeAllDependentGeometry();
+                    updateSceneFromState();
+                    setGuideHtml(t(
+                        isBoundedPlaneRegion
+                            ? `Đã dựng <b>Đường giao tuyến giới hạn trong miền ${planeSurf.name}</b> với <b>${solidSurf.name}</b> (${branches.length} nhánh)!`
+                            : `Đã dựng <b>Đường giao tuyến</b> của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b> (${branches.length} nhánh)!`,
+                        isBoundedPlaneRegion
+                            ? `Constructed <b>Bounded Intersection Curve</b> clipped inside <b>${planeSurf.name}</b> × <b>${solidSurf.name}</b> (${branches.length} branch(es))!`
+                            : `Constructed <b>Intersection Curve</b> of plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b> (${branches.length} branch(es))!`
+                    ));
+                    return;
+                }
 
                 if (sol.kind === 'sphere') {
                     const sGeom = computeSphereGeometry(sol);
@@ -16135,49 +17369,6 @@
                     setGuideHtml(t(
                         `Đã dựng giao tuyến / thiết diện của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b>!`,
                         `Constructed intersection of plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b>!`
-                    ));
-                    return;
-                }
-
-                if (sol.kind === 'revolve') {
-                    const s1Ref = {
-                        surfType: 'plane',
-                        planeId: planeSurf.planeId,
-                        faceId: planeSurf.faceId || null,
-                        circleId: planeSurf.circleId || null,
-                        name: planeSurf.name
-                    };
-                    const s2Ref = {
-                        surfType: 'solid',
-                        solidId: sol.id,
-                        solidKind: 'revolve',
-                        name: solidSurf.name
-                    };
-                    const branches = computeSurfaceIntersectionPolylines3D(s1Ref, s2Ref);
-                    if (!branches || branches.length === 0) {
-                        setGuideHtml(`<span style="color:#fbbf24;">${t(
-                            `Mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b> không giao nhau!`,
-                            `Plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b> do not intersect!`
-                        )}</span>`);
-                        return;
-                    }
-                    saveHistory();
-                    if (!Array.isArray(geoState.curves)) geoState.curves = [];
-                    const curvId = 'curv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-                    geoState.curves.push({
-                        id: curvId,
-                        mode: 'surfaceIntersection',
-                        surf1: s1Ref,
-                        surf2: s2Ref,
-                        name: t(`Giao tuyến ${planeSurf.name} × ${solidSurf.name}`, `Intersection ${planeSurf.name} × ${solidSurf.name}`),
-                        createdOrder: nextCreationOrder(curvId),
-                        hidden: false
-                    });
-                    recomputeAllDependentGeometry();
-                    updateSceneFromState();
-                    setGuideHtml(t(
-                        `Đã dựng <b>Đường giao tuyến</b> của mặt phẳng <b>${planeSurf.name}</b> và <b>${solidSurf.name}</b> (${branches.length} nhánh)!`,
-                        `Constructed <b>Intersection Curve</b> of plane <b>${planeSurf.name}</b> and <b>${solidSurf.name}</b> (${branches.length} branch(es))!`
                     ));
                     return;
                 }
@@ -16968,9 +18159,11 @@
 
             const target = computeSmartTarget(event);
             const newHoverId = (target && target.type === 'point') ? target.pointId : null;
-            const newHoverCirId = (target && target.type === 'circle') ? target.circleId : null;
+            const newHoverCirId = (target && (target.type === 'circle' || target.type === 'circleDisk')) ? target.circleId : null;
             const newHoverCurvId = (target && target.type === 'curve') ? target.curveId : null;
-            const hoverPlaneBorder = (target && target.type === 'edge' && target.segId)
+            const newHoverFaceId = (target && target.type === 'face' && ['trace', 'hide', 'delete-obj'].includes(currentTool)) ? target.faceId : null;
+            const newHoverSolidId = (target && ['solid', 'sphere', 'cone', 'frustum', 'revolve'].includes(target.type) && ['trace', 'hide', 'delete-obj'].includes(currentTool)) ? target.solidId : null;
+            const hoverPlaneBorder = (currentTool !== 'trace' && currentTool !== 'hide' && currentTool !== 'delete-obj' && target && target.type === 'edge' && target.segId)
                 ? findConstructedPlaneBorderEdge(target.segId)
                 : null;
             const newHoverPlaneBorderSegId = hoverPlaneBorder ? hoverPlaneBorder.seg.id : null;
@@ -16978,11 +18171,15 @@
                 newHoverId !== hoveredPointId ||
                 newHoverCirId !== hoveredCircleId ||
                 newHoverCurvId !== hoveredCurveId ||
+                newHoverFaceId !== hoveredFaceId ||
+                newHoverSolidId !== hoveredSolidId ||
                 newHoverPlaneBorderSegId !== hoveredPlaneBorderSegId
             ) {
                 hoveredPointId = newHoverId;
                 hoveredCircleId = newHoverCirId;
                 hoveredCurveId = newHoverCurvId;
+                hoveredFaceId = newHoverFaceId;
+                hoveredSolidId = newHoverSolidId;
                 hoveredPlaneBorderSegId = newHoverPlaneBorderSegId;
                 updateSceneFromState();
             }
@@ -17030,6 +18227,45 @@
                     if (target.type !== 'point') {
                         snapIndicator.material.map = texPointSelected;
                         snapIndicator.material.size = 14;
+                        snapIndicator.material.needsUpdate = true;
+                        const posAttr = snapIndicator.geometry.attributes.position;
+                        posAttr.setXYZ(0, target.pos.x, target.pos.y, target.pos.z);
+                        posAttr.needsUpdate = true;
+                        snapIndicator.visible = true;
+                    } else {
+                        snapIndicator.visible = false;
+                    }
+                } else {
+                    container.style.cursor = 'default';
+                    snapIndicator.visible = false;
+                    snapBadge.style.display = 'none';
+                }
+                return;
+            }
+
+            if (currentTool === 'trace') {
+                if (target && target.type !== 'plane') {
+                    container.style.cursor = 'pointer';
+                    snapBadge.classList.remove('delete-target', 'intersection');
+                    let isCurrentlyTraced = false;
+                    if (target.type === 'point') isCurrentlyTraced = Boolean((geoState.points.find(p => p.id === target.pointId) || {}).trace);
+                    else if (target.type === 'edge') isCurrentlyTraced = Boolean((geoState.segments.find(s => s.id === target.segId) || {}).trace);
+                    else if (target.type === 'circle' || target.type === 'circleDisk') isCurrentlyTraced = Boolean(((geoState.circles || []).find(c => c.id === target.circleId) || {}).trace);
+                    else if (target.type === 'curve') isCurrentlyTraced = Boolean(((geoState.curves || []).find(c => c.id === target.curveId) || {}).trace);
+                    else if (target.type === 'face') isCurrentlyTraced = Boolean((geoState.faces.find(f => f.id === target.faceId) || {}).trace);
+                    else if (['solid', 'sphere', 'cone', 'frustum', 'revolve'].includes(target.type) && target.solidId) {
+                        isCurrentlyTraced = Boolean(((geoState.solids || []).find(s => s.id === target.solidId) || {}).trace);
+                    }
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    snapBadge.textContent = isCurrentlyTraced
+                        ? t(`Tắt vết: ${target.label}`, `Disable trace: ${target.label}`)
+                        : t(`Bật vết: ${target.label}`, `Enable trace: ${target.label}`);
+                    snapBadge.style.left = `${event.clientX - rect.left}px`;
+                    snapBadge.style.top = `${event.clientY - rect.top}px`;
+                    snapBadge.style.display = 'block';
+                    if (target.type !== 'point') {
+                        snapIndicator.material.map = texPointTrace;
+                        snapIndicator.material.size = 13;
                         snapIndicator.material.needsUpdate = true;
                         const posAttr = snapIndicator.geometry.attributes.position;
                         posAttr.setXYZ(0, target.pos.x, target.pos.y, target.pos.z);
