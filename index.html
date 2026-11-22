@@ -2700,14 +2700,14 @@
             },
             'curve-interp': {
                 vi: {
-                    name: 'Đường cong đi qua n điểm (Đa thức nội suy)',
-                    tip: '<b>Đường cong qua $n$ điểm:</b> Lần lượt tạo/chọn các điểm trong cùng 1 mặt phẳng, từ 2 điểm trở lên vẽ đường đồ thị đa thức nội suy tương ứng',
-                    guide: 'Đường cong nội suy qua $n$ điểm: Lần lượt chấm/chọn các điểm trong <b>cùng 1 mặt phẳng</b> — bắt đầu từ <b>2 điểm trở lên</b> tự động vẽ đồ thị đa thức nội suy đi qua các điểm đó (Click lại 1 điểm của đường cong hoặc bấm <b>Hoàn tất</b> để vẽ đường cong mới)'
+                    name: 'Đường cong nội suy qua n điểm',
+                    tip: '<b>Đường cong nội suy qua $n$ điểm:</b> Lần lượt tạo/chọn các điểm trong cùng 1 mặt phẳng, từ 2 điểm trở lên vẽ đường cong nội suy đi qua các điểm theo đúng thứ tự chọn',
+                    guide: 'Đường cong nội suy qua $n$ điểm: Lần lượt chấm/chọn các điểm trong <b>cùng 1 mặt phẳng</b> — bắt đầu từ <b>2 điểm trở lên</b> tự động vẽ đường cong nội suy đi qua các điểm <b>theo đúng thứ tự chọn</b> (Click lại 1 điểm của đường cong hoặc bấm <b>Hoàn tất</b> để vẽ đường cong mới)'
                 },
                 en: {
-                    name: 'Curve Through n Points (Interpolating Polynomial)',
-                    tip: '<b>Curve Through $n$ Points:</b> Sequentially create/select points in the same plane; from 2+ points draws the interpolating polynomial curve',
-                    guide: 'Interpolating Curve ($n$ points): Sequentially create/select points in the <b>same plane</b> — starting from <b>2 points</b> draws the interpolating polynomial graph (Click a curve point again or <b>Finish</b> to start a new curve)'
+                    name: 'Interpolating Curve (n Points)',
+                    tip: '<b>Interpolating Curve ($n$ Points):</b> Sequentially create/select points in the same plane; from 2+ points draws the interpolating curve through the points in selection order',
+                    guide: 'Interpolating Curve ($n$ points): Sequentially create/select points in the <b>same plane</b> — starting from <b>2 points</b> draws the interpolating curve <b>in selection order</b> (Click a curve point again or <b>Finish</b> to start a new curve)'
                 }
             },
             'solid-cone': {
@@ -3144,7 +3144,7 @@
             },
             {
                 id: 'curve-interp', group: 5, groupName: 'Nhóm 5: Đa giác & Tròn xoay',
-                name: 'Đường cong đi qua n điểm (Đa thức nội suy)', type: 'mode',
+                name: 'Đường cong nội suy qua n điểm', type: 'mode',
                 iconHtml: SVG_ICONS.curveInterp,
                 tip: TOOL_I18N['curve-interp'].vi.tip
             },
@@ -8218,14 +8218,20 @@
         }
 
         function computeCoplanarInterpolatingPolynomial3D(rawPoints, samplesCount = 140) {
-            const validPts = (rawPoints || []).filter(
-                p => p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z)
-            );
+            const validPts = [];
+            for (const p of (rawPoints || [])) {
+                if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y) || !Number.isFinite(p.z)) continue;
+                const prev = validPts.length > 0 ? validPts[validPts.length - 1] : null;
+                if (!prev || Math.hypot(p.x - prev.x, p.y - prev.y, p.z - prev.z) >= 1e-5) {
+                    validPts.push({ x: p.x, y: p.y, z: p.z });
+                }
+            }
             if (validPts.length < 2) return null;
 
             const origin = new THREE.Vector3(validPts[0].x, validPts[0].y, validPts[0].z);
             let normal = null;
-            for (let i = 1; i < validPts.length && !normal; i++) {
+            let bestCrossLen = 0;
+            for (let i = 1; i < validPts.length; i++) {
                 const v1 = new THREE.Vector3(validPts[i].x - origin.x, validPts[i].y - origin.y, validPts[i].z - origin.z);
                 if (v1.length() < 1e-6) continue;
                 for (let j = i + 1; j < validPts.length; j++) {
@@ -8233,9 +8239,9 @@
                     if (v2.length() < 1e-6) continue;
                     const cr = new THREE.Vector3().crossVectors(v1, v2);
                     const crLen = cr.length();
-                    if (crLen > 1e-5) {
+                    if (crLen > bestCrossLen && crLen > 1e-5) {
+                        bestCrossLen = crLen;
                         normal = cr.divideScalar(crLen);
-                        break;
                     }
                 }
             }
@@ -8262,134 +8268,96 @@
                 normal.negate();
             }
 
-            const projected3D = validPts.map(p => {
+            // Chiếu tất cả các điểm lên mặt phẳng chung, giữ nguyên đúng thứ tự chọn điểm
+            const projected3D = [];
+            for (const p of validPts) {
                 const rel = new THREE.Vector3(p.x - origin.x, p.y - origin.y, p.z - origin.z);
                 const d = rel.dot(normal);
-                return new THREE.Vector3(p.x - d * normal.x, p.y - d * normal.y, p.z - d * normal.z);
-            });
+                const proj = new THREE.Vector3(p.x - d * normal.x, p.y - d * normal.y, p.z - d * normal.z);
+                const prev = projected3D.length > 0 ? projected3D[projected3D.length - 1] : null;
+                if (!prev || prev.distanceTo(proj) >= 1e-5) {
+                    projected3D.push(proj);
+                }
+            }
+            if (projected3D.length < 2) return null;
 
-            let baseU;
+            let uAxis;
             if (Math.abs(normal.y) > 0.999) {
-                baseU = new THREE.Vector3(1, 0, 0);
+                uAxis = new THREE.Vector3(1, 0, 0);
             } else {
                 const horiz = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), normal);
-                baseU = horiz.length() > 1e-5
+                uAxis = horiz.length() > 1e-5
                     ? horiz.normalize()
                     : new THREE.Vector3().crossVectors(new THREE.Vector3(1, 0, 0), normal).normalize();
             }
-            const baseV = new THREE.Vector3().crossVectors(normal, baseU).normalize();
+            const vAxis = new THREE.Vector3().crossVectors(normal, uAxis).normalize();
 
-            let uAxis = baseU;
-            let vAxis = baseV;
-            let bestRatio = -1;
-            const candidateAngles = [0];
-            for (let deg = 5; deg <= 90; deg += 5) {
-                const rad = (deg * Math.PI) / 180;
-                candidateAngles.push(rad, -rad);
-            }
-
-            for (const ang of candidateAngles) {
-                const c = Math.cos(ang);
-                const s = Math.sin(ang);
-                const candU = new THREE.Vector3(
-                    baseU.x * c + baseV.x * s,
-                    baseU.y * c + baseV.y * s,
-                    baseU.z * c + baseV.z * s
-                );
-                const candV = new THREE.Vector3(
-                    -baseU.x * s + baseV.x * c,
-                    -baseU.y * s + baseV.y * c,
-                    -baseU.z * s + baseV.z * c
-                );
-                const uVals = projected3D.map(pt => new THREE.Vector3().subVectors(pt, origin).dot(candU));
-                let minDu = Infinity;
-                let minU = Infinity, maxU = -Infinity;
-                for (let i = 0; i < uVals.length; i++) {
-                    if (uVals[i] < minU) minU = uVals[i];
-                    if (uVals[i] > maxU) maxU = uVals[i];
-                    for (let j = i + 1; j < uVals.length; j++) {
-                        const du = Math.abs(uVals[i] - uVals[j]);
-                        if (du < minDu) minDu = du;
-                    }
-                }
-                const span = Math.max(1e-5, maxU - minU);
-                const ratio = minDu / span;
-                if (ang === 0 && ratio >= 0.18) {
-                    uAxis = candU;
-                    vAxis = candV;
-                    bestRatio = ratio;
-                    break;
-                }
-                if (ratio > bestRatio) {
-                    bestRatio = ratio;
-                    uAxis = candU;
-                    vAxis = candV;
-                }
-            }
-
-            const rawNodes = projected3D.map((pt, index) => {
+            // Giữ nguyên thứ tự điểm chọn (không sắp xếp lại theo hoành độ u)
+            const nodes2D = projected3D.map((pt, index) => {
                 const rel = new THREE.Vector3().subVectors(pt, origin);
                 return {
                     u: rel.dot(uAxis),
                     v: rel.dot(vAxis),
+                    pt3D: pt,
                     index
                 };
             });
 
-            rawNodes.sort((a, b) => a.u - b.u);
-            const nodes2D = [];
-            for (const nd of rawNodes) {
-                if (nodes2D.length === 0 || Math.abs(nd.u - nodes2D[nodes2D.length - 1].u) > 1e-5) {
-                    nodes2D.push(nd);
-                }
-            }
             const m = nodes2D.length;
             if (m < 2) return null;
 
-            const divDiff = nodes2D.map(nd => nd.v);
-            for (let j = 1; j < m; j++) {
-                for (let i = m - 1; i >= j; i--) {
-                    const denom = nodes2D[i].u - nodes2D[i - j].u;
-                    divDiff[i] = Math.abs(denom) > 1e-9 ? (divDiff[i] - divDiff[i - 1]) / denom : 0;
-                }
+            // Tham số hóa hướng tâm (centripetal knots: t_i = t_{i-1} + sqrt(|P_i - P_{i-1}|)) chuẩn hóa về [0, 1]
+            const tRaw = new Array(m).fill(0);
+            for (let i = 1; i < m; i++) {
+                const segDist = Math.hypot(nodes2D[i].u - nodes2D[i - 1].u, nodes2D[i].v - nodes2D[i - 1].v);
+                tRaw[i] = tRaw[i - 1] + Math.sqrt(Math.max(segDist, 1e-6));
             }
+            const totalT = tRaw[m - 1] > 1e-9 ? tRaw[m - 1] : 1;
+            const tNodes = tRaw.map((t, idx) => (idx === m - 1 ? 1 : t / totalT));
 
-            const evalPoly = (u) => {
-                let val = divDiff[m - 1];
+            const buildNewtonDivDiff = (ts, ys) => {
+                const coeffs = ys.slice();
+                for (let j = 1; j < m; j++) {
+                    for (let i = m - 1; i >= j; i--) {
+                        const denom = ts[i] - ts[i - j];
+                        coeffs[i] = Math.abs(denom) > 1e-12 ? (coeffs[i] - coeffs[i - 1]) / denom : 0;
+                    }
+                }
+                return coeffs;
+            };
+
+            const divDiffU = buildNewtonDivDiff(tNodes, nodes2D.map(nd => nd.u));
+            const divDiffV = buildNewtonDivDiff(tNodes, nodes2D.map(nd => nd.v));
+
+            const evalNewton = (coeffs, tVal) => {
+                let val = coeffs[m - 1];
                 for (let k = m - 2; k >= 0; k--) {
-                    val = val * (u - nodes2D[k].u) + divDiff[k];
+                    val = val * (tVal - tNodes[k]) + coeffs[k];
                 }
                 return val;
             };
 
-            const uMin = nodes2D[0].u;
-            const uMax = nodes2D[m - 1].u;
+            // Lấy mẫu lần lượt trên từng đoạn [t_i, t_{i+1}] và gán chính xác tọa độ các điểm nút theo đúng thứ tự
             const totalSamples = Math.max(24, Math.min(400, Math.round(samplesCount)));
+            const stepsPerSpan = Math.max(12, Math.ceil(totalSamples / (m - 1)));
+            const sampledPoints = [];
 
-            const sampleUs = [];
-            for (let s = 0; s <= totalSamples; s++) {
-                sampleUs.push(uMin + ((uMax - uMin) * s) / totalSamples);
-            }
-            for (const nd of nodes2D) {
-                sampleUs.push(nd.u);
-            }
-            sampleUs.sort((a, b) => a - b);
-
-            const uniqueUs = [];
-            for (const u of sampleUs) {
-                if (uniqueUs.length === 0 || Math.abs(u - uniqueUs[uniqueUs.length - 1]) > 1e-7) {
-                    uniqueUs.push(u);
+            for (let span = 0; span < m - 1; span++) {
+                sampledPoints.push(nodes2D[span].pt3D.clone());
+                const t0 = tNodes[span];
+                const t1 = tNodes[span + 1];
+                for (let s = 1; s < stepsPerSpan; s++) {
+                    const tVal = t0 + ((t1 - t0) * s) / stepsPerSpan;
+                    const uVal = evalNewton(divDiffU, tVal);
+                    const vVal = evalNewton(divDiffV, tVal);
+                    sampledPoints.push(new THREE.Vector3(
+                        origin.x + uVal * uAxis.x + vVal * vAxis.x,
+                        origin.y + uVal * uAxis.y + vVal * vAxis.y,
+                        origin.z + uVal * uAxis.z + vVal * vAxis.z
+                    ));
                 }
             }
-
-            const sampledPoints = uniqueUs.map(u => {
-                const v = evalPoly(u);
-                return new THREE.Vector3(
-                    origin.x + u * uAxis.x + v * vAxis.x,
-                    origin.y + u * uAxis.y + v * vAxis.y,
-                    origin.z + u * uAxis.z + v * vAxis.z
-                );
-            });
+            sampledPoints.push(nodes2D[m - 1].pt3D.clone());
 
             return {
                 origin,
@@ -8398,6 +8366,7 @@
                 vAxis,
                 degree: m - 1,
                 nodes2D,
+                tNodes,
                 sampledPoints
             };
         }
@@ -18511,7 +18480,7 @@
                 ? (geoState.curves || []).find(c => c.id === activeInterpCurveState.curveId)
                 : null;
             const ptCount = activeCurve && Array.isArray(activeCurve.pointIds) ? activeCurve.pointIds.length : selectedPointIds.length;
-            const cName = activeCurve ? (activeCurve.name || '(P)') : '(P)';
+            const cName = activeCurve ? (activeCurve.name || '(C)') : '(C)';
             selectedPointIds = [];
             activeInterpCurveState = { curveId: null, lockedPlaneSpec: null };
             updateSceneFromState();
@@ -18525,11 +18494,10 @@
                                 return p ? p.name : '';
                             })
                             .filter(Boolean)
-                            .join(', ');
-                        const deg = Math.max(1, ptCount - 1);
+                            .join(' \\to ');
                         guideSpan.innerHTML = t(
-                            `Đã hoàn tất <b>Đường cong đa thức nội suy bậc $\\le ${deg}$</b> đi qua ${ptCount} điểm đồng phẳng ($${ptNames}$)! Click chọn các điểm tiếp theo nếu muốn vẽ đường cong mới.`,
-                            `Completed <b>Interpolating polynomial curve of degree $\\le ${deg}$</b> through ${ptCount} coplanar points ($${ptNames}$)! Click points to start another curve.`
+                            `Đã hoàn tất <b>Đường cong nội suy</b> đi qua ${ptCount} điểm đồng phẳng ($${ptNames}$)! Click chọn các điểm tiếp theo nếu muốn vẽ đường cong mới.`,
+                            `Completed <b>Interpolating curve</b> through ${ptCount} coplanar points ($${ptNames}$)! Click points to start another curve.`
                         );
                         renderMathInElementSafe(guideSpan);
                     } else {
@@ -18655,7 +18623,7 @@
                     activeCurve = {
                         id: curveId,
                         pointIds: [...selectedPointIds],
-                        name: `(P_{${ptNames}})`,
+                        name: `(C_{${ptNames}})`,
                         hidden: false,
                         createdOrder: nextCreationOrder(curveId)
                     };
@@ -18663,7 +18631,7 @@
                     activeInterpCurveState.curveId = curveId;
                 } else {
                     activeCurve.pointIds = [...selectedPointIds];
-                    activeCurve.name = `(P_{${ptNames}})`;
+                    activeCurve.name = `(C_{${ptNames}})`;
                 }
             }
 
@@ -18678,21 +18646,20 @@
                         return p ? p.name : '';
                     })
                     .filter(Boolean)
-                    .join(', ');
+                    .join(' \\to ');
                 if (selectedPointIds.length === 1) {
                     guideSpan.innerHTML = t(
-                        `Đã chọn điểm thứ nhất <b>$${namesList}$</b> (1/2+) $\\to$ Hãy chấm/chọn tiếp <b>Điểm thứ 2</b> trong cùng mặt phẳng để bắt đầu vẽ đường đồ thị đa thức nội suy!`,
-                        `Selected 1st point <b>$${namesList}$</b> (1/2+) $\\to$ Click/pick the <b>2nd point</b> in the same plane to start drawing the interpolating polynomial graph!`
+                        `Đã chọn điểm thứ nhất <b>$${namesList}$</b> (1/2+) $\\to$ Hãy chấm/chọn tiếp <b>Điểm thứ 2</b> trong cùng mặt phẳng để bắt đầu vẽ đường cong nội suy theo thứ tự chọn!`,
+                        `Selected 1st point <b>$${namesList}$</b> (1/2+) $\\to$ Click/pick the <b>2nd point</b> in the same plane to start drawing the interpolating curve in selection order!`
                     );
                 } else {
                     const nPts = selectedPointIds.length;
-                    const deg = nPts - 1;
                     const planeInfo = getActiveInterpCurvePlaneGeometry();
                     const planeNoteVi = planeInfo ? ` trên mặt phẳng <b>$${planeInfo.label}$</b>` : '';
                     const planeNoteEn = planeInfo ? ` on plane <b>$${planeInfo.label}$</b>` : '';
                     guideSpan.innerHTML = t(
-                        `Đang vẽ <b>Đồ thị đa thức nội suy bậc $\\le ${deg}$</b> qua <b>${nPts} điểm</b> ($${namesList}$)${planeNoteVi} $\\to$ Chọn thêm điểm để nâng bậc đa thức hoặc <button onclick="finishActiveInterpolatingCurve()" style="background:#0d9488;color:#fff;border:none;border-radius:4px;padding:1px 8px;font-weight:700;cursor:pointer;font-size:11.5px;margin-left:4px;">✓ Hoàn tất đường cong</button>`,
-                        `Drawing <b>Interpolating polynomial graph of degree $\\le ${deg}$</b> through <b>${nPts} points</b> ($${namesList}$)${planeNoteEn} $\\to$ Click more points or <button onclick="finishActiveInterpolatingCurve()" style="background:#0d9488;color:#fff;border:none;border-radius:4px;padding:1px 8px;font-weight:700;cursor:pointer;font-size:11.5px;margin-left:4px;">✓ Finish Curve</button>`
+                        `Đang vẽ <b>Đường cong nội suy</b> đi qua ${nPts} điểm theo thứ tự ($${namesList}$)${planeNoteVi} $\\to$ Chọn thêm điểm để mở rộng đường cong hoặc <button onclick="finishActiveInterpolatingCurve()" style="background:#0d9488;color:#fff;border:none;border-radius:4px;padding:1px 8px;font-weight:700;cursor:pointer;font-size:11.5px;margin-left:4px;">✓ Hoàn tất đường cong</button>`,
+                        `Drawing <b>Interpolating curve</b> through ${nPts} points in order ($${namesList}$)${planeNoteEn} $\\to$ Click more points to extend the curve or <button onclick="finishActiveInterpolatingCurve()" style="background:#0d9488;color:#fff;border:none;border-radius:4px;padding:1px 8px;font-weight:700;cursor:pointer;font-size:11.5px;margin-left:4px;">✓ Finish Curve</button>`
                     );
                 }
                 renderMathInElementSafe(guideSpan);
