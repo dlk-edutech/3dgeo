@@ -807,6 +807,10 @@
             transform: translate(14px, 10px); font-weight: 600; white-space: nowrap;
             display: none; z-index: 15; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
+        .snap-badge sub, .snap-badge sup {
+            font-size: 0.78em; line-height: 0; font-style: normal;
+        }
+        .snap-badge i { font-style: italic; }
         .snap-badge.intersection {
             background: #701a75; color: #fdf4ff; border: 1px solid #f0abfc;
         }
@@ -3737,10 +3741,311 @@
         }
 
         // =========================================================================
-        // 4. BỘ HIỂN THỊ CÔNG THỨC TOÁN (TỰ ĐỘNG CHUYỂN ĐỔI KHI OFFLINE KHÔNG CÓ KATEX)
+        // 4. BỘ HIỂN THỊ CÔNG THỨC TOÁN (CHUẨN HÓA LATEX + TỰ ĐỘNG CHUYỂN ĐỔI KHI OFFLINE)
         // =========================================================================
+        function stripRedundantOuterParens(raw) {
+            const s = String(raw || '').trim();
+            if (s.length >= 2 && s[0] === '(' && s[s.length - 1] === ')') {
+                let depth = 0;
+                let wrapsAll = true;
+                for (let i = 0; i < s.length - 1; i++) {
+                    if (s[i] === '(') depth++;
+                    else if (s[i] === ')') depth--;
+                    if (depth === 0) {
+                        wrapsAll = false;
+                        break;
+                    }
+                }
+                if (wrapsAll) return s.slice(1, -1).trim();
+            }
+            return s;
+        }
+
+        function readBalancedBraceGroup(src, openBraceIdx) {
+            if (openBraceIdx >= src.length || src[openBraceIdx] !== '{') return null;
+            let depth = 0;
+            for (let i = openBraceIdx; i < src.length; i++) {
+                const ch = src[i];
+                if (ch === '\\' && i + 1 < src.length) {
+                    i++;
+                    continue;
+                }
+                if (ch === '{') depth++;
+                else if (ch === '}') {
+                    depth--;
+                    if (depth === 0) {
+                        return { content: src.slice(openBraceIdx + 1, i), endIdx: i + 1 };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function escapeLatexTextChunk(str) {
+            return String(str || '')
+                .replace(/\\/g, '\\textbackslash{}')
+                .replace(/([{}%#&_$])/g, '\\$1')
+                .replace(/\^/g, '\\^{}')
+                .replace(/~/g, '\\textasciitilde{}');
+        }
+
+        const UNICODE_MATH_SYMBOL_TO_LATEX = {
+            'Δ': '\\Delta ', 'α': '\\alpha ', 'β': '\\beta ', 'γ': '\\gamma ',
+            'δ': '\\delta ', 'π': '\\pi ', 'φ': '\\varphi ', 'θ': '\\theta ',
+            'ω': '\\omega ', 'Ω': '\\Omega ', '△': '\\triangle ', '∠': '\\angle ',
+            '⊥': '\\perp ', '∥': '\\parallel '
+        };
+
+        function formatMixedLabelToLatex(rawLabel) {
+            const s = String(rawLabel || '').trim();
+            if (!s) return '';
+
+            const isUnicodeLetter = (ch) => Boolean(ch && /\p{L}/u.test(ch));
+            const isLowerOrAccentedLetter = (ch) => Boolean(ch && /[a-z\u00C0-\u024F\u1E00-\u1EFF]/u.test(ch));
+
+            const out = [];
+            let textBuf = '';
+            const flushText = () => {
+                if (!textBuf) return;
+                out.push(`\\text{${escapeLatexTextChunk(textBuf)}}`);
+                textBuf = '';
+            };
+
+            let i = 0;
+            while (i < s.length) {
+                const ch = s[i];
+
+                if (ch === '\\') {
+                    const cmdMatch = /^\\[a-zA-Z]+/.exec(s.slice(i));
+                    if (cmdMatch) {
+                        const cmd = cmdMatch[0];
+                        let nextIdx = i + cmd.length;
+                        if (cmd === '\\text' && s[nextIdx] === '{') {
+                            const grp = readBalancedBraceGroup(s, nextIdx);
+                            if (grp) {
+                                flushText();
+                                out.push(formatMixedLabelToLatex(grp.content));
+                                i = grp.endIdx;
+                                continue;
+                            }
+                        }
+                        let argLatex = '';
+                        if (s[nextIdx] === '{') {
+                            const grp = readBalancedBraceGroup(s, nextIdx);
+                            if (grp) {
+                                argLatex = `{${grp.content}}`;
+                                nextIdx = grp.endIdx;
+                            }
+                        }
+                        flushText();
+                        out.push(argLatex ? `${cmd}${argLatex}` : `${cmd} `);
+                        i = nextIdx;
+                        continue;
+                    }
+                }
+
+                if (UNICODE_MATH_SYMBOL_TO_LATEX[ch]) {
+                    flushText();
+                    out.push(UNICODE_MATH_SYMBOL_TO_LATEX[ch]);
+                    i++;
+                    continue;
+                }
+
+                if ((i === 0 || !isUnicodeLetter(s[i - 1])) && /[A-Za-z]/.test(ch)) {
+                    const baseMatch = /^[A-Z]{1,4}|^[a-z]/.exec(s.slice(i));
+                    if (baseMatch) {
+                        const base = baseMatch[0];
+                        let cursor = i + base.length;
+                        let suffix = '';
+                        let matchedScript = false;
+
+                        while (cursor < s.length) {
+                            const sc = s[cursor];
+                            if ((sc === '_' || sc === '^') && cursor + 1 < s.length) {
+                                if (s[cursor + 1] === '{') {
+                                    const grp = readBalancedBraceGroup(s, cursor + 1);
+                                    if (grp) {
+                                        const innerTrim = grp.content.trim();
+                                        const isSimpleMath = /^[A-Za-z0-9'.,+\-\\ ]+$/.test(innerTrim) && !/\s{2,}/.test(innerTrim);
+                                        const formattedInner = isSimpleMath ? innerTrim : formatMixedLabelToLatex(innerTrim);
+                                        suffix += `${sc}{${formattedInner}}`;
+                                        cursor = grp.endIdx;
+                                        matchedScript = true;
+                                        continue;
+                                    }
+                                } else {
+                                    const simpleArg = /^(?:[0-9]+|[A-Za-z])/.exec(s.slice(cursor + 1));
+                                    if (simpleArg) {
+                                        const arg = simpleArg[0];
+                                        suffix += arg.length === 1 ? `${sc}${arg}` : `${sc}{${arg}}`;
+                                        cursor += 1 + arg.length;
+                                        matchedScript = true;
+                                        continue;
+                                    }
+                                }
+                            } else if (sc === "'") {
+                                suffix += "'";
+                                cursor++;
+                                matchedScript = true;
+                                continue;
+                            }
+                            break;
+                        }
+
+                        if (matchedScript && !isLowerOrAccentedLetter(s[cursor])) {
+                            flushText();
+                            out.push(`${base}${suffix}`);
+                            i = cursor;
+                            continue;
+                        }
+                    }
+                }
+
+                if ((i === 0 || !isUnicodeLetter(s[i - 1])) && /[A-Z]/.test(ch)) {
+                    const symMatch = /^[A-Z]+(?:\.[A-Z]+)*/.exec(s.slice(i));
+                    if (symMatch) {
+                        const afterIdx = i + symMatch[0].length;
+                        if (!isLowerOrAccentedLetter(s[afterIdx])) {
+                            flushText();
+                            out.push(symMatch[0]);
+                            i = afterIdx;
+                            continue;
+                        }
+                    }
+                }
+
+                if (ch === '(' || ch === ')' || ch === '[' || ch === ']' || ch === ',' || ch === ';') {
+                    flushText();
+                    out.push(ch);
+                    if ((ch === ',' || ch === ';') && s[i + 1] === ' ') {
+                        out.push(' ');
+                        i += 2;
+                        continue;
+                    }
+                    i++;
+                    continue;
+                }
+
+                textBuf += ch;
+                i++;
+            }
+
+            flushText();
+            return out.join('');
+        }
+
+        function sanitizeLatexMathExpression(tex) {
+            const src = String(tex || '');
+            if (!src.includes('\\text{')) return src;
+
+            let result = '';
+            let i = 0;
+            while (i < src.length) {
+                const idx = src.indexOf('\\text{', i);
+                if (idx === -1) {
+                    result += src.slice(i);
+                    break;
+                }
+                result += src.slice(i, idx);
+                const grp = readBalancedBraceGroup(src, idx + 5);
+                if (!grp) {
+                    result += src.slice(idx);
+                    break;
+                }
+                const inner = grp.content;
+                const hasMathInText = /(^|[^\\])[_^]/.test(inner) || /\\[a-zA-Z]+/.test(inner);
+                if (hasMathInText) {
+                    result += formatMixedLabelToLatex(inner);
+                } else {
+                    result += `\\text{${inner}}`;
+                }
+                i = grp.endIdx;
+            }
+            return result;
+        }
+
+        function formatMixedLabelToHtml(rawLabel) {
+            let html = String(rawLabel || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+
+            html = html
+                .replace(/\\Delta\b/g, 'Δ')
+                .replace(/\\triangle\b/g, '△')
+                .replace(/\\alpha\b/g, 'α')
+                .replace(/\\beta\b/g, 'β')
+                .replace(/\\gamma\b/g, 'γ')
+                .replace(/\\delta\b/g, 'δ')
+                .replace(/\\pi\b/g, 'π')
+                .replace(/\\varphi\b|\\phi\b/g, 'φ')
+                .replace(/\\theta\b/g, 'θ')
+                .replace(/\\omega\b/g, 'ω')
+                .replace(/\\Omega\b/g, 'Ω')
+                .replace(/\\angle\b/g, '∠')
+                .replace(/\\perp\b/g, '⊥')
+                .replace(/\\parallel\b/g, '∥');
+
+            html = html
+                .replace(/([A-Za-z])_\{([^}]+)\}/g, '<i>$1</i><sub>$2</sub>')
+                .replace(/([A-Za-z])_([0-9]+|[A-Za-z])(?![a-z\u00C0-\u024F\u1E00-\u1EFF])/g, '<i>$1</i><sub>$2</sub>')
+                .replace(/([A-Za-z])\^\{([^}]+)\}/g, '<i>$1</i><sup>$2</sup>')
+                .replace(/([A-Za-z])\^([0-9]+|[A-Za-z])(?![a-z\u00C0-\u024F\u1E00-\u1EFF])/g, '<i>$1</i><sup>$2</sup>');
+
+            return html;
+        }
+
+        function formatMixedLabelToPlainText(rawLabel) {
+            let s = String(rawLabel || '').trim();
+            while (s.includes('\\text{')) {
+                const idx = s.indexOf('\\text{');
+                const grp = readBalancedBraceGroup(s, idx + 5);
+                if (!grp) break;
+                s = s.slice(0, idx) + grp.content + s.slice(grp.endIdx);
+            }
+            return s
+                .replace(/\\Delta\b/g, 'Δ')
+                .replace(/\\triangle\b/g, '△')
+                .replace(/\\alpha\b/g, 'α')
+                .replace(/\\beta\b/g, 'β')
+                .replace(/\\gamma\b/g, 'γ')
+                .replace(/\\pi\b/g, 'π')
+                .replace(/([A-Za-z])_\{([^}]+)\}/g, '$1_$2')
+                .replace(/([A-Za-z])\^\{([^}]+)\}/g, '$1^$2')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
+        }
+
+        function unwrapLatexTextOffline(tex) {
+            let s = String(tex || '');
+            let out = '';
+            let i = 0;
+            while (i < s.length) {
+                const idx = s.indexOf('\\text{', i);
+                if (idx === -1) {
+                    out += s.slice(i);
+                    break;
+                }
+                out += s.slice(i, idx);
+                const grp = readBalancedBraceGroup(s, idx + 5);
+                if (!grp) {
+                    out += s.slice(idx);
+                    break;
+                }
+                const cleanText = grp.content
+                    .replace(/\\([{}%#&_$])/g, '$1')
+                    .replace(/\\textbackslash\{\}/g, '\\')
+                    .replace(/\\\^\{\}/g, '^')
+                    .replace(/\\textasciitilde\{\}/g, '~');
+                out += `<span style="font-style:normal;font-family:inherit;">${cleanText}</span>`;
+                i = grp.endIdx;
+            }
+            return out;
+        }
+
         function convertLatexStringOffline(tex) {
-            let s = tex
+            let s = unwrapLatexTextOffline(sanitizeLatexMathExpression(tex))
                 .replace(/\\overrightarrow\{([^}]+)\}/g, '<span class="math-vec">$1</span>')
                 .replace(/\\widehat\{([^}]+)\}/g, '<span class="math-hat">$1</span>')
                 .replace(/\\sqrt\[([^\]]+)\]\{([^}]+)\}/g, '<sup>$1</sup>√($2)')
@@ -3792,8 +4097,24 @@
             return `<span class="math-fallback">${s}</span>`;
         }
 
+        function sanitizeMathTextNodesInElement(el) {
+            if (!el || !document.createTreeWalker) return;
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = walker.nextNode())) {
+                const val = node.nodeValue;
+                if (!val || !val.includes('\\text{')) continue;
+                const updated = val
+                    .replace(/\$\$([^$]+)\$\$/g, (_, expr) => `$$${sanitizeLatexMathExpression(expr)}$$`)
+                    .replace(/\$([^$]+)\$/g, (_, expr) => `$${sanitizeLatexMathExpression(expr)}$`)
+                    .replace(/\\\((.+?)\\\)/g, (_, expr) => `\\(${sanitizeLatexMathExpression(expr)}\\)`);
+                if (updated !== val) node.nodeValue = updated;
+            }
+        }
+
         function renderMathInElementSafe(el) {
             if (!el) return;
+            sanitizeMathTextNodesInElement(el);
             if (window.renderMathInElement && window.katex) {
                 try {
                     renderMathInElement(el, {
@@ -14195,12 +14516,14 @@
                         const sGeom = computeSphereGeometry(sol);
                         if (!sGeom) return null;
                         const vol = (4 / 3) * Math.PI * Math.pow(sGeom.radius, 3) * k3;
+                        const sphereLabel = sol.name || t('Cầu', 'Sphere');
+                        const sphereLatex = formatMixedLabelToLatex(sphereLabel);
                         return {
                             categoryLabel: catVol,
-                            titleHtml: `$V_{${sol.name || t('Cầu', 'Sphere')}}$`,
+                            titleHtml: `$V_{${sphereLatex}}$`,
                             valueStr: formatMeasureNumber(vol),
-                            badgeHtml: `$V_{${sol.name || t('Cầu', 'Sphere')}} = ${formatMeasureNumber(vol)}$`,
-                            plainBadgeText: `V = ${formatMeasureNumber(vol)}`,
+                            badgeHtml: `$V_{${sphereLatex}} = ${formatMeasureNumber(vol)}$`,
+                            plainBadgeText: `V(${formatMixedLabelToPlainText(sphereLabel)}) = ${formatMeasureNumber(vol)}`,
                             anchorPos: sGeom.center.clone().add(new THREE.Vector3(0, sGeom.radius * 0.45, 0))
                         };
                     }
@@ -14216,7 +14539,7 @@
                         const coneTag = t('Nón', 'Cone');
                         return {
                             categoryLabel: catVol,
-                            titleHtml: `$V_{\\text{${coneTag} }(${S.name}, ${cir.name || 'C'})}$`,
+                            titleHtml: `$V_{\\text{${coneTag} }(${S.name}, ${formatMixedLabelToLatex(cir.name || 'C')})}$`,
                             valueStr: formatMeasureNumber(vol),
                             badgeHtml: `$V_{\\text{${coneTag}}} = ${formatMeasureNumber(vol)}$`,
                             plainBadgeText: `V(${coneTag}) = ${formatMeasureNumber(vol)}`,
@@ -14251,12 +14574,14 @@
                         const st0 = revGeom.stations[0];
                         const stN = revGeom.stations[revGeom.stations.length - 1];
                         const labelTag = sol.name || t('Mặt tròn xoay', 'Revolved Solid');
+                        const latexSub = formatMixedLabelToLatex(labelTag);
+                        const plainSub = formatMixedLabelToPlainText(labelTag);
                         return {
                             categoryLabel: catVol,
-                            titleHtml: `$V_{\\text{${labelTag}}}$`,
+                            titleHtml: `$V_{${latexSub}}$`,
                             valueStr: formatMeasureNumber(vol),
-                            badgeHtml: `$V_{\\text{${labelTag}}} = ${formatMeasureNumber(vol)}$`,
-                            plainBadgeText: `V(${labelTag}) = ${formatMeasureNumber(vol)}`,
+                            badgeHtml: `$V_{${latexSub}} = ${formatMeasureNumber(vol)}$`,
+                            plainBadgeText: `V(${plainSub}) = ${formatMeasureNumber(vol)}`,
                             anchorPos: st0.axisFoot.clone().lerp(stN.axisFoot, 0.5)
                         };
                     }
@@ -19218,10 +19543,10 @@
                     snapIndicator.visible = false;
                     snapBadge.classList.remove('delete-target', 'intersection');
                     const rect = renderer.domElement.getBoundingClientRect();
-                    snapBadge.textContent = t(
+                    snapBadge.innerHTML = formatMixedLabelToHtml(t(
                         `Kéo cạnh để đổi kích thước mặt phẳng ${hoverPlaneBorder.face.name || '(α)'}`,
                         `Drag edge to resize plane ${hoverPlaneBorder.face.name || '(α)'}`
-                    );
+                    ));
                     snapBadge.style.left = `${event.clientX - rect.left}px`;
                     snapBadge.style.top = `${event.clientY - rect.top}px`;
                     snapBadge.style.display = 'block';
@@ -19240,10 +19565,10 @@
                     snapBadge.classList.remove('intersection');
                     snapBadge.classList.add('delete-target');
                     const rect = renderer.domElement.getBoundingClientRect();
-                    snapBadge.textContent = t(
+                    snapBadge.innerHTML = formatMixedLabelToHtml(t(
                         `Xóa: ${target.label} (+ đối tượng con)`,
                         `Delete: ${target.label} (+ dependents)`
-                    );
+                    ));
                     snapBadge.style.left = `${event.clientX - rect.left}px`;
                     snapBadge.style.top = `${event.clientY - rect.top}px`;
                     snapBadge.style.display = 'block';
@@ -19281,9 +19606,9 @@
                         isCurrentlyTraced = Boolean(((geoState.solids || []).find(s => s.id === target.solidId) || {}).trace);
                     }
                     const rect = renderer.domElement.getBoundingClientRect();
-                    snapBadge.textContent = isCurrentlyTraced
+                    snapBadge.innerHTML = formatMixedLabelToHtml(isCurrentlyTraced
                         ? t(`Tắt vết: ${target.label}`, `Disable trace: ${target.label}`)
-                        : t(`Bật vết: ${target.label}`, `Enable trace: ${target.label}`);
+                        : t(`Bật vết: ${target.label}`, `Enable trace: ${target.label}`));
                     snapBadge.style.left = `${event.clientX - rect.left}px`;
                     snapBadge.style.top = `${event.clientY - rect.top}px`;
                     snapBadge.style.display = 'block';
@@ -19329,12 +19654,12 @@
                 snapIndicator.visible = true;
 
                 const rect = renderer.domElement.getBoundingClientRect();
-                snapBadge.textContent = hoverPlaneBorder
+                snapBadge.innerHTML = formatMixedLabelToHtml(hoverPlaneBorder
                     ? t(
                         `Cạnh mặt phẳng ${hoverPlaneBorder.face.name || '(α)'} (Kéo cạnh để đổi kích thước)`,
                         `Plane ${hoverPlaneBorder.face.name || '(α)'} edge (Drag edge to resize)`
                     )
-                    : target.label;
+                    : target.label);
                 snapBadge.style.left = `${event.clientX - rect.left}px`;
                 snapBadge.style.top = `${event.clientY - rect.top}px`;
                 snapBadge.style.display = 'block';
@@ -19342,7 +19667,7 @@
                 snapIndicator.visible = false;
                 snapBadge.classList.remove('intersection');
                 const rect = renderer.domElement.getBoundingClientRect();
-                snapBadge.textContent = target.label;
+                snapBadge.innerHTML = formatMixedLabelToHtml(target.label);
                 snapBadge.style.left = `${event.clientX - rect.left}px`;
                 snapBadge.style.top = `${event.clientY - rect.top}px`;
                 snapBadge.style.display = 'block';
@@ -21279,7 +21604,8 @@
                 const p2 = geoState.points.find(p => p.id === sol.axisP2Id);
                 if (p1 && p2) axisName = `${p1.name || ''}${p2.name || ''}`;
             }
-            return `Mặt tròn xoay (${genName} quanh ${axisName})`;
+            const cleanGenName = stripRedundantOuterParens(genName);
+            return `Mặt tròn xoay (${cleanGenName} quanh ${axisName})`;
         }
 
         function advanceRevolveBuilderToAxisStage() {
@@ -21439,14 +21765,15 @@
                 };
                 selectedPointIds = [];
                 if (guideSpan) {
+                    const safeCurveHtml = formatMixedLabelToHtml(curv.name || (isSurfInter ? 'giao tuyến' : '(C)'));
                     guideSpan.innerHTML = isSurfInter
                         ? t(
-                            `Đã chọn đường sinh là <b>${curv.name || 'giao tuyến'}</b> $\\to$ <b>Bước 2:</b> Hãy click chọn <b>Trục quay</b> (1 đoạn/đường thẳng hoặc lần lượt 2 điểm)!`,
-                            `Selected intersection curve <b>${curv.name || 'curve'}</b> as generatrix $\\to$ <b>Step 2:</b> Click to select the <b>Axis of Revolution</b> (a line/segment or 2 points)!`
+                            `Đã chọn đường sinh là <b>${safeCurveHtml}</b> $\\to$ <b>Bước 2:</b> Hãy click chọn <b>Trục quay</b> (1 đoạn/đường thẳng hoặc lần lượt 2 điểm)!`,
+                            `Selected intersection curve <b>${safeCurveHtml}</b> as generatrix $\\to$ <b>Step 2:</b> Click to select the <b>Axis of Revolution</b> (a line/segment or 2 points)!`
                         )
                         : t(
-                            `Đã chọn đường sinh là <b>đường cong nội suy ${curv.name || '(C)'}</b> $\\to$ <b>Bước 2:</b> Hãy click chọn <b>Trục quay</b> (1 đoạn/đường thẳng hoặc lần lượt 2 điểm)!`,
-                            `Selected interpolating curve <b>${curv.name || '(C)'}</b> as generatrix $\\to$ <b>Step 2:</b> Click to select the <b>Axis of Revolution</b> (a line/segment or 2 points)!`
+                            `Đã chọn đường sinh là <b>đường cong nội suy ${safeCurveHtml}</b> $\\to$ <b>Bước 2:</b> Hãy click chọn <b>Trục quay</b> (1 đoạn/đường thẳng hoặc lần lượt 2 điểm)!`,
+                            `Selected interpolating curve <b>${safeCurveHtml}</b> as generatrix $\\to$ <b>Step 2:</b> Click to select the <b>Axis of Revolution</b> (a line/segment or 2 points)!`
                         );
                     renderMathInElementSafe(guideSpan);
                 }
@@ -21603,17 +21930,20 @@
                         selectedPointIds = [];
                         const brokenLineName = formatRevolveGeneratrixDisplayName('segments', null, [...prevGenSegIds, segId]);
                         if (guideSpan) {
+                            const createdHtml = formatMixedLabelToHtml(created.name);
+                            const brokenHtml = formatMixedLabelToHtml(brokenLineName);
                             guideSpan.innerHTML = t(
-                                `Đã tạo <b>${created.name}</b>! (Nếu muốn lấy đường gấp khúc <b>${brokenLineName}</b> làm đường sinh, hãy click tiếp vào <b>Trục quay</b>; hoặc bấm <button onclick="resetRevolveBuilderState(true)" style="margin-left:4px;padding:2px 8px;border-radius:5px;border:1px solid #38bdf8;background:rgba(56,189,248,0.18);color:#e0f2fe;cursor:pointer;font-weight:600;">+ Mặt tròn xoay mới</button>)`,
-                                `Created <b>${created.name}</b>! (If <b>${brokenLineName}</b> is a broken line generatrix, click the <b>Axis of Revolution</b> next!)`
+                                `Đã tạo <b>${createdHtml}</b>! (Nếu muốn lấy đường gấp khúc <b>${brokenHtml}</b> làm đường sinh, hãy click tiếp vào <b>Trục quay</b>; hoặc bấm <button onclick="resetRevolveBuilderState(true)" style="margin-left:4px;padding:2px 8px;border-radius:5px;border:1px solid #38bdf8;background:rgba(56,189,248,0.18);color:#e0f2fe;cursor:pointer;font-weight:600;">+ Mặt tròn xoay mới</button>)`,
+                                `Created <b>${createdHtml}</b>! (If <b>${brokenHtml}</b> is a broken line generatrix, click the <b>Axis of Revolution</b> next!)`
                             );
                         }
                     } else {
                         resetRevolveBuilderState(false);
                         if (guideSpan) {
+                            const createdHtml = formatMixedLabelToHtml(created.name);
                             guideSpan.innerHTML = t(
-                                `Đã tạo <b>${created.name}</b>!`,
-                                `Created <b>${created.name}</b>!`
+                                `Đã tạo <b>${createdHtml}</b>!`,
+                                `Created <b>${createdHtml}</b>!`
                             );
                         }
                     }
