@@ -901,6 +901,464 @@
         }
         .measure-close-btn:hover { background: #e2e8f0; color: #0f172a; }
         .measure-close-btn.danger-close:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
+
+        /* =========================================================================
+           BÚT VIẾT TAY THÔNG MINH (SMART HANDWRITING PEN) & TRANG VIẾT TAY
+           ========================================================================= */
+        #handwriting-capture-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 18;
+            pointer-events: none;
+            touch-action: none;
+            display: none;
+        }
+        #handwriting-capture-canvas.active {
+            display: block;
+            pointer-events: auto;
+            cursor: crosshair;
+        }
+        #handwriting-fly-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 30;
+            pointer-events: none;
+        }
+        #handwriting-live-pill {
+            position: absolute;
+            left: 50%;
+            bottom: 36px;
+            transform: translateX(-50%);
+            z-index: 29;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 12px;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.92);
+            color: #f8fafc;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            box-shadow: 0 10px 26px rgba(15, 23, 42, 0.28);
+            font-size: 12px;
+            font-weight: 600;
+            pointer-events: auto;
+            backdrop-filter: blur(8px);
+        }
+        #handwriting-live-pill.visible {
+            display: inline-flex;
+        }
+        .hw-live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #38bdf8;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+            flex-shrink: 0;
+        }
+        .hw-live-progress-wrap {
+            width: 78px;
+            height: 5px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .hw-live-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #38bdf8, #60a5fa);
+            transition: width 40ms linear;
+        }
+        .hw-live-commit-btn {
+            background: #2563eb;
+            color: #ffffff;
+            border: 1px solid #60a5fa;
+            border-radius: 6px;
+            padding: 3px 9px;
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+        .hw-live-commit-btn:hover { background: #1d4ed8; }
+        .hw-live-cancel-btn {
+            background: rgba(255,255,255,0.12);
+            color: #e2e8f0;
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .hw-live-cancel-btn:hover { background: rgba(239,68,68,0.35); color: #fff; }
+
+        #handwriting-page-panel {
+            position: absolute;
+            top: 56px;
+            right: 14px;
+            width: 420px;
+            height: 470px;
+            min-width: 300px;
+            min-height: 240px;
+            max-width: calc(100vw - 24px);
+            max-height: calc(100vh - 108px);
+            z-index: 28;
+            display: none;
+            flex-direction: column;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            box-shadow: 0 14px 36px rgba(15, 23, 42, 0.18), 0 2px 6px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+            user-select: none;
+        }
+        #handwriting-page-panel.open {
+            display: flex;
+        }
+        #handwriting-page-panel.collapsed {
+            height: auto !important;
+            min-height: 0;
+            width: 320px !important;
+        }
+        #handwriting-page-panel.collapsed .hw-controls-strip,
+        #handwriting-page-panel.collapsed .hw-paper-wrap,
+        #handwriting-page-panel.collapsed .hw-resize-handle {
+            display: none !important;
+        }
+        #handwriting-page-panel.tools-hidden {
+            background: #fffef8;
+            border-color: rgba(148, 163, 184, 0.55);
+        }
+        #handwriting-page-panel.tools-hidden .hw-panel-header,
+        #handwriting-page-panel.tools-hidden .hw-controls-strip {
+            display: none !important;
+        }
+        .hw-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 7px 10px;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid #e2e8f0;
+            cursor: move;
+            touch-action: none;
+            flex-shrink: 0;
+        }
+        .hw-panel-title-group {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
+        }
+        .hw-panel-title-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 7px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .hw-panel-title-icon svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.1;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .hw-panel-title {
+            font-size: 12.5px;
+            font-weight: 800;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .hw-mode-tag {
+            font-size: 10.5px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .hw-mode-tag.paused {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        .hw-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .hw-header-btn {
+            height: 24px;
+            padding: 0 8px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.14s;
+            white-space: nowrap;
+        }
+        .hw-header-btn:hover { background: #f1f5f9; color: #0f172a; }
+        .hw-header-btn.active-pen {
+            background: #2563eb;
+            border-color: #1d4ed8;
+            color: #ffffff;
+        }
+        .hw-header-btn.active-pen:hover { background: #1d4ed8; }
+        .hw-header-btn.icon-only { width: 24px; padding: 0; }
+        .hw-header-btn.danger:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
+
+        .hw-controls-strip {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 7px 10px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+        .hw-control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .hw-swatches {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .hw-swatch {
+            width: 19px;
+            height: 19px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.16);
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.12s, box-shadow 0.12s;
+        }
+        .hw-swatch:hover { transform: scale(1.12); }
+        .hw-swatch.active {
+            border-color: #ffffff;
+            box-shadow: 0 0 0 2px #2563eb;
+            transform: scale(1.08);
+        }
+        .hw-seg-group {
+            display: inline-flex;
+            align-items: center;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            padding: 1px;
+            gap: 1px;
+        }
+        .hw-seg-btn {
+            border: none;
+            background: transparent;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.14s;
+            white-space: nowrap;
+        }
+        .hw-seg-btn:hover { color: #0f172a; background: rgba(255, 255, 255, 0.65); }
+        .hw-seg-btn.active {
+            background: #ffffff;
+            color: #1d4ed8;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
+        }
+        .hw-smart-toggle {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 7px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.14s;
+            white-space: nowrap;
+        }
+        .hw-smart-toggle.active {
+            background: #eff6ff;
+            border-color: #60a5fa;
+            color: #1d4ed8;
+        }
+        .hw-action-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .hw-mini-btn {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.13s;
+            white-space: nowrap;
+        }
+        .hw-mini-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .hw-mini-btn.danger:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
+        .hw-pause-select {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2.5px 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .hw-paper-wrap {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #fffef8;
+        }
+        .hw-paper-drag-strip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 36px;
+            height: 15px;
+            z-index: 7;
+            cursor: grab;
+            touch-action: none;
+            display: none;
+        }
+        #handwriting-page-panel.tools-hidden .hw-paper-drag-strip {
+            display: block;
+        }
+        .hw-paper-drag-strip:active { cursor: grabbing; }
+        #hw-corner-tools-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            z-index: 8;
+            width: 26px;
+            height: 26px;
+            padding: 0;
+            border-radius: 7px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            background: rgba(255, 254, 248, 0.9);
+            backdrop-filter: blur(4px);
+            color: #475569;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+            transition: all 0.14s;
+        }
+        #hw-corner-tools-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        #hw-corner-tools-btn:hover {
+            background: #eff6ff;
+            border-color: #60a5fa;
+            color: #1d4ed8;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.16);
+        }
+        #hw-corner-tools-btn.active {
+            background: #eff6ff;
+            border-color: #93c5fd;
+            color: #1d4ed8;
+        }
+        .hw-paper-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: #fffef8;
+            position: relative;
+        }
+        #handwriting-page-canvas {
+            display: block;
+            width: 100%;
+            cursor: text;
+        }
+        .hw-paper-hint {
+            position: absolute;
+            left: 34px;
+            right: 38px;
+            top: 66px;
+            pointer-events: none;
+            color: #94a3b8;
+            font-size: 12px;
+            line-height: 1.65;
+            font-style: italic;
+        }
+        .hw-paper-hint.hidden { display: none; }
+        .hw-resize-handle {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 18px;
+            height: 18px;
+            cursor: nwse-resize;
+            touch-action: none;
+            z-index: 5;
+            background: linear-gradient(135deg, transparent 50%, rgba(100, 116, 139, 0.35) 50%, rgba(100, 116, 139, 0.35) 62%, transparent 62%, transparent 74%, rgba(100, 116, 139, 0.5) 74%);
+        }
+
+        @media (max-width: 720px) {
+            #handwriting-page-panel {
+                width: calc(100vw - 20px);
+                right: 10px;
+                top: 52px;
+                height: 360px;
+            }
+        }
         .measure-scale-box {
             display: flex; align-items: center; justify-content: space-between; gap: 6px;
             background: #f0fdf4; border: 1px solid #86efac; border-radius: 7px;
@@ -1310,9 +1768,19 @@
         }
         .settings-style-bar {
             padding: 10px 20px; background: #ffffff; border-bottom: 1px solid #e2e8f0;
-            display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; align-items: center;
+            display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 14px; align-items: center;
         }
-        @media (max-width: 640px) {
+        .style-pop-val-badge.clickable {
+            border: 1px solid #bfdbfe; cursor: pointer; font-family: inherit;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .style-pop-val-badge.clickable:hover {
+            background: #dbeafe; border-color: #60a5fa;
+        }
+        .style-pop-hint {
+            font-size: 10.5px; color: #64748b; line-height: 1.3; margin-top: 2px;
+        }
+        @media (max-width: 820px) {
             .settings-style-bar { grid-template-columns: 1fr; }
         }
         .pt-opt-quick-actions {
@@ -1674,6 +2142,18 @@
                     <button class="style-step-btn" onclick="stepVisualLineWidth(0.5)" title="Tăng độ dày đường">+</button>
                 </div>
             </div>
+            <div class="style-pop-row">
+                <div class="style-pop-label-line">
+                    <span id="style-lbl-base-plane">Mặt phẳng nền (P):</span>
+                    <button type="button" class="style-pop-val-badge clickable" id="style-val-base-plane" data-testid="style-val-base-plane" onclick="resetBasePlaneBounds()" title="Nhấp để đặt lại mặt phẳng nền về 16 × 16">16 × 16</button>
+                </div>
+                <div class="style-slider-wrap">
+                    <button type="button" class="style-step-btn" onclick="stepBasePlaneSize(-4)" aria-label="Thu nhỏ mặt phẳng nền (P)" title="Thu nhỏ mặt phẳng nền (P)">-</button>
+                    <input type="range" class="style-range-input" id="style-slider-base-plane" data-testid="style-slider-base-plane" min="8" max="80" step="2" value="16" aria-label="Kích thước mặt phẳng nền (P)" onpointerdown="beginBasePlaneSliderHistory()" oninput="setBasePlaneUniformSize(Number(this.value))" onchange="endBasePlaneSliderHistory()">
+                    <button type="button" class="style-step-btn" onclick="stepBasePlaneSize(4)" aria-label="Mở rộng mặt phẳng nền (P)" title="Mở rộng mặt phẳng nền (P)">+</button>
+                </div>
+                <div class="style-pop-hint" id="style-hint-base-plane">Kéo trực tiếp 4 cạnh/góc viền của (P) trong không gian 3D (giữ Shift để mở rộng đối xứng).</div>
+            </div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding-top:4px; border-top:1px solid #f1f5f9;">
                 <button class="measure-mini-btn" id="style-reset-default-btn" onclick="resetVisualStyleToDefault()">Mặc định (9px / 2px)</button>
                 <button class="measure-mini-btn primary" id="style-done-btn" onclick="closeStyleSizePopover()">Xong</button>
@@ -1864,6 +2344,76 @@
         <div id="labels-container"></div>
         <div id="bg-images-controls-layer" data-testid="bg-images-controls-layer"></div>
         <div id="floating-textboxes-layer" data-testid="floating-textboxes-layer"></div>
+        <canvas id="handwriting-capture-canvas" data-testid="handwriting-capture-canvas" aria-label="Vùng viết tay tự do trên màn hình"></canvas>
+        <canvas id="handwriting-fly-canvas" aria-hidden="true"></canvas>
+        <div id="handwriting-live-pill" data-testid="handwriting-live-pill" role="status" aria-live="polite">
+            <span class="hw-live-dot"></span>
+            <span id="hw-live-pill-text">Đang nhận nét viết...</span>
+            <div class="hw-live-progress-wrap"><div class="hw-live-progress-bar" id="hw-live-progress-bar"></div></div>
+            <button type="button" class="hw-live-commit-btn" id="hw-live-commit-btn" onclick="commitPendingHandwritingNow()">↵ Đưa vào dòng</button>
+            <button type="button" class="hw-live-cancel-btn" id="hw-live-cancel-btn" onclick="discardPendingHandwriting()" aria-label="Hủy nét đang viết">Hủy</button>
+        </div>
+        <section id="handwriting-page-panel" data-testid="handwriting-page-panel" aria-label="Trang viết tay">
+            <div class="hw-panel-header" id="hw-panel-drag-handle">
+                <div class="hw-panel-title-group">
+                    <span class="hw-panel-title-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+                    </span>
+                    <span class="hw-panel-title" id="hw-panel-title-text">Trang viết tay</span>
+                    <span class="hw-mode-tag" id="hw-mode-tag">Đang viết</span>
+                </div>
+                <div class="hw-header-actions">
+                    <button type="button" class="hw-header-btn active-pen" id="hw-toggle-pen-btn" onclick="toggleHandwritingPenMode()" title="Bật / Tắt chế độ viết tay trên màn hình">Tắt bút</button>
+                    <button type="button" class="hw-header-btn icon-only" id="hw-collapse-btn" onclick="toggleHandwritingPanelCollapse()" aria-label="Thu gọn / Mở rộng trang viết" title="Thu gọn / Mở rộng">▾</button>
+                    <button type="button" class="hw-header-btn icon-only danger" id="hw-close-btn" onclick="closeHandwritingPagePanel()" aria-label="Đóng trang viết tay" title="Đóng trang viết">✕</button>
+                </div>
+            </div>
+            <div class="hw-controls-strip">
+                <div class="hw-control-row">
+                    <div class="hw-swatches" id="hw-ink-swatches" role="group" aria-label="Màu mực viết tay">
+                        <button type="button" class="hw-swatch active" data-hw-color="#1d4ed8" style="background:#1d4ed8" onclick="setHandwritingInkColor('#1d4ed8')" aria-label="Mực xanh dương" title="Mực xanh dương"></button>
+                        <button type="button" class="hw-swatch" data-hw-color="#0f172a" style="background:#0f172a" onclick="setHandwritingInkColor('#0f172a')" aria-label="Mực đen" title="Mực đen"></button>
+                        <button type="button" class="hw-swatch" data-hw-color="#dc2626" style="background:#dc2626" onclick="setHandwritingInkColor('#dc2626')" aria-label="Mực đỏ" title="Mực đỏ"></button>
+                        <button type="button" class="hw-swatch" data-hw-color="#15803d" style="background:#15803d" onclick="setHandwritingInkColor('#15803d')" aria-label="Mực xanh lá" title="Mực xanh lá"></button>
+                        <button type="button" class="hw-swatch" data-hw-color="#7e22ce" style="background:#7e22ce" onclick="setHandwritingInkColor('#7e22ce')" aria-label="Mực tím" title="Mực tím"></button>
+                    </div>
+                    <div class="hw-seg-group" role="group" aria-label="Độ dày nét bút">
+                        <button type="button" class="hw-seg-btn" data-hw-width="2.8" onclick="setHandwritingBaseWidth(2.8)" id="hw-width-thin">Mảnh</button>
+                        <button type="button" class="hw-seg-btn active" data-hw-width="4.2" onclick="setHandwritingBaseWidth(4.2)" id="hw-width-med">Vừa</button>
+                        <button type="button" class="hw-seg-btn" data-hw-width="5.8" onclick="setHandwritingBaseWidth(5.8)" id="hw-width-bold">Đậm</button>
+                    </div>
+                    <button type="button" class="hw-smart-toggle active" id="hw-smart-calligraphy-btn" onclick="toggleHandwritingSmartThickThin()" aria-pressed="true" title="Tự động nhận dạng nét đậm (kéo xuống/nhấn) và nét thanh (đưa lên/nhanh)">✦ Đậm nhạt</button>
+                </div>
+                <div class="hw-control-row">
+                    <div class="hw-action-group">
+                        <button type="button" class="hw-mini-btn" id="hw-lh-dec-btn" onclick="adjustHandwritingLineHeight(-4)" title="Thu nhỏ chiều cao dòng viết">A−</button>
+                        <button type="button" class="hw-mini-btn" id="hw-lh-inc-btn" onclick="adjustHandwritingLineHeight(4)" title="Tăng chiều cao dòng viết">A+</button>
+                        <select class="hw-pause-select" id="hw-pause-select" onchange="setHandwritingPauseMs(this.value)" aria-label="Thời gian dừng tự đưa vào dòng" title="Thời gian dừng tay để tự đưa cụm từ vào dòng">
+                            <option value="600">0.6s</option>
+                            <option value="900" selected>0.9s</option>
+                            <option value="1400">1.4s</option>
+                        </select>
+                    </div>
+                    <div class="hw-action-group">
+                        <button type="button" class="hw-mini-btn" id="hw-space-btn" onclick="insertHandwritingSpace()" title="Thêm khoảng trắng (Phím Space)">Cách</button>
+                        <button type="button" class="hw-mini-btn" id="hw-newline-btn" onclick="insertHandwritingLineBreak()" title="Xuống dòng mới (Phím Enter)">↵ Dòng</button>
+                        <button type="button" class="hw-mini-btn" id="hw-backspace-btn" onclick="deleteLastHandwritingWord()" title="Xóa từ vừa viết (Phím Backspace)">⌫ Xóa từ</button>
+                        <button type="button" class="hw-mini-btn danger" id="hw-clear-btn" onclick="clearHandwritingPage()" title="Xóa toàn bộ trang viết tay">Xóa trang</button>
+                    </div>
+                </div>
+            </div>
+            <div class="hw-paper-wrap">
+                <div class="hw-paper-drag-strip" id="hw-paper-drag-strip" title="Kéo cạnh trên giấy để di chuyển trang viết"></div>
+                <button type="button" id="hw-corner-tools-btn" data-testid="hw-corner-tools-btn" onclick="toggleHandwritingToolsVisibility()" aria-label="Ẩn / Hiện công cụ trang viết tay" aria-expanded="false" title="Hiện / Ẩn công cụ trang viết">
+                    <svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><circle cx="9" cy="7" r="2" fill="currentColor"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="11" cy="17" r="2" fill="currentColor"/></svg>
+                </button>
+                <div class="hw-paper-scroll" id="hw-paper-scroll">
+                    <canvas id="handwriting-page-canvas" data-testid="handwriting-page-canvas"></canvas>
+                    <div class="hw-paper-hint" id="hw-paper-hint">Viết tay tự do lên bất kỳ vị trí nào trên màn hình — khi dừng tay, cụm từ sẽ tự động thu cỡ đồng bộ và đưa về đúng dòng hiện hành.</div>
+                </div>
+            </div>
+            <div class="hw-resize-handle" id="hw-resize-handle" title="Kéo để thay đổi kích thước trang viết"></div>
+        </section>
         <div class="snap-badge" id="snap-badge"></div>
     </div>
 
@@ -1948,6 +2498,17 @@
                         <button class="style-step-btn" onclick="stepVisualLineWidth(-0.5)">-</button>
                         <input type="range" class="style-range-input" id="settings-slider-line-width" min="1" max="5" step="0.5" value="2" oninput="setVisualLineWidth(Number(this.value))">
                         <button class="style-step-btn" onclick="stepVisualLineWidth(0.5)">+</button>
+                    </div>
+                </div>
+                <div class="style-pop-row">
+                    <div class="style-pop-label-line">
+                        <span id="settings-lbl-base-plane">Mặt phẳng nền (P):</span>
+                        <button type="button" class="style-pop-val-badge clickable" id="settings-val-base-plane" onclick="resetBasePlaneBounds()" title="Nhấp để đặt lại mặt phẳng nền về 16 × 16">16 × 16</button>
+                    </div>
+                    <div class="style-slider-wrap">
+                        <button type="button" class="style-step-btn" onclick="stepBasePlaneSize(-4)" aria-label="Thu nhỏ mặt phẳng nền (P)">-</button>
+                        <input type="range" class="style-range-input" id="settings-slider-base-plane" min="8" max="80" step="2" value="16" aria-label="Kích thước mặt phẳng nền (P)" onpointerdown="beginBasePlaneSliderHistory()" oninput="setBasePlaneUniformSize(Number(this.value))" onchange="endBasePlaneSliderHistory()">
+                        <button type="button" class="style-step-btn" onclick="stepBasePlaneSize(4)" aria-label="Mở rộng mặt phẳng nền (P)">+</button>
                     </div>
                 </div>
                 <button class="measure-mini-btn" id="settings-style-reset-btn" onclick="resetVisualStyleToDefault()">Mặc định</button>
@@ -2125,7 +2686,7 @@
                     spherical.phi = Math.max(0.05, Math.min(Math.PI - 0.05, spherical.phi));
                     if (scope.object.isOrthographicCamera) {
                         if (scale !== 1) {
-                            scope.object.zoom = Math.max(0.2, Math.min(8.0, scope.object.zoom / scale));
+                            scope.object.zoom = Math.max(0.12, Math.min(8.0, scope.object.zoom / scale));
                             scope.object.updateProjectionMatrix();
                         }
                     } else {
@@ -2374,7 +2935,8 @@
             colorPalette: `<svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="17.5" cy="10.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="7.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="6.5" cy="12.5" r="1.4" fill="currentColor" stroke="none"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.43-.18-.83-.44-1.12-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h1.99c3.05 0 5.55-2.5 5.55-5.55C21.97 5.91 17.46 2 12 2Z"/></svg>`,
             howToDraw: `<svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4" fill="currentColor"/><line x1="19" y1="5" x2="19" y2="19"/></svg>`,
             curveInterp: `<svg viewBox="0 0 24 24"><path d="M3 18C6.5 5 11.5 5 14 12C16.5 19 19.5 14 21 6" fill="none"/><circle cx="4" cy="15.5" r="2" fill="currentColor" stroke="none"/><circle cx="9.5" cy="7.5" r="2" fill="currentColor" stroke="none"/><circle cx="15.5" cy="14.8" r="2" fill="currentColor" stroke="none"/><circle cx="20.5" cy="7.5" r="2" fill="currentColor" stroke="none"/></svg>`,
-            solidRevolve: `<svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22" stroke-dasharray="2 2"/><path d="M12 4C17.5 6.5 19.5 11.5 16 15.5C14 17.8 15 19.5 17 20" fill="none"/><path d="M12 4C6.5 6.5 4.5 11.5 8 15.5C10 17.8 9 19.5 7 20" fill="none" stroke-opacity="0.55"/><ellipse cx="12" cy="11.5" rx="6.2" ry="2.1" fill="none"/><ellipse cx="12" cy="20" rx="5" ry="1.7" fill="none"/></svg>`
+            solidRevolve: `<svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22" stroke-dasharray="2 2"/><path d="M12 4C17.5 6.5 19.5 11.5 16 15.5C14 17.8 15 19.5 17 20" fill="none"/><path d="M12 4C6.5 6.5 4.5 11.5 8 15.5C10 17.8 9 19.5 7 20" fill="none" stroke-opacity="0.55"/><ellipse cx="12" cy="11.5" rx="6.2" ry="2.1" fill="none"/><ellipse cx="12" cy="20" rx="5" ry="1.7" fill="none"/></svg>`,
+            handwritingPen: `<svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/><path d="M3 21h9" stroke-dasharray="2 2"/></svg>`
         };
 
         const GROUP_NAMES_I18N = {
@@ -2413,8 +2975,8 @@
                 }
             },
             'toggle-plane': {
-                vi: { name: 'Ẩn / Hiện mặt phẳng nền (P)', tip: '<b>Ẩn / Hiện mặt phẳng nền $(P)$</b>' },
-                en: { name: 'Show / Hide Base Plane (P)', tip: '<b>Show / Hide Base Plane $(P)$</b>' }
+                vi: { name: 'Ẩn / Hiện mặt phẳng nền (P)', tip: '<b>Ẩn / Hiện mặt phẳng nền $(P)$</b> (Kéo 4 cạnh/góc viền của $(P)$ trong không gian 3D để mở rộng hoặc thu gọn)' },
+                en: { name: 'Show / Hide Base Plane (P)', tip: '<b>Show / Hide Base Plane $(P)$</b> (Drag the 4 outer edges/corners of $(P)$ in 3D to expand or shrink)' }
             },
             'reset-camera': {
                 vi: { name: 'Đặt lại góc nhìn chuẩn', tip: '<b>Đặt lại góc nhìn chuẩn</b>' },
@@ -2448,6 +3010,18 @@
                 en: {
                     name: 'Add Text & Math Formula Box',
                     tip: '<b>Text & Math Box ($\\sqrt{x}, \\dfrac{a}{b}$):</b> Drag to move, resize, press Ctrl/Alt + [+/-] to adjust font size'
+                }
+            },
+            'handwriting-pen': {
+                vi: {
+                    name: 'Bút viết tay thông minh (Tự đưa về dòng)',
+                    tip: '<b>Bút viết tay thông minh:</b> Viết 1 từ/cụm từ ở bất kỳ đâu trên màn hình; khi dừng tự thu cỡ đồng bộ về dòng hiện hành với nét đậm nhạt thông minh',
+                    guide: 'Bút viết tay thông minh: <b>Viết tay tự do ở bất kỳ đâu trên màn hình</b> — dừng tay để tự động thu cỡ đồng bộ về dòng hiện hành (Nhấn <b>Enter</b> để đưa vào dòng/xuống dòng, <b>Backspace</b> để xóa từ, <b>Esc</b> để tắt bút)'
+                },
+                en: {
+                    name: 'Smart Handwriting Pen (Auto-Flow to Line)',
+                    tip: '<b>Smart Handwriting Pen:</b> Handwrite words anywhere on screen; pausing auto-scales and flows them into the current notebook line with smart thick/thin calligraphy',
+                    guide: 'Smart Handwriting Pen: <b>Write anywhere on screen</b> — pause to automatically scale & flow into the current line (<b>Enter</b> to commit/new line, <b>Backspace</b> to undo word, <b>Esc</b> to exit)'
                 }
             },
             'point2d': {
@@ -3012,6 +3586,12 @@
                 iconHtml: SVG_ICONS.textBox,
                 tip: TOOL_I18N['text-box'].vi.tip
             },
+            {
+                id: 'handwriting-pen', group: 1, groupName: 'Nhóm 1: Góc nhìn & Nền',
+                name: 'Bút viết tay thông minh (Tự đưa về dòng)', type: 'mode',
+                iconHtml: SVG_ICONS.handwritingPen,
+                tip: TOOL_I18N['handwriting-pen'].vi.tip
+            },
 
             // NHÓM 2: Tạo Điểm
             {
@@ -3311,7 +3891,7 @@
         const DEFAULT_BASIC_TRAY_TOOL_IDS = [
             'view', 'color-obj', 'point2d', 'point3d', 'segment', 'line', 'parallel', 'perp',
             'intersect-surfaces', 'plane-perp', 'plane-parallel',
-            'poly-free', 'circle-center', 'arc-3pts', 'curve-interp', 'solid-revolve', 'text-box', 'construction-steps', 'undo-action', 'delete-obj'
+            'poly-free', 'circle-center', 'arc-3pts', 'curve-interp', 'solid-revolve', 'text-box', 'handwriting-pen', 'construction-steps', 'undo-action', 'delete-obj'
         ];
 
         const TRAY_ICON_LIBRARY = [
@@ -3343,7 +3923,7 @@
                 nameVi: 'Góc nhìn & Hiển thị',
                 nameEn: 'View & Display',
                 iconId: 'group1',
-                toolIds: ['view', 'move', 'toggle-plane', 'reset-camera', 'toggle-face-tint', 'color-obj', 'style-size', 'text-box']
+                toolIds: ['view', 'move', 'toggle-plane', 'reset-camera', 'toggle-face-tint', 'color-obj', 'style-size', 'text-box', 'handwriting-pen']
             },
             {
                 id: 'tray_cluster_points',
@@ -3671,6 +4251,16 @@
                                 }
                                 changed = true;
                             }
+                            if (!parsed.migratedHandwritingPenV1) {
+                                const group1Tray = normalized.trays.find(tr => tr.id === 'tray_cluster_view' || tr.iconId === 'group1');
+                                if (group1Tray && Array.isArray(group1Tray.toolIds) && !group1Tray.toolIds.includes('handwriting-pen')) {
+                                    group1Tray.toolIds.push('handwriting-pen');
+                                }
+                                if (!basicTray.toolIds.includes('handwriting-pen')) {
+                                    basicTray.toolIds.push('handwriting-pen');
+                                }
+                                changed = true;
+                            }
                             if (changed) {
                                 const orderMap = new Map();
                                 MASTER_TOOLS.forEach((mt, idx) => orderMap.set(mt.id, idx));
@@ -3705,7 +4295,8 @@
                     migratedCurveInterpV1: true,
                     migratedArc3PtsV1: true,
                     migratedSolidRevolveV1: true,
-                    migratedClusterTraysV1: true
+                    migratedClusterTraysV1: true,
+                    migratedHandwritingPenV1: true
                 }));
             } catch (e) {}
         }
@@ -5386,11 +5977,190 @@
         // 10. CẤU TRÚC DỮ LIỆU ĐỘNG & KHỞI TẠO 3D
         // =========================================================================
         let scene, camera, renderer, controls;
-        let basePlaneMesh, gridHelper;
+        let basePlaneMesh, gridHelper, basePlaneBorderGroup;
+        let basePlaneBorderLines = {};
+        let basePlaneCornerDot = null;
+        let lastRenderedBasePlaneKey = '';
         let isBasePlaneVisible = true;
         let showFaceTint = true;
 
-        let geoState = { points: [], segments: [], faces: [], circles: [], curves: [], solids: [], measureScale: null, measurements: [], textBoxes: [], bgImages: [] };
+        const DEFAULT_BASE_PLANE_BOUNDS = Object.freeze({ xMin: -8, xMax: 8, zMin: -8, zMax: 8 });
+        const BASE_PLANE_MIN_SPAN = 4;
+        const BASE_PLANE_MAX_EXTENT = 40;
+        let basePlaneSliderHistoryCaptured = false;
+
+        function clampBasePlaneNum(v, lo, hi) {
+            return v < lo ? lo : v > hi ? hi : v;
+        }
+
+        function normalizeBasePlaneBounds(raw, minSpan = BASE_PLANE_MIN_SPAN, maxExtent = BASE_PLANE_MAX_EXTENT) {
+            if (!raw || typeof raw !== 'object') {
+                return { ...DEFAULT_BASE_PLANE_BOUNDS };
+            }
+            const safeMinSpan = Math.max(2, Math.min(maxExtent, minSpan));
+            const rawXMin = (typeof raw.xMin === 'number' && Number.isFinite(raw.xMin)) ? raw.xMin : DEFAULT_BASE_PLANE_BOUNDS.xMin;
+            const rawXMax = (typeof raw.xMax === 'number' && Number.isFinite(raw.xMax)) ? raw.xMax : DEFAULT_BASE_PLANE_BOUNDS.xMax;
+            const rawZMin = (typeof raw.zMin === 'number' && Number.isFinite(raw.zMin)) ? raw.zMin : DEFAULT_BASE_PLANE_BOUNDS.zMin;
+            const rawZMax = (typeof raw.zMax === 'number' && Number.isFinite(raw.zMax)) ? raw.zMax : DEFAULT_BASE_PLANE_BOUNDS.zMax;
+
+            let xMin = clampBasePlaneNum(Math.min(rawXMin, rawXMax), -maxExtent, maxExtent - safeMinSpan);
+            let xMax = clampBasePlaneNum(Math.max(rawXMin, rawXMax), xMin + safeMinSpan, maxExtent);
+            let zMin = clampBasePlaneNum(Math.min(rawZMin, rawZMax), -maxExtent, maxExtent - safeMinSpan);
+            let zMax = clampBasePlaneNum(Math.max(rawZMin, rawZMax), zMin + safeMinSpan, maxExtent);
+
+            if (xMax - xMin < safeMinSpan) {
+                const mid = clampBasePlaneNum((xMin + xMax) * 0.5, -maxExtent + safeMinSpan * 0.5, maxExtent - safeMinSpan * 0.5);
+                xMin = mid - safeMinSpan * 0.5;
+                xMax = mid + safeMinSpan * 0.5;
+            }
+            if (zMax - zMin < safeMinSpan) {
+                const mid = clampBasePlaneNum((zMin + zMax) * 0.5, -maxExtent + safeMinSpan * 0.5, maxExtent - safeMinSpan * 0.5);
+                zMin = mid - safeMinSpan * 0.5;
+                zMax = mid + safeMinSpan * 0.5;
+            }
+            return { xMin, xMax, zMin, zMax };
+        }
+
+        function computeUniformBasePlaneBounds(targetSpan, minSpan = 8, maxExtent = BASE_PLANE_MAX_EXTENT) {
+            const clampedSpan = clampBasePlaneNum(Math.round(targetSpan / 2) * 2, minSpan, maxExtent * 2);
+            const half = clampedSpan * 0.5;
+            return { xMin: -half, xMax: half, zMin: -half, zMax: half };
+        }
+
+        function computeResizedBasePlaneBounds(current, handle, dragPointXZ, options = {}) {
+            const safe = normalizeBasePlaneBounds(current);
+            const minSpan = options.minSpan ?? BASE_PLANE_MIN_SPAN;
+            const maxExtent = options.maxExtent ?? BASE_PLANE_MAX_EXTENT;
+            const gridStep = options.gridStep ?? 1;
+            const symmetric = Boolean(options.symmetric);
+            const snapVal = (v) => (Number.isFinite(gridStep) && gridStep > 0) ? Math.round(v / gridStep) * gridStep : v;
+
+            const next = { ...safe };
+            const targetX = snapVal(dragPointXZ.x);
+            const targetZ = snapVal(dragPointXZ.z);
+
+            const touchesXMin = handle === 'xMin' || handle === 'xMin_zMin' || handle === 'xMin_zMax';
+            const touchesXMax = handle === 'xMax' || handle === 'xMax_zMin' || handle === 'xMax_zMax';
+            const touchesZMin = handle === 'zMin' || handle === 'xMin_zMin' || handle === 'xMax_zMin';
+            const touchesZMax = handle === 'zMax' || handle === 'xMin_zMax' || handle === 'xMax_zMax';
+
+            if (touchesXMin) {
+                if (symmetric) {
+                    const half = clampBasePlaneNum(Math.abs(targetX), minSpan * 0.5, maxExtent);
+                    next.xMin = -half;
+                    next.xMax = half;
+                } else {
+                    next.xMin = clampBasePlaneNum(targetX, -maxExtent, next.xMax - minSpan);
+                }
+            }
+            if (touchesXMax) {
+                if (symmetric) {
+                    const half = clampBasePlaneNum(Math.abs(targetX), minSpan * 0.5, maxExtent);
+                    next.xMin = -half;
+                    next.xMax = half;
+                } else {
+                    next.xMax = clampBasePlaneNum(targetX, next.xMin + minSpan, maxExtent);
+                }
+            }
+            if (touchesZMin) {
+                if (symmetric) {
+                    const half = clampBasePlaneNum(Math.abs(targetZ), minSpan * 0.5, maxExtent);
+                    next.zMin = -half;
+                    next.zMax = half;
+                } else {
+                    next.zMin = clampBasePlaneNum(targetZ, -maxExtent, next.zMax - minSpan);
+                }
+            }
+            if (touchesZMax) {
+                if (symmetric) {
+                    const half = clampBasePlaneNum(Math.abs(targetZ), minSpan * 0.5, maxExtent);
+                    next.zMin = -half;
+                    next.zMax = half;
+                } else {
+                    next.zMax = clampBasePlaneNum(targetZ, next.zMin + minSpan, maxExtent);
+                }
+            }
+
+            return normalizeBasePlaneBounds(next, minSpan, maxExtent);
+        }
+
+        function computeBasePlaneGridGeometryData(bounds, yOffset = -0.005) {
+            const b = normalizeBasePlaneBounds(bounds);
+            const majorLines = [];
+            const minorLines = [];
+
+            const xStart = Math.ceil(b.xMin);
+            const xEnd = Math.floor(b.xMax);
+            for (let x = xStart; x <= xEnd; x++) {
+                const seg = { x1: x, y1: yOffset, z1: b.zMin, x2: x, y2: yOffset, z2: b.zMax };
+                if (x === 0) majorLines.push(seg);
+                else minorLines.push(seg);
+            }
+
+            const zStart = Math.ceil(b.zMin);
+            const zEnd = Math.floor(b.zMax);
+            for (let z = zStart; z <= zEnd; z++) {
+                const seg = { x1: b.xMin, y1: yOffset, z1: z, x2: b.xMax, y2: yOffset, z2: z };
+                if (z === 0) majorLines.push(seg);
+                else minorLines.push(seg);
+            }
+
+            const borderEdges = [
+                { handle: 'zMax', segment: { x1: b.xMin, y1: yOffset, z1: b.zMax, x2: b.xMax, y2: yOffset, z2: b.zMax } },
+                { handle: 'xMin', segment: { x1: b.xMin, y1: yOffset, z1: b.zMin, x2: b.xMin, y2: yOffset, z2: b.zMax } },
+                { handle: 'zMin', segment: { x1: b.xMin, y1: yOffset, z1: b.zMin, x2: b.xMax, y2: yOffset, z2: b.zMin } },
+                { handle: 'xMax', segment: { x1: b.xMax, y1: yOffset, z1: b.zMin, x2: b.xMax, y2: yOffset, z2: b.zMax } }
+            ];
+
+            return {
+                majorLines,
+                minorLines,
+                borderEdges,
+                width: b.xMax - b.xMin,
+                depth: b.zMax - b.zMin,
+                centerX: (b.xMin + b.xMax) * 0.5,
+                centerZ: (b.zMin + b.zMax) * 0.5
+            };
+        }
+
+        function isPointWithinBasePlaneIntersectionMargin(x, z, bounds, margin = 4) {
+            const b = normalizeBasePlaneBounds(bounds);
+            return x >= b.xMin - margin && x <= b.xMax + margin && z >= b.zMin - margin && z <= b.zMax + margin;
+        }
+
+        function getBasePlaneBounds() {
+            const normalized = normalizeBasePlaneBounds(geoState && geoState.basePlaneBounds);
+            if (geoState) geoState.basePlaneBounds = normalized;
+            return normalized;
+        }
+
+        function createDefaultHandwritingPageState() {
+            return {
+                words: [],
+                lineHeight: 44,
+                visible: false,
+                inkColor: '#1d4ed8',
+                baseWidth: 4.2,
+                smartThickThin: true,
+                pauseMs: 900
+            };
+        }
+
+        function normalizeHandwritingPageState(raw) {
+            const def = createDefaultHandwritingPageState();
+            if (!raw || typeof raw !== 'object') return def;
+            return {
+                words: Array.isArray(raw.words) ? raw.words : [],
+                lineHeight: (typeof raw.lineHeight === 'number' && Number.isFinite(raw.lineHeight)) ? Math.max(28, Math.min(84, raw.lineHeight)) : def.lineHeight,
+                visible: Boolean(raw.visible),
+                inkColor: (typeof raw.inkColor === 'string' && raw.inkColor.trim()) ? raw.inkColor : def.inkColor,
+                baseWidth: (typeof raw.baseWidth === 'number' && Number.isFinite(raw.baseWidth)) ? Math.max(2, Math.min(8, raw.baseWidth)) : def.baseWidth,
+                smartThickThin: raw.smartThickThin !== false,
+                pauseMs: (typeof raw.pauseMs === 'number' && Number.isFinite(raw.pauseMs)) ? Math.max(350, Math.min(2500, raw.pauseMs)) : def.pauseMs
+            };
+        }
+
+        let geoState = { points: [], segments: [], faces: [], circles: [], curves: [], solids: [], measureScale: null, measurements: [], textBoxes: [], bgImages: [], handwritingPage: createDefaultHandwritingPageState(), basePlaneBounds: { ...DEFAULT_BASE_PLANE_BOUNDS } };
         let historyStack = [];
         let activeTextBoxId = null;
         let activeBgImageId = null;
@@ -5428,6 +6198,7 @@
         let hoveredFaceId = null;
         let hoveredSolidId = null;
         let hoveredPlaneBorderSegId = null;
+        let hoveredBasePlaneHandle = null;
         let activeInterpCurveState = { curveId: null, lockedPlaneSpec: null };
 
         let isCreating3DPoint = false;
@@ -5439,6 +6210,8 @@
         let draggedPointId = null;
         let isDraggingPlaneBorder = false;
         let draggedPlaneBorder = null;
+        let isDraggingBasePlaneBorder = false;
+        let draggedBasePlaneBorder = null;
         let dragPlane = null;
         let dragStartMouseY = 0;
         let dragStartPointY = 0;
@@ -5515,6 +6288,66 @@
             if (tracePointsCloud && tracePointsCloud.material) {
                 tracePointsCloud.material.size = Math.max(4, Math.round(ptSize * 0.72));
                 tracePointsCloud.material.needsUpdate = true;
+            }
+            syncBasePlaneSizeUI();
+        }
+
+        function syncBasePlaneSizeUI() {
+            const b = getBasePlaneBounds();
+            const w = Math.round(b.xMax - b.xMin);
+            const d = Math.round(b.zMax - b.zMin);
+            const maxSpan = clampBasePlaneNum(Math.round(Math.max(w, d) / 2) * 2, 8, BASE_PLANE_MAX_EXTENT * 2);
+            const labelText = `${w} × ${d}`;
+            ['style-slider-base-plane', 'settings-slider-base-plane'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = String(maxSpan);
+            });
+            ['style-val-base-plane', 'settings-val-base-plane'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = labelText;
+            });
+        }
+
+        function beginBasePlaneSliderHistory() {
+            if (!basePlaneSliderHistoryCaptured) {
+                saveHistory();
+                basePlaneSliderHistoryCaptured = true;
+            }
+        }
+
+        function endBasePlaneSliderHistory() {
+            basePlaneSliderHistoryCaptured = false;
+            scheduleAutoSaveState();
+        }
+
+        function setBasePlaneUniformSize(spanVal, recordHistory = false) {
+            if (recordHistory) saveHistory();
+            geoState.basePlaneBounds = computeUniformBasePlaneBounds(Number(spanVal));
+            rebuildBasePlaneVisuals(false);
+            syncBasePlaneSizeUI();
+            if (scene) computeEdgeIntersections();
+            scheduleAutoSaveState();
+        }
+
+        function stepBasePlaneSize(delta) {
+            const b = getBasePlaneBounds();
+            const currentSpan = Math.max(b.xMax - b.xMin, b.zMax - b.zMin);
+            setBasePlaneUniformSize(currentSpan + delta, true);
+        }
+
+        function resetBasePlaneBounds() {
+            saveHistory();
+            geoState.basePlaneBounds = { ...DEFAULT_BASE_PLANE_BOUNDS };
+            rebuildBasePlaneVisuals(false);
+            syncBasePlaneSizeUI();
+            if (scene) computeEdgeIntersections();
+            scheduleAutoSaveState();
+            const guideSpan = document.getElementById('guide-span');
+            if (guideSpan) {
+                guideSpan.innerHTML = t(
+                    'Đã đặt lại mặt phẳng nền <b>(P)</b> về kích thước mặc định <b>16 × 16</b>',
+                    'Reset base plane <b>(P)</b> to default size <b>16 × 16</b>'
+                );
             }
         }
 
@@ -5658,7 +6491,9 @@
                     measureScale: parsed.measureScale || null,
                     measurements: parsed.measurements || [],
                     textBoxes: Array.isArray(parsed.textBoxes) ? parsed.textBoxes : [],
-                    bgImages: Array.isArray(parsed.bgImages) ? parsed.bgImages : []
+                    bgImages: Array.isArray(parsed.bgImages) ? parsed.bgImages : [],
+                    handwritingPage: normalizeHandwritingPageState(parsed.handwritingPage),
+                    basePlaneBounds: normalizeBasePlaneBounds(parsed.basePlaneBounds)
                 };
                 lastSavedSerializedState = JSON.stringify(geoState);
                 return true;
@@ -5751,13 +6586,18 @@
             setTxt('settings-reset-text', 'Khôi phục mặc định', 'Reset Default');
             setTxt('settings-done-btn', 'Hoàn tất', 'Done');
 
-            setTxt('style-pop-title', 'KÍCH THƯỚC ĐIỂM & ĐƯỜNG', 'POINT & LINE SIZE');
+            setTxt('style-pop-title', 'KÍCH THƯỚC ĐIỂM, ĐƯỜNG & NỀN', 'POINT, LINE & BASE PLANE');
             setTxt('style-lbl-point-size', 'Kích thước điểm:', 'Point Size:');
             setTxt('style-lbl-line-width', 'Độ dày đường vẽ:', 'Line Width:');
+            setTxt('style-lbl-base-plane', 'Mặt phẳng nền (P):', 'Base Plane (P):');
+            setTxt('style-hint-base-plane', 'Kéo trực tiếp 4 cạnh/góc viền của (P) trong không gian 3D (giữ Shift để mở rộng đối xứng).', 'Drag the 4 outer edges/corners of (P) in 3D (hold Shift for symmetric resize).');
+            setTitle('style-val-base-plane', 'Nhấp để đặt lại mặt phẳng nền về 16 × 16', 'Click to reset base plane to 16 × 16');
             setTxt('style-reset-default-btn', 'Mặc định (9px / 2px)', 'Default (9px / 2px)');
             setTxt('style-done-btn', 'Xong', 'Done');
             setTxt('settings-lbl-point-size', 'Kích thước điểm:', 'Point Size:');
             setTxt('settings-lbl-line-width', 'Độ dày đường vẽ:', 'Line Width:');
+            setTxt('settings-lbl-base-plane', 'Mặt phẳng nền (P):', 'Base Plane (P):');
+            setTitle('settings-val-base-plane', 'Nhấp để đặt lại mặt phẳng nền về 16 × 16', 'Click to reset base plane to 16 × 16');
             setTxt('settings-style-reset-btn', 'Mặc định', 'Default');
             syncVisualStyleUI();
             const sloganVi = 'Chạm không gian - Xoay góc nhìn - Mở tri thức';
@@ -5816,6 +6656,10 @@
             if (guideSpan && typeof getToolGuide === 'function') {
                 guideSpan.innerHTML = getToolGuide(currentTool);
                 renderMathInElementSafe(guideSpan);
+            }
+
+            if (typeof syncHandwritingLanguageUI === 'function') {
+                syncHandwritingLanguageUI();
             }
 
             if (scene) {
@@ -5920,7 +6764,9 @@
                         measureScale: stateCandidate.measureScale || null,
                         measurements: Array.isArray(stateCandidate.measurements) ? stateCandidate.measurements : [],
                         textBoxes: Array.isArray(stateCandidate.textBoxes) ? stateCandidate.textBoxes : [],
-                        bgImages: Array.isArray(stateCandidate.bgImages) ? stateCandidate.bgImages : []
+                        bgImages: Array.isArray(stateCandidate.bgImages) ? stateCandidate.bgImages : [],
+                        handwritingPage: normalizeHandwritingPageState(stateCandidate.handwritingPage),
+                        basePlaneBounds: normalizeBasePlaneBounds(stateCandidate.basePlaneBounds)
                     };
 
                     if (parsed.options) {
@@ -5928,6 +6774,7 @@
                             isBasePlaneVisible = parsed.options.isBasePlaneVisible;
                             if (basePlaneMesh) basePlaneMesh.visible = isBasePlaneVisible;
                             if (gridHelper) gridHelper.visible = isBasePlaneVisible;
+                            if (basePlaneBorderGroup) basePlaneBorderGroup.visible = isBasePlaneVisible;
                         }
                         if (typeof parsed.options.showFaceTint === 'boolean') {
                             showFaceTint = parsed.options.showFaceTint;
@@ -6047,7 +6894,7 @@
                  frustumSize / 2,
                 -frustumSize / 2,
                  0.1,
-                 200
+                 400
             );
             camera.userData.frustumSize = frustumSize;
             camera.position.set(20, 13.5, 28);
@@ -6167,7 +7014,24 @@
                             tryReadClipboardImageOnShortcut();
                         }
                     }, 60);
+                } else if (!isEditingInput && currentTool === 'handwriting-pen' && e.key === 'Enter') {
+                    e.preventDefault();
+                    if (typeof handleHandwritingEnterKey === 'function') handleHandwritingEnterKey();
+                    return;
+                } else if (!isEditingInput && currentTool === 'handwriting-pen' && e.key === ' ') {
+                    e.preventDefault();
+                    if (typeof handleHandwritingSpaceKey === 'function') handleHandwritingSpaceKey();
+                    return;
+                } else if (!isEditingInput && currentTool === 'handwriting-pen' && e.key === 'Backspace') {
+                    e.preventDefault();
+                    if (typeof handleHandwritingBackspaceKey === 'function') handleHandwritingBackspaceKey();
+                    return;
                 } else if (e.key === 'Escape') {
+                    if (currentTool === 'handwriting-pen') {
+                        if (typeof commitPendingHandwritingNow === 'function') commitPendingHandwritingNow();
+                        selectTool('view');
+                        return;
+                    }
                     selectedPointIds = [];
                     selectedSurfaceItems = [];
                     intersectPendingBuilder = { points: [], segments: [] };
@@ -6182,6 +7046,7 @@
             setupStaticTooltips();
             setupGuideMarquee();
             initPinAppSystem();
+            if (typeof initHandwritingSystem === 'function') initHandwritingSystem();
             applyLanguage(currentLang);
             if (restoreAutoSavedState()) {
                 selectTool('view');
@@ -6194,21 +7059,137 @@
             animate();
         }
 
-        function createBasePlane() {
-            gridHelper = new THREE.GridHelper(16, 16, 0x94a3b8, 0xe2e8f0);
-            gridHelper.position.y = -0.005;
-            gridHelper.renderOrder = 0;
-            if (gridHelper.material) {
-                if (Array.isArray(gridHelper.material)) {
-                    gridHelper.material.forEach(m => { m.depthWrite = false; m.depthTest = false; });
-                } else {
-                    gridHelper.material.depthWrite = false;
-                    gridHelper.material.depthTest = false;
+        function disposeBasePlaneObject(obj) {
+            if (!obj) return;
+            if (scene) scene.remove(obj);
+            const disposedGeos = new Set();
+            const disposedMats = new Set();
+            obj.traverse((child) => {
+                if (child.geometry && !disposedGeos.has(child.geometry)) {
+                    disposedGeos.add(child.geometry);
+                    if (typeof child.geometry.dispose === 'function') child.geometry.dispose();
+                }
+                if (child.material) {
+                    const mats = Array.isArray(child.material) ? child.material : [child.material];
+                    mats.forEach((m) => {
+                        if (m && !disposedMats.has(m)) {
+                            disposedMats.add(m);
+                            if (typeof m.dispose === 'function') m.dispose();
+                        }
+                    });
+                }
+            });
+        }
+
+        function buildGridLineSegmentsMesh(segments, colorHex, opacity = 1) {
+            const positions = new Float32Array(segments.length * 6);
+            for (let i = 0; i < segments.length; i++) {
+                const s = segments[i];
+                const base = i * 6;
+                positions[base] = s.x1;
+                positions[base + 1] = s.y1;
+                positions[base + 2] = s.z1;
+                positions[base + 3] = s.x2;
+                positions[base + 4] = s.y2;
+                positions[base + 5] = s.z2;
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const mat = new THREE.LineBasicMaterial({
+                color: colorHex,
+                transparent: opacity < 1,
+                opacity,
+                depthWrite: false,
+                depthTest: false
+            });
+            const lines = new THREE.LineSegments(geo, mat);
+            lines.renderOrder = 0;
+            return lines;
+        }
+
+        function updateBasePlaneBorderHighlight() {
+            const activeHandle = (isDraggingBasePlaneBorder && draggedBasePlaneBorder)
+                ? draggedBasePlaneBorder.handle
+                : hoveredBasePlaneHandle;
+            const isSymmetricDrag = Boolean(isDraggingBasePlaneBorder && draggedBasePlaneBorder && draggedBasePlaneBorder.shiftSymmetric);
+            const activeEdges = new Set();
+            if (activeHandle) {
+                if (activeHandle.includes('xMin')) {
+                    activeEdges.add('xMin');
+                    if (isSymmetricDrag) activeEdges.add('xMax');
+                }
+                if (activeHandle.includes('xMax')) {
+                    activeEdges.add('xMax');
+                    if (isSymmetricDrag) activeEdges.add('xMin');
+                }
+                if (activeHandle.includes('zMin')) {
+                    activeEdges.add('zMin');
+                    if (isSymmetricDrag) activeEdges.add('zMax');
+                }
+                if (activeHandle.includes('zMax')) {
+                    activeEdges.add('zMax');
+                    if (isSymmetricDrag) activeEdges.add('zMin');
                 }
             }
+
+            ['zMax', 'xMin', 'zMin', 'xMax'].forEach((edgeKey) => {
+                const line = basePlaneBorderLines[edgeKey];
+                if (!line || !line.material) return;
+                const isLit = activeEdges.has(edgeKey);
+                line.material.color.setHex(isLit ? 0xd97706 : 0x94a3b8);
+                line.material.opacity = isLit ? 0.98 : 0.55;
+                line.material.needsUpdate = true;
+            });
+
+            if (basePlaneCornerDot) {
+                const isCorner = Boolean(activeHandle && activeHandle.includes('_'));
+                if (isCorner && isBasePlaneVisible) {
+                    const b = getBasePlaneBounds();
+                    const cx = activeHandle.includes('xMin') ? b.xMin : b.xMax;
+                    const cz = activeHandle.includes('zMin') ? b.zMin : b.zMax;
+                    const posAttr = basePlaneCornerDot.geometry.attributes.position;
+                    posAttr.setXYZ(0, cx, -0.002, cz);
+                    posAttr.needsUpdate = true;
+                    basePlaneCornerDot.visible = true;
+                } else {
+                    basePlaneCornerDot.visible = false;
+                }
+            }
+        }
+
+        function rebuildBasePlaneVisuals(force = false) {
+            if (!scene) return;
+            const b = getBasePlaneBounds();
+            const key = `${b.xMin},${b.xMax},${b.zMin},${b.zMax}`;
+            if (!force && key === lastRenderedBasePlaneKey && basePlaneMesh && gridHelper && basePlaneBorderGroup) {
+                basePlaneMesh.visible = isBasePlaneVisible;
+                gridHelper.visible = isBasePlaneVisible;
+                basePlaneBorderGroup.visible = isBasePlaneVisible;
+                updateBasePlaneBorderHighlight();
+                syncBasePlaneSizeUI();
+                return;
+            }
+
+            disposeBasePlaneObject(gridHelper);
+            disposeBasePlaneObject(basePlaneMesh);
+            disposeBasePlaneObject(basePlaneBorderGroup);
+            basePlaneBorderLines = {};
+            basePlaneCornerDot = null;
+
+            const gridData = computeBasePlaneGridGeometryData(b, -0.005);
+
+            gridHelper = new THREE.Group();
+            if (gridData.minorLines.length > 0) {
+                gridHelper.add(buildGridLineSegmentsMesh(gridData.minorLines, 0xe2e8f0, 1));
+            }
+            if (gridData.majorLines.length > 0) {
+                gridHelper.add(buildGridLineSegmentsMesh(gridData.majorLines, 0x94a3b8, 1));
+            }
+            gridHelper.renderOrder = 0;
+            gridHelper.visible = isBasePlaneVisible;
             scene.add(gridHelper);
 
-            const planeGeo = new THREE.PlaneGeometry(16, 16);
+            const planeGeo = new THREE.PlaneGeometry(gridData.width, gridData.depth);
             planeGeo.rotateX(-Math.PI / 2);
             const planeMat = new THREE.MeshBasicMaterial({
                 color: 0xf8fafc,
@@ -6219,8 +7200,57 @@
                 depthTest: false
             });
             basePlaneMesh = new THREE.Mesh(planeGeo, planeMat);
+            basePlaneMesh.position.set(gridData.centerX, 0, gridData.centerZ);
             basePlaneMesh.renderOrder = 0;
+            basePlaneMesh.visible = isBasePlaneVisible;
             scene.add(basePlaneMesh);
+
+            basePlaneBorderGroup = new THREE.Group();
+            gridData.borderEdges.forEach(({ handle, segment }) => {
+                const geo = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(segment.x1, -0.004, segment.z1),
+                    new THREE.Vector3(segment.x2, -0.004, segment.z2)
+                ]);
+                const mat = new THREE.LineBasicMaterial({
+                    color: 0x94a3b8,
+                    transparent: true,
+                    opacity: 0.55,
+                    depthWrite: false,
+                    depthTest: false
+                });
+                const line = new THREE.Line(geo, mat);
+                line.renderOrder = 1;
+                line.userData = { basePlaneHandle: handle };
+                basePlaneBorderLines[handle] = line;
+                basePlaneBorderGroup.add(line);
+            });
+
+            const cornerGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -0.002, 0)]);
+            const cornerMat = new THREE.PointsMaterial({
+                size: 11,
+                sizeAttenuation: false,
+                map: texPointHover || null,
+                color: 0xffffff,
+                transparent: true,
+                depthWrite: false,
+                depthTest: false
+            });
+            basePlaneCornerDot = new THREE.Points(cornerGeo, cornerMat);
+            basePlaneCornerDot.renderOrder = 12;
+            basePlaneCornerDot.visible = false;
+            basePlaneBorderGroup.add(basePlaneCornerDot);
+
+            basePlaneBorderGroup.renderOrder = 1;
+            basePlaneBorderGroup.visible = isBasePlaneVisible;
+            scene.add(basePlaneBorderGroup);
+
+            lastRenderedBasePlaneKey = key;
+            updateBasePlaneBorderHighlight();
+            syncBasePlaneSizeUI();
+        }
+
+        function createBasePlane() {
+            rebuildBasePlaneVisuals(true);
         }
 
         function positionTooltipSmart(btn) {
@@ -10144,6 +11174,8 @@
             if (!geoState.measurements) geoState.measurements = [];
             if (!geoState.textBoxes) geoState.textBoxes = [];
             if (!geoState.bgImages) geoState.bgImages = [];
+            geoState.handwritingPage = normalizeHandwritingPageState(geoState.handwritingPage);
+            geoState.basePlaneBounds = normalizeBasePlaneBounds(geoState.basePlaneBounds);
             selectedPointIds = [];
             selectedCircleIds = [];
             activeInterpCurveState = { curveId: null, lockedPlaneSpec: null };
@@ -10155,7 +11187,7 @@
 
         function clearAll() {
             saveHistory();
-            geoState = { points: [], segments: [], faces: [], circles: [], curves: [], solids: [], measureScale: null, measurements: [], textBoxes: [], bgImages: [] };
+            geoState = { points: [], segments: [], faces: [], circles: [], curves: [], solids: [], measureScale: null, measurements: [], textBoxes: [], bgImages: [], handwritingPage: createDefaultHandwritingPageState(), basePlaneBounds: { ...DEFAULT_BASE_PLANE_BOUNDS } };
             activeTextBoxId = null;
             activeBgImageId = null;
             selectedPointIds = [];
@@ -10759,7 +11791,7 @@
                 0,
                 p1.z + tVal * (p2.z - p1.z)
             );
-            if (!ignoreBounds && (Math.abs(pos.x) > 12 || Math.abs(pos.z) > 12)) return null;
+            if (!ignoreBounds && !isPointWithinBasePlaneIntersectionMargin(pos.x, pos.z, geoState.basePlaneBounds, 4)) return null;
             const segName = getSegmentDisplayName(seg);
             return {
                 pos,
@@ -11083,6 +12115,7 @@
 
         function updateSceneFromState() {
             if (!scene) return;
+            rebuildBasePlaneVisuals(false);
             recomputeAllDependentGeometry();
 
             if (typeof syncConstructionStepsWithScene === 'function') {
@@ -12135,6 +13168,9 @@
             }
             if (typeof updateConstructionStepsPanelUI === 'function') {
                 updateConstructionStepsPanelUI();
+            }
+            if (typeof syncHandwritingUIAndRender === 'function') {
+                syncHandwritingUIAndRender();
             }
             scheduleAutoSaveState();
         }
@@ -16799,6 +17835,12 @@
                 isDraggingPlaneBorder = false;
                 draggedPlaneBorder = null;
             }
+            if (isDraggingBasePlaneBorder) {
+                isDraggingBasePlaneBorder = false;
+                draggedBasePlaneBorder = null;
+                hoveredBasePlaneHandle = null;
+                updateBasePlaneBorderHighlight();
+            }
             if (isCreating3DPoint) {
                 isCreating3DPoint = false;
                 drag3DBasePos = null;
@@ -16837,6 +17879,12 @@
             const draggablePlaneBorder = (!draggablePt && target && target.type === 'edge' && target.segId)
                 ? findConstructedPlaneBorderEdge(target.segId)
                 : null;
+            const draggableBasePlaneBorder = (
+                !draggablePt &&
+                !draggablePlaneBorder &&
+                (!target || target.type === 'plane') &&
+                !['trace', 'hide', 'delete-obj', 'point3d'].includes(currentTool)
+            ) ? detectBasePlaneBorderHandle(event) : null;
 
             if (currentTool === 'point3d' && target && !['sphere', 'cone', 'frustum', 'revolve', 'curve', 'intersection'].includes(target.type)) {
                 isCreating3DPoint = true;
@@ -16853,7 +17901,7 @@
                 return;
             }
 
-            // Cho phép tự động Kéo điểm, Kéo cạnh mặt phẳng chữ nhật (đổi kích thước) hoặc Xoay góc nhìn 3D
+            // Cho phép tự động Kéo điểm, Kéo cạnh mặt phẳng chữ nhật / mặt nền (P) hoặc Xoay góc nhìn 3D
             // ngay cả khi đang chọn công cụ dựng hình / đo đạc / xoay / di chuyển; nếu chỉ Click/Chạm nhẹ thì thực thi công cụ hoặc chọn thành phần tô màu.
             pendingPointerGesture = {
                 startX: event.clientX,
@@ -16870,7 +17918,8 @@
                 },
                 target,
                 draggablePt,
-                draggablePlaneBorder
+                draggablePlaneBorder,
+                draggableBasePlaneBorder
             };
             if (controls) {
                 controls.enabled = false;
@@ -19413,6 +20462,179 @@
             updateSceneFromState();
         }
 
+        function detectBasePlaneBorderHandle(event) {
+            if (!isBasePlaneVisible || !camera || !renderer || !basePlaneMesh) return null;
+            const rect = renderer.domElement.getBoundingClientRect();
+            if (!rect || rect.width <= 0 || rect.height <= 0) return null;
+            const px = event.clientX - rect.left;
+            const py = event.clientY - rect.top;
+
+            const pType = event.pointerType || lastPointerType || 'mouse';
+            const edgeThresholdPx = pType === 'touch' ? 22 : 11;
+            const cornerThresholdPx = edgeThresholdPx + 5;
+
+            const b = getBasePlaneBounds();
+            const projectPt = (x, z) => {
+                const v = new THREE.Vector3(x, 0, z).project(camera);
+                if (!Number.isFinite(v.x) || !Number.isFinite(v.y) || v.z > 1.02) return null;
+                return {
+                    x: (v.x * 0.5 + 0.5) * rect.width,
+                    y: (-v.y * 0.5 + 0.5) * rect.height
+                };
+            };
+
+            const cNW = projectPt(b.xMin, b.zMin);
+            const cNE = projectPt(b.xMax, b.zMin);
+            const cSE = projectPt(b.xMax, b.zMax);
+            const cSW = projectPt(b.xMin, b.zMax);
+
+            const corners = [
+                { handle: 'xMin_zMin', pt: cNW },
+                { handle: 'xMax_zMin', pt: cNE },
+                { handle: 'xMax_zMax', pt: cSE },
+                { handle: 'xMin_zMax', pt: cSW }
+            ];
+            let bestCorner = null;
+            let bestCornerDist = cornerThresholdPx;
+            for (const c of corners) {
+                if (!c.pt) continue;
+                const d = Math.hypot(px - c.pt.x, py - c.pt.y);
+                if (d <= bestCornerDist) {
+                    bestCornerDist = d;
+                    bestCorner = { handle: c.handle, isCorner: true, bounds: b };
+                }
+            }
+            if (bestCorner) return bestCorner;
+
+            const distToSeg2D = (ax, ay, bx, by) => {
+                const dx = bx - ax;
+                const dy = by - ay;
+                const lenSq = dx * dx + dy * dy;
+                if (lenSq < 1e-4) return Math.hypot(px - ax, py - ay);
+                const tVal = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq));
+                return Math.hypot(px - (ax + tVal * dx), py - (ay + tVal * dy));
+            };
+
+            const edges = [
+                { handle: 'zMin', a: cNW, b: cNE },
+                { handle: 'xMax', a: cNE, b: cSE },
+                { handle: 'zMax', a: cSW, b: cSE },
+                { handle: 'xMin', a: cNW, b: cSW }
+            ];
+            let bestEdge = null;
+            let bestEdgeDist = edgeThresholdPx;
+            for (const e of edges) {
+                if (!e.a || !e.b) continue;
+                const d = distToSeg2D(e.a.x, e.a.y, e.b.x, e.b.y);
+                if (d <= bestEdgeDist) {
+                    bestEdgeDist = d;
+                    bestEdge = { handle: e.handle, isCorner: false, bounds: b };
+                }
+            }
+            return bestEdge;
+        }
+
+        function computeBasePlaneHandleResizeCursor(handle) {
+            if (!handle || !camera || !renderer) return 'grab';
+            const dir = new THREE.Vector3(
+                handle.includes('xMax') ? 1 : (handle.includes('xMin') ? -1 : 0),
+                0,
+                handle.includes('zMax') ? 1 : (handle.includes('zMin') ? -1 : 0)
+            );
+            if (dir.lengthSq() < 1e-6) return 'move';
+            dir.normalize();
+            const b = getBasePlaneBounds();
+            const center = new THREE.Vector3((b.xMin + b.xMax) * 0.5, 0, (b.zMin + b.zMax) * 0.5);
+            const rect = renderer.domElement.getBoundingClientRect();
+            const p0 = center.clone().project(camera);
+            const p1 = center.clone().add(dir).project(camera);
+            const dx = (p1.x - p0.x) * rect.width * 0.5;
+            const dy = -(p1.y - p0.y) * rect.height * 0.5;
+            if (Math.hypot(dx, dy) < 1e-3) return 'move';
+            let deg = Math.atan2(dy, dx) * (180 / Math.PI);
+            deg = ((deg % 180) + 180) % 180;
+            if (deg < 22.5 || deg >= 157.5) return 'ew-resize';
+            if (deg < 67.5) return 'nwse-resize';
+            if (deg < 112.5) return 'ns-resize';
+            return 'nesw-resize';
+        }
+
+        function startBasePlaneBorderDrag(handleInfo, downEvent) {
+            if (!handleInfo || !handleInfo.handle || !camera || !renderer) return false;
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((downEvent.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((downEvent.clientY - rect.top) / rect.height) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const b = getBasePlaneBounds();
+            const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            const initHit = new THREE.Vector3();
+            let grabOffsetX = 0;
+            let grabOffsetZ = 0;
+            if (Math.abs(raycaster.ray.direction.y) > 0.025 && raycaster.ray.intersectPlane(groundPlane, initHit)) {
+                if (handleInfo.handle.includes('xMin')) grabOffsetX = b.xMin - initHit.x;
+                else if (handleInfo.handle.includes('xMax')) grabOffsetX = b.xMax - initHit.x;
+                if (handleInfo.handle.includes('zMin')) grabOffsetZ = b.zMin - initHit.z;
+                else if (handleInfo.handle.includes('zMax')) grabOffsetZ = b.zMax - initHit.z;
+            }
+
+            isDraggingBasePlaneBorder = true;
+            draggedBasePlaneBorder = {
+                handle: handleInfo.handle,
+                isCorner: Boolean(handleInfo.isCorner),
+                grabOffsetX,
+                grabOffsetZ,
+                shiftSymmetric: Boolean(downEvent.shiftKey)
+            };
+            hoveredBasePlaneHandle = handleInfo.handle;
+            updateBasePlaneBorderHighlight();
+            container.style.cursor = computeBasePlaneHandleResizeCursor(handleInfo.handle);
+            return true;
+        }
+
+        function handleDragBasePlaneBorder(event) {
+            if (!isDraggingBasePlaneBorder || !draggedBasePlaneBorder || !camera || !renderer) return;
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            if (Math.abs(raycaster.ray.direction.y) <= 0.025) return;
+            const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            const hitPt = new THREE.Vector3();
+            if (!raycaster.ray.intersectPlane(groundPlane, hitPt)) return;
+
+            const isSym = Boolean(event.shiftKey);
+            draggedBasePlaneBorder.shiftSymmetric = isSym;
+            const nextBounds = computeResizedBasePlaneBounds(
+                getBasePlaneBounds(),
+                draggedBasePlaneBorder.handle,
+                {
+                    x: hitPt.x + (draggedBasePlaneBorder.grabOffsetX || 0),
+                    z: hitPt.z + (draggedBasePlaneBorder.grabOffsetZ || 0)
+                },
+                {
+                    minSpan: BASE_PLANE_MIN_SPAN,
+                    maxExtent: BASE_PLANE_MAX_EXTENT,
+                    gridStep: 1,
+                    symmetric: isSym
+                }
+            );
+            geoState.basePlaneBounds = nextBounds;
+            rebuildBasePlaneVisuals(false);
+
+            const w = Math.round(nextBounds.xMax - nextBounds.xMin);
+            const d = Math.round(nextBounds.zMax - nextBounds.zMin);
+            const guideSpan = document.getElementById('guide-span');
+            if (guideSpan) {
+                guideSpan.innerHTML = t(
+                    `Đang thay đổi kích thước mặt phẳng nền <b>(P)</b>: <b>${w} × ${d}</b> (Giữ <b>Shift</b> để mở rộng đối xứng, thả chuột để hoàn tất)`,
+                    `Resizing base plane <b>(P)</b>: <b>${w} × ${d}</b> (Hold <b>Shift</b> for symmetric resize, release to finish)`
+                );
+            }
+            scheduleAutoSaveState();
+        }
+
         function onPointerMove(event) {
             const pType = event.pointerType || lastPointerType || 'mouse';
             if (event.pointerId !== undefined && activeCanvasPointers.has(event.pointerId)) {
@@ -19437,6 +20659,11 @@
 
             if (isDraggingPlaneBorder && draggedPlaneBorder) {
                 handleDragPlaneBorderEdge(event);
+                return;
+            }
+
+            if (isDraggingBasePlaneBorder && draggedBasePlaneBorder) {
+                handleDragBasePlaneBorder(event);
                 return;
             }
 
@@ -19487,6 +20714,18 @@
                             handleDragPlaneBorderEdge(event);
                             return;
                         }
+                    } else if (gesture.draggableBasePlaneBorder) {
+                        saveHistory();
+                        if (controls) {
+                            controls.enabled = false;
+                            if (typeof controls.cancelInteraction === 'function') controls.cancelInteraction();
+                        }
+                        if (snapIndicator) snapIndicator.visible = false;
+                        snapBadge.style.display = 'none';
+                        if (startBasePlaneBorderDrag(gesture.draggableBasePlaneBorder, gesture.downEvent)) {
+                            handleDragBasePlaneBorder(event);
+                            return;
+                        }
                     } else {
                         if (controls) {
                             controls.enabled = true;
@@ -19516,6 +20755,18 @@
                 ? findConstructedPlaneBorderEdge(target.segId)
                 : null;
             const newHoverPlaneBorderSegId = hoverPlaneBorder ? hoverPlaneBorder.seg.id : null;
+            const hoverBasePlaneBorder = (
+                !hoverPlaneBorder &&
+                (!target || target.type === 'plane') &&
+                !['trace', 'hide', 'delete-obj', 'point3d'].includes(currentTool)
+            ) ? detectBasePlaneBorderHandle(event) : null;
+            const newHoverBasePlaneHandle = hoverBasePlaneBorder ? hoverBasePlaneBorder.handle : null;
+
+            if (newHoverBasePlaneHandle !== hoveredBasePlaneHandle) {
+                hoveredBasePlaneHandle = newHoverBasePlaneHandle;
+                updateBasePlaneBorderHighlight();
+            }
+
             if (
                 newHoverId !== hoveredPointId ||
                 newHoverCirId !== hoveredCircleId ||
@@ -19546,6 +20797,22 @@
                     snapBadge.innerHTML = formatMixedLabelToHtml(t(
                         `Kéo cạnh để đổi kích thước mặt phẳng ${hoverPlaneBorder.face.name || '(α)'}`,
                         `Drag edge to resize plane ${hoverPlaneBorder.face.name || '(α)'}`
+                    ));
+                    snapBadge.style.left = `${event.clientX - rect.left}px`;
+                    snapBadge.style.top = `${event.clientY - rect.top}px`;
+                    snapBadge.style.display = 'block';
+                } else if (hoverBasePlaneBorder) {
+                    container.style.cursor = computeBasePlaneHandleResizeCursor(hoverBasePlaneBorder.handle);
+                    snapIndicator.visible = false;
+                    snapBadge.classList.remove('delete-target', 'intersection');
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    snapBadge.innerHTML = formatMixedLabelToHtml(t(
+                        hoverBasePlaneBorder.isCorner
+                            ? 'Kéo góc để mở rộng mặt nền (P) (Shift: đối xứng)'
+                            : 'Kéo cạnh để mở rộng mặt nền (P) (Shift: đối xứng)',
+                        hoverBasePlaneBorder.isCorner
+                            ? 'Drag corner to resize base plane (P) (Shift: symmetric)'
+                            : 'Drag edge to resize base plane (P) (Shift: symmetric)'
                     ));
                     snapBadge.style.left = `${event.clientX - rect.left}px`;
                     snapBadge.style.top = `${event.clientY - rect.top}px`;
@@ -19633,7 +20900,9 @@
 
             container.style.cursor = (target && target.type === 'point')
                 ? 'pointer'
-                : (hoverPlaneBorder ? computePlaneBorderResizeCursor(hoverPlaneBorder) : 'crosshair');
+                : (hoverPlaneBorder
+                    ? computePlaneBorderResizeCursor(hoverPlaneBorder)
+                    : (hoverBasePlaneBorder ? computeBasePlaneHandleResizeCursor(hoverBasePlaneBorder.handle) : 'crosshair'));
             snapBadge.classList.remove('delete-target');
 
             if (target && target.type !== 'point') {
@@ -19651,7 +20920,7 @@
                 const posAttr = snapIndicator.geometry.attributes.position;
                 posAttr.setXYZ(0, target.pos.x, target.pos.y, target.pos.z);
                 posAttr.needsUpdate = true;
-                snapIndicator.visible = true;
+                snapIndicator.visible = !hoverBasePlaneBorder;
 
                 const rect = renderer.domElement.getBoundingClientRect();
                 snapBadge.innerHTML = formatMixedLabelToHtml(hoverPlaneBorder
@@ -19659,7 +20928,23 @@
                         `Cạnh mặt phẳng ${hoverPlaneBorder.face.name || '(α)'} (Kéo cạnh để đổi kích thước)`,
                         `Plane ${hoverPlaneBorder.face.name || '(α)'} edge (Drag edge to resize)`
                     )
-                    : target.label);
+                    : (hoverBasePlaneBorder
+                        ? t(
+                            'Biên mặt nền (P) (Kéo cạnh/góc để mở rộng)',
+                            'Base plane (P) border (Drag edge/corner to resize)'
+                        )
+                        : target.label));
+                snapBadge.style.left = `${event.clientX - rect.left}px`;
+                snapBadge.style.top = `${event.clientY - rect.top}px`;
+                snapBadge.style.display = 'block';
+            } else if (hoverBasePlaneBorder) {
+                snapIndicator.visible = false;
+                snapBadge.classList.remove('intersection');
+                const rect = renderer.domElement.getBoundingClientRect();
+                snapBadge.innerHTML = formatMixedLabelToHtml(t(
+                    'Biên mặt nền (P) (Kéo cạnh/góc để mở rộng)',
+                    'Base plane (P) border (Drag edge/corner to resize)'
+                ));
                 snapBadge.style.left = `${event.clientX - rect.left}px`;
                 snapBadge.style.top = `${event.clientY - rect.top}px`;
                 snapBadge.style.display = 'block';
@@ -19754,6 +21039,28 @@
                     );
                 }
                 updateSceneFromState();
+                return;
+            }
+
+            if (isDraggingBasePlaneBorder) {
+                isDraggingBasePlaneBorder = false;
+                draggedBasePlaneBorder = null;
+                hoveredBasePlaneHandle = null;
+                updateBasePlaneBorderHighlight();
+                container.style.cursor = (currentTool === 'view' || currentTool === 'move') ? 'default' : 'crosshair';
+                if (controls) controls.enabled = (currentTool === 'view' || currentTool === 'move');
+                const b = getBasePlaneBounds();
+                const w = Math.round(b.xMax - b.xMin);
+                const d = Math.round(b.zMax - b.zMin);
+                const guideSpan = document.getElementById('guide-span');
+                if (guideSpan) {
+                    guideSpan.innerHTML = t(
+                        `Đã cập nhật kích thước mặt phẳng nền <b>(P)</b>: <b>${w} × ${d}</b>`,
+                        `Updated base plane <b>(P)</b> size: <b>${w} × ${d}</b>`
+                    );
+                }
+                updateSceneFromState();
+                scheduleAutoSaveState();
                 return;
             }
 
@@ -22085,6 +23392,10 @@
         }
 
         function selectTool(tool) {
+            const prevTool = currentTool;
+            if (prevTool === 'handwriting-pen' && tool !== 'handwriting-pen') {
+                if (typeof commitPendingHandwritingNow === 'function') commitPendingHandwritingNow();
+            }
             currentTool = tool;
             selectedPointIds = [];
             selectedCircleIds = [];
@@ -22095,6 +23406,15 @@
             resetPlaneConstructorPending();
             measurePendingItems = [];
             pendingPointerGesture = null;
+            if (tool === 'handwriting-pen') {
+                if (typeof ensureHandwritingPageState === 'function') {
+                    const hw = ensureHandwritingPageState();
+                    hw.visible = true;
+                }
+                if (typeof hwRuntime !== 'undefined') {
+                    hwRuntime.toolsVisible = false;
+                }
+            }
             if (tool === 'color-obj') {
                 openObjectColorPopover();
             } else if (tool !== 'view' && tool !== 'move') {
@@ -22136,6 +23456,9 @@
             }
             renderMathInElementSafe(guideSpan);
             updateSceneFromState();
+            if (typeof syncHandwritingModeUI === 'function') {
+                syncHandwritingModeUI();
+            }
 
             if (['measure-dist', 'measure-angle', 'measure-area', 'measure-volume'].includes(tool) && !hasValidMeasureScale()) {
                 openReferenceScaleModal(tool);
@@ -22150,6 +23473,11 @@
             isBasePlaneVisible = !isBasePlaneVisible;
             if (basePlaneMesh) basePlaneMesh.visible = isBasePlaneVisible;
             if (gridHelper) gridHelper.visible = isBasePlaneVisible;
+            if (basePlaneBorderGroup) basePlaneBorderGroup.visible = isBasePlaneVisible;
+            if (!isBasePlaneVisible) {
+                hoveredBasePlaneHandle = null;
+                updateBasePlaneBorderHighlight();
+            }
             renderToolbar();
         }
 
@@ -23059,6 +24387,7 @@
             }
             const preservedTextBoxes = Array.isArray(geoState?.textBoxes) ? geoState.textBoxes : [];
             const preservedBgImages = Array.isArray(geoState?.bgImages) ? geoState.bgImages : [];
+            const preservedHandwritingPage = normalizeHandwritingPageState(geoState?.handwritingPage);
             geoState = {
                 points: [],
                 segments: [],
@@ -23069,7 +24398,9 @@
                 measureScale: null,
                 measurements: [],
                 textBoxes: preservedTextBoxes,
-                bgImages: preservedBgImages
+                bgImages: preservedBgImages,
+                handwritingPage: preservedHandwritingPage,
+                basePlaneBounds: { ...DEFAULT_BASE_PLANE_BOUNDS }
             };
             selectedPointIds = [];
             selectedCircleIds = [];
@@ -24373,6 +25704,2001 @@
             };
             header.addEventListener('pointerup', stopDrag);
             header.addEventListener('pointercancel', stopDrag);
+        }
+
+        // =========================================================================
+        // BÚT VIẾT TAY THÔNG MINH (CALLIGRAPHIC INK + TỰ ĐƯA VỀ DÒNG HIỆN HÀNH)
+        // =========================================================================
+        const hwRuntime = {
+            initialized: false,
+            isDrawing: false,
+            activePointerId: null,
+            activeRawPoints: [],
+            pendingStrokes: [],
+            pauseTimerId: null,
+            pauseStartAt: 0,
+            pauseDurationMs: 900,
+            pauseProgressRafId: null,
+            flyAnimRafId: null,
+            flyingWordId: null,
+            cursorBlinkRafId: null,
+            cursorVisible: true,
+            lastBlinkAt: 0,
+            lastLayout: null,
+            toolsVisible: false
+        };
+
+        function ensureHandwritingPageState() {
+            if (!geoState.handwritingPage || typeof geoState.handwritingPage !== 'object') {
+                geoState.handwritingPage = createDefaultHandwritingPageState();
+            } else {
+                geoState.handwritingPage = normalizeHandwritingPageState(geoState.handwritingPage);
+            }
+            return geoState.handwritingPage;
+        }
+
+        function hwClamp(v, lo, hi) {
+            return v < lo ? lo : v > hi ? hi : v;
+        }
+
+        function computeCalligraphicStrokePoints(rawPoints, options = {}) {
+            if (!rawPoints || rawPoints.length === 0) return [];
+            const baseWidth = Math.max(1, options.baseWidth ?? 4.0);
+            const smartThickThin = options.smartThickThin !== false;
+            const minRatio = options.minWidthRatio ?? 0.32;
+            const maxRatio = options.maxWidthRatio ?? 1.65;
+            const smoothAlpha = hwClamp(options.smoothing ?? 0.34, 0.08, 0.9);
+
+            const filtered = [rawPoints[0]];
+            for (let i = 1; i < rawPoints.length; i++) {
+                const prev = filtered[filtered.length - 1];
+                const cur = rawPoints[i];
+                const dist = Math.hypot(cur.x - prev.x, cur.y - prev.y);
+                if (dist >= 1.2 || i === rawPoints.length - 1) {
+                    filtered.push(cur);
+                }
+            }
+
+            if (filtered.length === 1) {
+                return [{ x: filtered[0].x, y: filtered[0].y, width: baseWidth * (smartThickThin ? 1.15 : 1.0) }];
+            }
+
+            let hasRealPressure = false;
+            for (const pt of filtered) {
+                if (
+                    pt.pointerType === 'pen' &&
+                    typeof pt.pressure === 'number' &&
+                    pt.pressure > 0.01 &&
+                    pt.pressure < 0.99 &&
+                    Math.abs(pt.pressure - 0.5) > 0.03
+                ) {
+                    hasRealPressure = true;
+                    break;
+                }
+            }
+
+            const n = filtered.length;
+            const rawWidths = new Array(n).fill(baseWidth);
+
+            if (smartThickThin) {
+                let emaWidth = baseWidth * 0.9;
+                for (let i = 0; i < n; i++) {
+                    const pPrev = filtered[Math.max(0, i - 1)];
+                    const pNext = filtered[Math.min(n - 1, i + 1)];
+                    const dx = pNext.x - pPrev.x;
+                    const dy = pNext.y - pPrev.y;
+                    const segLen = Math.hypot(dx, dy);
+
+                    const pStepPrev = filtered[Math.max(0, i - 1)];
+                    const dt = Math.max(1, filtered[i].t - pStepPrev.t);
+                    const stepDist = Math.hypot(filtered[i].x - pStepPrev.x, filtered[i].y - pStepPrev.y);
+                    const speed = i === 0 ? 0.45 : stepDist / dt;
+
+                    let dirFactor = 1.0;
+                    if (segLen > 1e-3) {
+                        const ux = dx / segLen;
+                        const uy = dy / segLen;
+                        const nibAlign = uy * 0.96 - ux * 0.28;
+                        const tDir = hwClamp((nibAlign + 1) * 0.5, 0, 1);
+                        const eased = tDir * tDir * (3 - 2 * tDir);
+                        dirFactor = 0.38 + eased * (1.54 - 0.38);
+                    }
+
+                    const speedNorm = hwClamp((speed - 0.15) / 1.65, 0, 1);
+                    const speedFactor = 1.18 - speedNorm * 0.46;
+
+                    let targetRatio;
+                    if (hasRealPressure && typeof filtered[i].pressure === 'number' && filtered[i].pressure > 0) {
+                        const pNorm = hwClamp(filtered[i].pressure, 0.05, 1.0);
+                        const pressureFactor = 0.42 + pNorm * 1.18;
+                        targetRatio = 0.55 * pressureFactor + 0.30 * dirFactor + 0.15 * speedFactor;
+                    } else {
+                        targetRatio = 0.70 * dirFactor + 0.30 * speedFactor;
+                    }
+
+                    const targetWidth = baseWidth * hwClamp(targetRatio, minRatio, maxRatio);
+                    emaWidth = i === 0 ? targetWidth : emaWidth + (targetWidth - emaWidth) * smoothAlpha;
+                    rawWidths[i] = emaWidth;
+                }
+
+                if (n >= 4) {
+                    rawWidths[0] = Math.max(baseWidth * minRatio, rawWidths[0] * 0.72);
+                    rawWidths[1] = Math.max(baseWidth * minRatio, rawWidths[1] * 0.88);
+                    rawWidths[n - 1] = Math.max(baseWidth * minRatio, rawWidths[n - 1] * 0.65);
+                    rawWidths[n - 2] = Math.max(baseWidth * minRatio, rawWidths[n - 2] * 0.86);
+                }
+            }
+
+            const result = [];
+            for (let i = 0; i < n; i++) {
+                if (i === 0 || i === n - 1) {
+                    result.push({ x: filtered[i].x, y: filtered[i].y, width: rawWidths[i] });
+                } else {
+                    result.push({
+                        x: filtered[i - 1].x * 0.2 + filtered[i].x * 0.6 + filtered[i + 1].x * 0.2,
+                        y: filtered[i - 1].y * 0.2 + filtered[i].y * 0.6 + filtered[i + 1].y * 0.2,
+                        width: rawWidths[i]
+                    });
+                }
+            }
+            return result;
+        }
+
+        function buildCalligraphicPolygonOutline(points) {
+            if (!points || points.length === 0) return { left: [], right: [] };
+            if (points.length === 1) {
+                const p = points[0];
+                const r = Math.max(0.5, p.width * 0.5);
+                return { left: [{ x: p.x - r, y: p.y }], right: [{ x: p.x + r, y: p.y }] };
+            }
+            const left = [];
+            const right = [];
+            const n = points.length;
+            let prevNx = 0, prevNy = -1;
+            for (let i = 0; i < n; i++) {
+                const pPrev = points[Math.max(0, i - 1)];
+                const pNext = points[Math.min(n - 1, i + 1)];
+                const dx = pNext.x - pPrev.x;
+                const dy = pNext.y - pPrev.y;
+                const len = Math.hypot(dx, dy);
+                let nx = prevNx, ny = prevNy;
+                if (len > 1e-5) {
+                    nx = -dy / len;
+                    ny = dx / len;
+                    prevNx = nx;
+                    prevNy = ny;
+                }
+                const halfW = Math.max(0.35, points[i].width * 0.5);
+                left.push({ x: points[i].x + nx * halfW, y: points[i].y + ny * halfW });
+                right.push({ x: points[i].x - nx * halfW, y: points[i].y - ny * halfW });
+            }
+            return { left, right };
+        }
+
+        function computeStrokesBoundingBox(strokes) {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, count = 0;
+            for (const st of strokes || []) {
+                for (const pt of st.points || []) {
+                    if (!Number.isFinite(pt.x) || !Number.isFinite(pt.y)) continue;
+                    const r = Math.max(0.5, (pt.width || st.baseWidth || 2) * 0.5);
+                    if (pt.x - r < minX) minX = pt.x - r;
+                    if (pt.y - r < minY) minY = pt.y - r;
+                    if (pt.x + r > maxX) maxX = pt.x + r;
+                    if (pt.y + r > maxY) maxY = pt.y + r;
+                    count++;
+                }
+            }
+            if (count === 0) return null;
+            return {
+                minX, minY, maxX, maxY,
+                width: Math.max(1, maxX - minX),
+                height: Math.max(1, maxY - minY)
+            };
+        }
+
+        function detectHandwritingBaseline(strokes, bounds) {
+            if (!strokes || strokes.length === 0 || bounds.height < 14) {
+                return { baselineY: bounds.maxY, hasDescenderOrUnderDot: false };
+            }
+
+            const metas = [];
+            for (const st of strokes) {
+                if (!st.points || st.points.length === 0) continue;
+                let sMinX = Infinity, sMaxX = -Infinity, sMinY = Infinity, sMaxY = -Infinity, arcLen = 0;
+                for (let i = 0; i < st.points.length; i++) {
+                    const p = st.points[i];
+                    const r = Math.max(0.5, (p.width || st.baseWidth || 2) * 0.5);
+                    if (p.x - r < sMinX) sMinX = p.x - r;
+                    if (p.x + r > sMaxX) sMaxX = p.x + r;
+                    if (p.y - r < sMinY) sMinY = p.y - r;
+                    if (p.y + r > sMaxY) sMaxY = p.y + r;
+                    if (i > 0) arcLen += Math.hypot(p.x - st.points[i - 1].x, p.y - st.points[i - 1].y);
+                }
+                metas.push({
+                    stroke: st,
+                    minX: sMinX, maxX: sMaxX, minY: sMinY, maxY: sMaxY,
+                    width: Math.max(1, sMaxX - sMinX),
+                    height: Math.max(1, sMaxY - sMinY),
+                    arcLen
+                });
+            }
+
+            if (metas.length === 0) {
+                return { baselineY: bounds.maxY, hasDescenderOrUnderDot: false };
+            }
+
+            // Step 1: Identify isolated below-body dots (dấu nặng) and above-body small accents
+            let bodyMetas = metas;
+            let removedUpperDotCount = 0;
+            if (metas.length >= 2) {
+                const filtered = metas.filter((m, idx) => {
+                    const isCompact =
+                        m.width <= Math.max(26, bounds.height * 0.32) &&
+                        m.height <= Math.max(26, bounds.height * 0.28) &&
+                        m.arcLen <= Math.max(60, bounds.height * 0.62);
+                    if (!isCompact) return true;
+
+                    const cx = (m.minX + m.maxX) * 0.5;
+                    const cy = (m.minY + m.maxY) * 0.5;
+                    const padX = Math.max(12, bounds.height * 0.24);
+
+                    const isDotOrShortTick =
+                        m.width <= Math.max(20, bounds.height * 0.20) &&
+                        m.height <= Math.max(20, bounds.height * 0.20) &&
+                        m.arcLen <= Math.max(44, bounds.height * 0.44);
+
+                    let crossesLargerStroke = false;
+                    for (let j = 0; j < metas.length; j++) {
+                        if (j === idx) continue;
+                        const other = metas[j];
+                        const otherIsLarger = other.height >= m.height * 1.35 || other.arcLen >= Math.max(24, m.arcLen * 1.7);
+                        if (!otherIsLarger) continue;
+                        const oPts = other.stroke.points;
+                        const hitPad = Math.max(4, bounds.height * 0.04);
+                        for (let k = 1; k < oPts.length; k++) {
+                            const p0 = oPts[k - 1], p1 = oPts[k];
+                            const segMinY = Math.min(p0.y, p1.y);
+                            const segMaxY = Math.max(p0.y, p1.y);
+                            if (segMaxY < m.minY - hitPad || segMinY > m.maxY + hitPad) continue;
+                            const dy = p1.y - p0.y;
+                            if (Math.abs(dy) > 1e-3) {
+                                const t = hwClamp((cy - p0.y) / dy, 0, 1);
+                                const ix = p0.x + (p1.x - p0.x) * t;
+                                if (ix >= m.minX - hitPad && ix <= m.maxX + hitPad) {
+                                    crossesLargerStroke = true;
+                                    break;
+                                }
+                            } else {
+                                const segMinX = Math.min(p0.x, p1.x);
+                                const segMaxX = Math.max(p0.x, p1.x);
+                                if (segMaxX >= m.minX - hitPad && segMinX <= m.maxX + hitPad) {
+                                    crossesLargerStroke = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (crossesLargerStroke) break;
+                    }
+                    if (crossesLargerStroke) return true;
+
+                    let sitsUnderLargerStroke = false;
+                    for (let j = 0; j < metas.length; j++) {
+                        if (j === idx) continue;
+                        const other = metas[j];
+                        const otherIsLarger = other.height >= m.height * 1.35 || other.arcLen >= Math.max(24, m.arcLen * 1.7);
+                        if (!otherIsLarger) continue;
+                        if (cx >= other.minX - padX && cx <= other.maxX + padX && m.minY >= other.maxY - bounds.height * 0.08) {
+                            sitsUnderLargerStroke = true;
+                            break;
+                        }
+                        if (
+                            isDotOrShortTick &&
+                            cx >= other.minX - padX * 0.5 &&
+                            cx <= other.maxX + padX * 0.5 &&
+                            other.minY < m.minY - bounds.height * 0.16 &&
+                            cy >= bounds.minY + bounds.height * 0.42
+                        ) {
+                            const bandHalf = Math.max(8, bounds.height * 0.12);
+                            let hasPointAbove = false;
+                            let hasPointNearOrBelow = false;
+                            for (const pt of other.stroke.points) {
+                                if (Math.abs(pt.x - cx) <= bandHalf) {
+                                    if (pt.y < m.minY - bounds.height * 0.03) hasPointAbove = true;
+                                    if (pt.y >= m.minY - bounds.height * 0.025) hasPointNearOrBelow = true;
+                                }
+                            }
+                            if (hasPointAbove && !hasPointNearOrBelow) {
+                                sitsUnderLargerStroke = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (sitsUnderLargerStroke) return false;
+
+                    const isUpperBand = m.maxY <= bounds.minY + bounds.height * 0.46 && cy <= bounds.minY + bounds.height * 0.38;
+                    if (isUpperBand) {
+                        for (let j = 0; j < metas.length; j++) {
+                            if (j === idx) continue;
+                            const other = metas[j];
+                            if (other.maxY > m.maxY + bounds.height * 0.12) {
+                                if (isDotOrShortTick) removedUpperDotCount++;
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                });
+                if (filtered.length > 0) bodyMetas = filtered;
+            }
+
+            const bodyBounds = computeStrokesBoundingBox(bodyMetas.map(m => m.stroke)) || bounds;
+            const bodyH = Math.max(1, bodyBounds.height);
+            const bodyW = Math.max(1, bodyBounds.width);
+            const aspectRatio = bodyW / bodyH;
+
+            // Step 2: Uniformly resample body strokes to compute 2D horizontal occupancy, column bounds & bottom anchors
+            const resampleStep = Math.max(1.6, bodyH / 48);
+            const numCols = Math.round(hwClamp(bodyW / Math.max(5.5, bodyH * 0.11), 10, 48));
+            const occBins = 60;
+
+            const colMinY = new Array(numCols).fill(Infinity);
+            const colMaxY = new Array(numCols).fill(-Infinity);
+            const colAbsDy = new Array(numCols).fill(0);
+            const activeColMask = new Uint8Array(numCols);
+
+            const occGrid = new Uint8Array(occBins * numCols);
+            const vertOccGrid = new Uint8Array(occBins * numCols);
+
+            const bottomAnchors = [];
+            const resampledStrokes = [];
+
+            for (const m of bodyMetas) {
+                const pts = m.stroke.points;
+                if (!pts || pts.length === 0) continue;
+
+                const rPts = [];
+                const addSample = (px, py, stepDx, stepDy) => {
+                    const col = Math.min(numCols - 1, Math.max(0, Math.floor(((px - bodyBounds.minX) / bodyW) * numCols)));
+                    if (py < colMinY[col]) colMinY[col] = py;
+                    if (py > colMaxY[col]) colMaxY[col] = py;
+                    colAbsDy[col] += Math.abs(stepDy);
+                    activeColMask[col] = 1;
+
+                    const relY = hwClamp((py - bodyBounds.minY) / bodyH, 0, 0.9999);
+                    const bin = Math.floor(relY * occBins);
+                    occGrid[bin * numCols + col] = 1;
+                    if (Math.abs(stepDy) >= Math.abs(stepDx) * 0.32) {
+                        vertOccGrid[bin * numCols + col] = 1;
+                    }
+                    rPts.push({ x: px, y: py });
+                };
+
+                addSample(pts[0].x, pts[0].y, 0, 0);
+                for (let i = 1; i < pts.length; i++) {
+                    const p0 = pts[i - 1], p1 = pts[i];
+                    const dx = p1.x - p0.x, dy = p1.y - p0.y;
+                    const dist = Math.hypot(dx, dy);
+                    const steps = Math.max(1, Math.ceil(dist / resampleStep));
+                    const stepDx = dx / steps, stepDy = dy / steps;
+                    for (let s = 1; s <= steps; s++) {
+                        const f = s / steps;
+                        addSample(p0.x + dx * f, p0.y + dy * f, stepDx, stepDy);
+                    }
+                }
+                resampledStrokes.push(rPts);
+
+                // Local bottom turning points (valleys)
+                if (rPts.length >= 5) {
+                    const vWin = Math.max(2, Math.min(4, Math.floor(rPts.length / 22)));
+                    let lastValleyIdx = -vWin * 2;
+                    for (let i = vWin; i < rPts.length - vWin; i++) {
+                        if (i - lastValleyIdx < vWin) continue;
+                        const curY = rPts[i].y;
+                        const relY = (curY - bodyBounds.minY) / bodyH;
+                        if (relY < 0.28) continue;
+
+                        let isLocalMax = true;
+                        let minBefore = curY, minAfter = curY;
+                        for (let k = i - vWin; k <= i + vWin; k++) {
+                            if (rPts[k].y > curY + 1e-5) { isLocalMax = false; break; }
+                            if (k < i && rPts[k].y < minBefore) minBefore = rPts[k].y;
+                            if (k > i && rPts[k].y < minAfter) minAfter = rPts[k].y;
+                        }
+                        if (!isLocalMax) continue;
+
+                        const dip = Math.max(curY - minBefore, curY - minAfter);
+                        if (dip >= Math.max(1.5, bodyH * 0.025)) {
+                            const col = Math.min(numCols - 1, Math.max(0, Math.floor(((rPts[i].x - bodyBounds.minX) / bodyW) * numCols)));
+                            bottomAnchors.push({ relY, col, weight: 1.0 });
+                            lastValleyIdx = i;
+                        }
+                    }
+                }
+
+                // Genuine downward-arriving stroke foot endpoints (skipping mid-height closed-oval seams)
+                if (rPts.length >= 4) {
+                    const startEndDist = Math.hypot(
+                        rPts[0].x - rPts[rPts.length - 1].x,
+                        rPts[0].y - rPts[rPts.length - 1].y
+                    );
+                    const isClosedLoopStroke = startEndDist <= Math.max(12, bodyH * 0.20);
+                    const checkEndpoint = (endIdx, lookDir) => {
+                        const ep = rPts[endIdx];
+                        const relY = (ep.y - bodyBounds.minY) / bodyH;
+                        if (relY < 0.28) return;
+                        if (isClosedLoopStroke && ep.y < m.maxY - Math.max(5, bodyH * 0.10)) return;
+                        const nearStep = Math.min(4, rPts.length - 1);
+                        const nearNeighbor = rPts[endIdx + lookDir * nearStep];
+                        if (!nearNeighbor || ep.y - nearNeighbor.y < Math.max(2.0, bodyH * 0.025)) return;
+                        for (let s = 1; s <= nearStep; s++) {
+                            const idx = endIdx + lookDir * s;
+                            if (rPts[idx].y > ep.y + 1.5) return;
+                        }
+                        const lookLimit = Math.min(rPts.length - 1, Math.max(3, Math.floor(rPts.length * 0.35)));
+                        let minNearbyY = ep.y;
+                        for (let s = 1; s <= lookLimit; s++) {
+                            const idx = endIdx + lookDir * s;
+                            if (idx < 0 || idx >= rPts.length) break;
+                            if (rPts[idx].y < minNearbyY) minNearbyY = rPts[idx].y;
+                        }
+                        if (ep.y - minNearbyY >= Math.max(4, bodyH * 0.08)) {
+                            const col = Math.min(numCols - 1, Math.max(0, Math.floor(((ep.x - bodyBounds.minX) / bodyW) * numCols)));
+                            bottomAnchors.push({ relY, col, weight: 0.9 });
+                        }
+                    };
+                    checkEndpoint(0, 1);
+                    checkEndpoint(rPts.length - 1, -1);
+                }
+            }
+
+            let totalActiveCols = 0;
+            for (let c = 0; c < numCols; c++) {
+                if (activeColMask[c]) totalActiveCols++;
+            }
+            totalActiveCols = Math.max(1, totalActiveCols);
+
+            const rawOcc = new Array(occBins).fill(0);
+            const rawVertOcc = new Array(occBins).fill(0);
+            for (let b = 0; b < occBins; b++) {
+                let occCnt = 0, vertCnt = 0;
+                const rowOffset = b * numCols;
+                for (let c = 0; c < numCols; c++) {
+                    if (occGrid[rowOffset + c]) occCnt++;
+                    if (vertOccGrid[rowOffset + c]) vertCnt++;
+                }
+                rawOcc[b] = occCnt / totalActiveCols;
+                rawVertOcc[b] = vertCnt / totalActiveCols;
+            }
+
+            const smoothOcc = new Array(occBins).fill(0);
+            const smoothVertOcc = new Array(occBins).fill(0);
+            const kernel = [0.12, 0.22, 0.32, 0.22, 0.12];
+            for (let b = 0; b < occBins; b++) {
+                let accO = 0, accV = 0;
+                for (let k = -2; k <= 2; k++) {
+                    const idx = Math.min(occBins - 1, Math.max(0, b + k));
+                    accO += rawOcc[idx] * kernel[k + 2];
+                    accV += rawVertOcc[idx] * kernel[k + 2];
+                }
+                smoothOcc[b] = accO;
+                smoothVertOcc[b] = accV;
+            }
+
+            const groundedCols = [];
+            for (let c = 0; c < numCols; c++) {
+                if (colMaxY[c] === -Infinity) continue;
+                const relBot = hwClamp((colMaxY[c] - bodyBounds.minY) / bodyH, 0, 1);
+                const relTop = hwClamp((colMinY[c] - bodyBounds.minY) / bodyH, 0, 1);
+                const relSpan = relBot - relTop;
+                if (relBot >= 0.28 && relSpan >= 0.15) {
+                    groundedCols.push({
+                        col: c,
+                        relBot,
+                        relSpan,
+                        absDyNorm: colAbsDy[c] / bodyH
+                    });
+                }
+            }
+
+            const countDistinctVerticalRunsInBand = (relStart, relEnd) => {
+                const b0 = Math.max(0, Math.floor(relStart * occBins));
+                const b1 = Math.min(occBins - 1, Math.floor(relEnd * occBins));
+                const colHasVert = new Uint8Array(numCols);
+                for (let b = b0; b <= b1; b++) {
+                    const off = b * numCols;
+                    for (let c = 0; c < numCols; c++) {
+                        if (vertOccGrid[off + c]) colHasVert[c] = 1;
+                    }
+                }
+                let runs = 0, inRun = false;
+                for (let c = 0; c < numCols; c++) {
+                    if (colHasVert[c] && !inRun) { runs++; inRun = true; }
+                    else if (!colHasVert[c]) { inRun = false; }
+                }
+                return runs;
+            };
+
+            let detectedBaselineY = bodyBounds.maxY;
+
+            // Step 3: Multi-Layer Horizontal Occupancy Cliff + Bottom-Anchor Baseline Detector
+            const allowMultiBodyStage =
+                (aspectRatio >= 0.72 && totalActiveCols >= 5) ||
+                (aspectRatio >= 0.50 && totalActiveCols >= 5 && bodyMetas.length >= 2);
+
+            if (allowMultiBodyStage) {
+                const sigma = 0.058;
+                const twoSigmaSq = 2 * sigma * sigma;
+                let bestCandidateRel = null;
+                let bestCompositeScore = -1;
+
+                for (let pct = 30; pct <= 84; pct++) {
+                    const r = pct / 100;
+                    const descDepthPx = bodyBounds.maxY - (bodyBounds.minY + r * bodyH);
+                    if (descDepthPx < Math.max(10, bodyH * 0.15)) continue;
+
+                    const bandTopRel = Math.max(0, r - 0.30);
+                    const bandBotRel = Math.max(bandTopRel + 0.04, r - 0.02);
+                    const b0 = Math.max(0, Math.floor(bandTopRel * occBins));
+                    const b1 = Math.min(occBins - 1, Math.floor(bandBotRel * occBins));
+                    if (b1 - b0 < 3) continue;
+
+                    let occSum = 0, vertSum = 0, peakBandVert = 0, activeVertBins = 0;
+                    const bandBinCount = b1 - b0 + 1;
+                    for (let b = b0; b <= b1; b++) {
+                        occSum += smoothOcc[b];
+                        vertSum += smoothVertOcc[b];
+                        if (smoothVertOcc[b] > peakBandVert) peakBandVert = smoothVertOcc[b];
+                    }
+                    const avgBodyOcc = occSum / bandBinCount;
+                    const avgBodyVertOcc = vertSum / bandBinCount;
+                    if (avgBodyVertOcc < 0.14 || peakBandVert < 0.18) continue;
+
+                    for (let b = b0; b <= b1; b++) {
+                        if (smoothVertOcc[b] >= peakBandVert * 0.50) activeVertBins++;
+                    }
+                    if (activeVertBins / occBins < 0.11) continue;
+
+                    const d0 = Math.min(occBins - 1, Math.floor(Math.min(0.95, r + 0.08) * occBins));
+                    let descOccSum = 0, descVertSum = 0, descMaxOcc = 0;
+                    const descBinCount = Math.max(1, occBins - d0);
+                    for (let b = d0; b < occBins; b++) {
+                        descOccSum += smoothOcc[b];
+                        descVertSum += smoothVertOcc[b];
+                        if (b >= Math.min(occBins - 1, d0 + 2) && smoothOcc[b] > descMaxOcc) {
+                            descMaxOcc = smoothOcc[b];
+                        }
+                    }
+                    const avgDescOcc = descOccSum / descBinCount;
+                    const avgDescVertOcc = descVertSum / descBinCount;
+
+                    const occDropRatio = avgDescOcc / Math.max(1e-4, avgBodyOcc);
+                    const vertDropRatio = avgDescVertOcc / Math.max(1e-4, avgBodyVertOcc);
+                    const hasSharpCliff =
+                        (occDropRatio <= 0.62 && avgBodyOcc - avgDescOcc >= 0.14) ||
+                        (vertDropRatio <= 0.55 && occDropRatio <= 0.68 && avgBodyVertOcc - avgDescVertOcc >= 0.11);
+                    if (!hasSharpCliff) continue;
+
+                    if (descMaxOcc > avgBodyOcc * 0.86 && occDropRatio > 0.45) continue;
+
+                    const nearCols = new Set();
+                    let kdeScore = 0;
+                    for (const c of groundedCols) {
+                        if (c.relBot > 0.93) continue;
+                        const d = c.relBot - r;
+                        const w = Math.exp(-(d * d) / twoSigmaSq);
+                        kdeScore += w;
+                        if (Math.abs(d) <= 0.075 && c.absDyNorm >= 0.14) nearCols.add(c.col);
+                    }
+                    let nearAnchorCount = 0;
+                    for (const a of bottomAnchors) {
+                        if (a.relY > 0.93) continue;
+                        const d = a.relY - r;
+                        const w = a.weight * Math.exp(-(d * d) / twoSigmaSq);
+                        kdeScore += 0.65 * w;
+                        if (Math.abs(d) <= 0.075) {
+                            nearCols.add(a.col);
+                            nearAnchorCount++;
+                        }
+                    }
+
+                    const anchoredColFraction = nearCols.size / totalActiveCols;
+                    if (nearAnchorCount < 1 || nearCols.size < 2 || (anchoredColFraction < 0.24 && nearAnchorCount < 2)) continue;
+
+                    if (aspectRatio < 0.78 && bodyMetas.length <= 2) {
+                        const descCols = groundedCols.filter(c => c.relBot > r + 0.10);
+                        const onlyLeftStemBelow = descCols.length > 0 && descCols.every(c => c.col / Math.max(1, numCols) < 0.36);
+                        const vertRuns = countDistinctVerticalRunsInBand(bandTopRel, bandBotRel);
+                        if (onlyLeftStemBelow || vertRuns < 3) continue;
+                    }
+
+                    const cliffStrength = Math.max(0.05, avgBodyOcc - avgDescOcc);
+                    const anchorNorm = kdeScore / Math.max(2, totalActiveCols);
+                    const composite = cliffStrength * (0.55 + anchorNorm) * (0.65 + anchoredColFraction);
+                    if (composite > bestCompositeScore) {
+                        bestCompositeScore = composite;
+                        bestCandidateRel = r;
+                    }
+                }
+
+                if (bestCandidateRel !== null) {
+                    let sumY = 0, sumW = 0;
+                    for (const c of groundedCols) {
+                        if (c.relBot <= 0.93 && Math.abs(c.relBot - bestCandidateRel) <= 0.08 && c.absDyNorm >= 0.14) {
+                            sumY += c.relBot; sumW += 1.0;
+                        }
+                    }
+                    for (const a of bottomAnchors) {
+                        if (a.relY <= 0.93 && Math.abs(a.relY - bestCandidateRel) <= 0.08) {
+                            sumY += a.relY * a.weight; sumW += a.weight;
+                        }
+                    }
+                    const refinedRel = sumW > 0 ? sumY / sumW : bestCandidateRel;
+                    if (1.0 - refinedRel >= 0.13 && (1.0 - refinedRel) * bodyH >= 9) {
+                        detectedBaselineY = bodyBounds.minY + Math.min(0.92, refinedRel + 0.012) * bodyH;
+                    }
+                }
+            }
+
+            // Step 4: Dedicated Single-Glyph Trajectory Recognizer (g, y, q, j) & Cursive-Loop Safety Net
+            if (detectedBaselineY === bodyBounds.maxY) {
+                let trajectoryBaselineRel = null;
+
+                const leftHalfDeepOtherStroke = (skipIdx) => {
+                    const midX = bodyBounds.minX + bodyW * 0.45;
+                    for (let s = 0; s < bodyMetas.length; s++) {
+                        if (s === skipIdx) continue;
+                        for (const p of bodyMetas[s].stroke.points) {
+                            const rY = (p.y - bodyBounds.minY) / bodyH;
+                            if (p.x <= midX && rY >= 0.82) return true;
+                        }
+                    }
+                    return false;
+                };
+
+                if (aspectRatio <= 1.50) {
+                    for (let sIdx = 0; sIdx < resampledStrokes.length; sIdx++) {
+                        const rPts = resampledStrokes[sIdx];
+                        if (rPts.length < 10) continue;
+
+                        let sMinY = Infinity, sMaxY = -Infinity;
+                        for (const p of rPts) {
+                            if (p.y < sMinY) sMinY = p.y;
+                            if (p.y > sMaxY) sMaxY = p.y;
+                        }
+                        if (sMaxY - sMinY < bodyH * 0.72) continue;
+
+                        const win = Math.max(2, Math.min(4, Math.floor(rPts.length / 18)));
+                        let runningMaxRelY = (rPts[0].y - bodyBounds.minY) / bodyH;
+                        let preValleyMinRelY = runningMaxRelY;
+                        let preValleyMinX = rPts[0].x;
+                        let runningMinX = rPts[0].x;
+
+                        for (let i = 0; i < rPts.length - win * 2; i++) {
+                            const relY = (rPts[i].y - bodyBounds.minY) / bodyH;
+                            if (relY > runningMaxRelY) runningMaxRelY = relY;
+                            if (relY < preValleyMinRelY) { preValleyMinRelY = relY; preValleyMinX = rPts[i].x; }
+                            if (rPts[i].x < runningMinX) runningMinX = rPts[i].x;
+
+                            if (relY < 0.26 || relY > 0.68) continue;
+
+                            let isLocalMax = true;
+                            const kStart = Math.max(0, i - win);
+                            for (let k = kStart; k <= i + win; k++) {
+                                if (rPts[k].y > rPts[i].y + 1e-6) { isLocalMax = false; break; }
+                            }
+                            if (!isLocalMax) continue;
+                            if (runningMaxRelY > relY + 0.08) continue;
+
+                            let peakIdx = -1, peakRelY = relY;
+                            for (let j = i + 1; j < rPts.length - win; j++) {
+                                const jRelY = (rPts[j].y - bodyBounds.minY) / bodyH;
+                                if (jRelY < peakRelY) { peakRelY = jRelY; peakIdx = j; }
+                                if (peakIdx !== -1 && jRelY > relY + 0.14) break;
+                            }
+                            if (peakIdx === -1 || peakRelY > 0.42 || relY - peakRelY < 0.12) continue;
+
+                            let deepIdx = -1, deepRelY = peakRelY;
+                            for (let k = peakIdx + 1; k < rPts.length; k++) {
+                                const kRelY = (rPts[k].y - bodyBounds.minY) / bodyH;
+                                if (kRelY > deepRelY) { deepRelY = kRelY; deepIdx = k; }
+                            }
+                            if (deepIdx === -1 || deepRelY < 0.84 || deepRelY - relY < 0.22) continue;
+
+                            let minRelYAfterDeep = deepRelY;
+                            let minXAfterDeep = rPts[deepIdx].x;
+                            let maxXAfterDeep = rPts[deepIdx].x;
+                            for (let m = deepIdx + 1; m < rPts.length; m++) {
+                                const mRelY = (rPts[m].y - bodyBounds.minY) / bodyH;
+                                if (mRelY < minRelYAfterDeep) minRelYAfterDeep = mRelY;
+                                if (rPts[m].x < minXAfterDeep) minXAfterDeep = rPts[m].x;
+                                if (rPts[m].x > maxXAfterDeep) maxXAfterDeep = rPts[m].x;
+                            }
+
+                            let bottomZoneMinX = rPts[deepIdx].x;
+                            let bottomZoneEntryX = rPts[deepIdx].x;
+                            for (let m = peakIdx + 1; m < rPts.length; m++) {
+                                const mRelY = (rPts[m].y - bodyBounds.minY) / bodyH;
+                                if (mRelY >= deepRelY - 0.18) { bottomZoneEntryX = rPts[m].x; break; }
+                            }
+                            for (let m = peakIdx + 1; m < rPts.length; m++) {
+                                const mRelY = (rPts[m].y - bodyBounds.minY) / bodyH;
+                                if (mRelY >= deepRelY - 0.18 && rPts[m].x < bottomZoneMinX) bottomZoneMinX = rPts[m].x;
+                            }
+                            const upwardReturn = deepRelY - minRelYAfterDeep;
+                            const bottomLeftHook = bottomZoneEntryX - bottomZoneMinX;
+                            const hasBottomLoopOrHook =
+                                upwardReturn >= 0.06 ||
+                                (upwardReturn >= 0.03 && rPts[deepIdx].x - minXAfterDeep >= bodyW * 0.18) ||
+                                bottomLeftHook >= bodyW * 0.28;
+
+                            const isOpenYCup =
+                                !leftHalfDeepOtherStroke(sIdx) &&
+                                preValleyMinRelY <= relY - 0.13 &&
+                                rPts[peakIdx].x - preValleyMinX >= bodyW * 0.16 &&
+                                runningMinX >= preValleyMinX - bodyW * 0.18;
+
+                            const hasRightwardQTick = maxXAfterDeep - rPts[deepIdx].x >= bodyW * 0.18;
+
+                            if (hasBottomLoopOrHook || isOpenYCup || hasRightwardQTick) {
+                                trajectoryBaselineRel = relY;
+                            }
+                        }
+                    }
+
+                    // 4B: Two-stroke standalone g, y, or q
+                    if (trajectoryBaselineRel === null && bodyMetas.length >= 2) {
+                        for (let i = 0; i < bodyMetas.length; i++) {
+                            const s1 = bodyMetas[i];
+                            const s1MinRel = (s1.minY - bodyBounds.minY) / bodyH;
+                            const s1MaxRel = (s1.maxY - bodyBounds.minY) / bodyH;
+                            if (s1MinRel > 0.30 || s1MaxRel < 0.28 || s1MaxRel > 0.68) continue;
+                            if (s1.height < bodyH * 0.18 || s1.width < bodyW * 0.24) continue;
+
+                            for (let j = 0; j < bodyMetas.length; j++) {
+                                if (j === i) continue;
+                                const s2 = bodyMetas[j];
+                                const s2MinRel = (s2.minY - bodyBounds.minY) / bodyH;
+                                const s2MaxRel = (s2.maxY - bodyBounds.minY) / bodyH;
+                                if (s2MaxRel < 0.85 || s2MaxRel - s1MaxRel < 0.22 || s2MinRel > s1MaxRel + 0.06) continue;
+
+                                const s2Pts = s2.stroke.points;
+                                if (s2Pts.length < 2) continue;
+
+                                let deepIdx = 0;
+                                for (let k = 1; k < s2Pts.length; k++) {
+                                    if (s2Pts[k].y > s2Pts[deepIdx].y) deepIdx = k;
+                                }
+                                let minAfterY = s2Pts[deepIdx].y;
+                                let maxAfterX = s2Pts[deepIdx].x;
+                                let minAfterX = s2Pts[deepIdx].x;
+                                for (let k = deepIdx + 1; k < s2Pts.length; k++) {
+                                    if (s2Pts[k].y < minAfterY) minAfterY = s2Pts[k].y;
+                                    if (s2Pts[k].x > maxAfterX) maxAfterX = s2Pts[k].x;
+                                    if (s2Pts[k].x < minAfterX) minAfterX = s2Pts[k].x;
+                                }
+                                const s2RiseAfterDeep = (s2Pts[deepIdx].y - minAfterY) / bodyH;
+                                const s2LeftHook = (s2Pts[deepIdx].x - minAfterX) / bodyW;
+                                const s2RightTick = (maxAfterX - s2Pts[deepIdx].x) / bodyW;
+
+                                const s1CenterX = (s1.minX + s1.maxX) * 0.5;
+                                const isTwoStrokeG =
+                                    s2Pts[0].x >= s1CenterX - bodyW * 0.08 &&
+                                    (s2RiseAfterDeep >= 0.05 || s2LeftHook >= 0.20);
+
+                                const s2Start = s2Pts[0], s2End = s2Pts[s2Pts.length - 1];
+                                const isTwoStrokeY =
+                                    s1MaxRel - s1MinRel >= 0.16 &&
+                                    s2Start.x > s1.minX + bodyW * 0.22 &&
+                                    ((s2End.x < s2Start.x - bodyW * 0.15 && s2End.x <= s1.minX + bodyW * 0.45) ||
+                                        s2RiseAfterDeep >= 0.06);
+
+                                let hasLowerCrossTick = false;
+                                for (let tIdx = 0; tIdx < bodyMetas.length; tIdx++) {
+                                    if (tIdx === i || tIdx === j) continue;
+                                    const tick = bodyMetas[tIdx];
+                                    const tickCenterRelY = ((tick.minY + tick.maxY) * 0.5 - bodyBounds.minY) / bodyH;
+                                    if (
+                                        tickCenterRelY > s1MaxRel + 0.05 &&
+                                        tick.height < bodyH * 0.22 &&
+                                        tick.maxX >= s2.minX - bodyW * 0.10 &&
+                                        tick.minX <= s2.maxX + bodyW * 0.10
+                                    ) {
+                                        hasLowerCrossTick = true;
+                                        break;
+                                    }
+                                }
+                                const isTwoStrokeQ =
+                                    s2Pts[0].x >= s1CenterX - bodyW * 0.08 &&
+                                    (s2RightTick >= 0.16 || hasLowerCrossTick);
+
+                                if (isTwoStrokeG || isTwoStrokeY || isTwoStrokeQ) {
+                                    trajectoryBaselineRel = s1MaxRel;
+                                    break;
+                                }
+                            }
+                            if (trajectoryBaselineRel !== null) break;
+                        }
+                    }
+
+                    // 4C: Standalone lowercase "j"
+                    if (trajectoryBaselineRel === null && removedUpperDotCount >= 1 && bodyMetas.length === 1 && aspectRatio < 0.48) {
+                        const rPts = resampledStrokes[0];
+                        if (rPts && rPts.length >= 6) {
+                            const startRelY = (rPts[0].y - bodyBounds.minY) / bodyH;
+                            let deepIdx = 0;
+                            for (let k = 1; k < rPts.length; k++) {
+                                if (rPts[k].y > rPts[deepIdx].y) deepIdx = k;
+                            }
+                            let hadEarlyRise = false;
+                            let runMaxY = rPts[0].y;
+                            for (let k = 1; k < deepIdx; k++) {
+                                if (rPts[k].y > runMaxY) runMaxY = rPts[k].y;
+                                if (runMaxY - rPts[k].y > bodyH * 0.22) { hadEarlyRise = true; break; }
+                            }
+                            let minAfterY = rPts[deepIdx].y;
+                            let minAfterX = rPts[deepIdx].x;
+                            for (let k = deepIdx + 1; k < rPts.length; k++) {
+                                if (rPts[k].y < minAfterY) minAfterY = rPts[k].y;
+                                if (rPts[k].x < minAfterX) minAfterX = rPts[k].x;
+                            }
+                            const rise = (rPts[deepIdx].y - minAfterY) / bodyH;
+                            const hookLeft = (rPts[0].x - minAfterX) / bodyW;
+                            const endX = rPts[rPts.length - 1].x;
+                            if (startRelY <= 0.25 && !hadEarlyRise && endX <= rPts[0].x + bodyW * 0.15 && (rise >= 0.05 || hookLeft >= 0.25)) {
+                                trajectoryBaselineRel = 0.68;
+                            }
+                        }
+                    }
+                }
+
+                // 4D: Word-embedded cursive descender loop safety net
+                const bottomGroundedRatio =
+                    groundedCols.length > 0
+                        ? groundedCols.filter(c => c.relBot >= 0.88).length / groundedCols.length
+                        : 1;
+                if (trajectoryBaselineRel === null && aspectRatio >= 0.80 && bottomAnchors.length >= 2 && bottomGroundedRatio <= 0.62) {
+                    let hasClearDescenderLoop = false;
+                    for (const rPts of resampledStrokes) {
+                        if (rPts.length < 12) continue;
+                        let deepIdx = 0;
+                        for (let k = 1; k < rPts.length; k++) {
+                            if (rPts[k].y > rPts[deepIdx].y) deepIdx = k;
+                        }
+                        const deepRel = (rPts[deepIdx].y - bodyBounds.minY) / bodyH;
+                        if (deepRel < 0.85) continue;
+
+                        let minBeforeY = rPts[deepIdx].y;
+                        for (let k = 0; k < deepIdx; k++) {
+                            if (rPts[k].y < minBeforeY) minBeforeY = rPts[k].y;
+                        }
+                        let minAfterY = rPts[deepIdx].y;
+                        let minLoopX = rPts[deepIdx].x;
+                        for (let k = deepIdx + 1; k < rPts.length; k++) {
+                            if (rPts[k].y < minAfterY) minAfterY = rPts[k].y;
+                            if (rPts[k].y >= rPts[deepIdx].y - bodyH * 0.25 && rPts[k].x < minLoopX) minLoopX = rPts[k].x;
+                        }
+                        let entryX = rPts[deepIdx].x;
+                        for (let k = deepIdx - 1; k >= 0; k--) {
+                            if (rPts[k].y <= rPts[deepIdx].y - bodyH * 0.25) { entryX = rPts[k].x; break; }
+                        }
+                        const dropIntoLoop = (rPts[deepIdx].y - minBeforeY) / bodyH;
+                        const riseOutOfLoop = (rPts[deepIdx].y - minAfterY) / bodyH;
+                        const loopsLeftward = entryX - minLoopX >= Math.max(6, bodyH * 0.06);
+                        if (dropIntoLoop >= 0.45 && riseOutOfLoop >= 0.14 && loopsLeftward) {
+                            hasClearDescenderLoop = true;
+                            break;
+                        }
+                    }
+
+                    if (hasClearDescenderLoop) {
+                        const upperAnchors = bottomAnchors.filter(a => a.relY >= 0.30 && a.relY <= 0.78);
+                        if (upperAnchors.length >= 2) {
+                            let bestR = -1, bestScore = -1;
+                            const sig2 = 2 * 0.06 * 0.06;
+                            for (let pct = 30; pct <= 78; pct++) {
+                                const r = pct / 100;
+                                const b0 = Math.max(0, Math.floor(Math.max(0, r - 0.30) * occBins));
+                                const b1 = Math.min(occBins - 1, Math.floor(Math.max(0.05, r - 0.02) * occBins));
+                                const d0 = Math.min(occBins - 1, Math.floor(Math.min(0.95, r + 0.09) * occBins));
+                                if (b1 - b0 < 3) continue;
+                                let bodyO = 0, bodyV = 0;
+                                for (let b = b0; b <= b1; b++) { bodyO += smoothOcc[b]; bodyV += smoothVertOcc[b]; }
+                                bodyO /= b1 - b0 + 1;
+                                bodyV /= b1 - b0 + 1;
+                                let descO = 0;
+                                for (let b = d0; b < occBins; b++) descO += smoothOcc[b];
+                                descO /= Math.max(1, occBins - d0);
+                                if (bodyV < 0.13 || descO > bodyO * 0.78) continue;
+
+                                let sc = 0;
+                                const cols = new Set();
+                                for (const a of upperAnchors) {
+                                    const d = a.relY - r;
+                                    sc += a.weight * Math.exp(-(d * d) / sig2);
+                                    if (Math.abs(d) <= 0.09) cols.add(a.col);
+                                }
+                                if (cols.size >= 2 && sc > bestScore) { bestScore = sc; bestR = r; }
+                            }
+                            if (bestR > 0) {
+                                const near = upperAnchors.filter(a => Math.abs(a.relY - bestR) <= 0.085);
+                                const avgRel = near.reduce((acc, a) => acc + a.relY, 0) / Math.max(1, near.length);
+                                trajectoryBaselineRel = avgRel;
+                            }
+                        }
+                    }
+                }
+
+                if (trajectoryBaselineRel !== null) {
+                    detectedBaselineY = bodyBounds.minY + Math.min(0.92, trajectoryBaselineRel + 0.012) * bodyH;
+                }
+            }
+
+            const minAllowedBaseline = bounds.minY + bounds.height * 0.28;
+            detectedBaselineY = hwClamp(detectedBaselineY, minAllowedBaseline, bounds.maxY);
+
+            const hasDescenderOrUnderDot = bounds.maxY - detectedBaselineY > Math.max(3, bounds.height * 0.06);
+            return { baselineY: detectedBaselineY, hasDescenderOrUnderDot };
+        }
+
+        function normalizeHandwritingClusterToWord(strokes, lineHeight, id) {
+            const bounds = computeStrokesBoundingBox(strokes);
+            if (!bounds) return null;
+
+            const safeLineH = hwClamp(lineHeight || 44, 24, 96);
+            const targetAboveBaseH = safeLineH * 0.68;
+            const maxAboveBaseH = safeLineH * 0.78;
+            const maxBelowBaseH = safeLineH * 0.46;
+
+            const isTinyDot = bounds.width < 18 && bounds.height < 18;
+            const isFlatDash = bounds.height < 20 && bounds.width >= bounds.height * 2.1;
+
+            let scale;
+            let verticalAlign = 'baseline';
+            let detectedBaselineY = bounds.maxY;
+
+            if (isTinyDot) {
+                const desiredDotH = safeLineH * 0.16;
+                scale = hwClamp(desiredDotH / Math.max(4, bounds.height), 0.35, 1.0);
+                verticalAlign = 'bottom';
+            } else if (isFlatDash) {
+                const desiredDashW = safeLineH * 0.42;
+                scale = hwClamp(desiredDashW / Math.max(8, bounds.width), 0.18, 0.9);
+                verticalAlign = 'center';
+            } else {
+                const baseInfo = detectHandwritingBaseline(strokes, bounds);
+                detectedBaselineY = baseInfo.baselineY;
+                const aboveBaselineH = Math.max(12, detectedBaselineY - bounds.minY);
+                const belowBaselineH = Math.max(0, bounds.maxY - detectedBaselineY);
+
+                const rawScale = targetAboveBaseH / aboveBaselineH;
+                scale = hwClamp(rawScale, 0.06, 1.35);
+                if (aboveBaselineH * scale > maxAboveBaseH) {
+                    scale = maxAboveBaseH / aboveBaselineH;
+                }
+                if (belowBaselineH > 0 && belowBaselineH * scale > maxBelowBaseH) {
+                    scale = Math.min(scale, maxBelowBaseH / belowBaselineH);
+                }
+                verticalAlign = 'baseline';
+            }
+
+            const minInkWidth = Math.max(0.7, safeLineH * 0.018);
+            const maxInkWidth = Math.max(4.0, safeLineH * 0.125);
+
+            let totalRawW = 0, totalPts = 0;
+            for (const st of strokes) {
+                for (const pt of st.points) {
+                    totalRawW += pt.width || st.baseWidth || 3;
+                    totalPts++;
+                }
+            }
+            const avgRawW = totalPts > 0 ? totalRawW / totalPts : 3.5;
+            const targetMeanW = hwClamp(safeLineH * 0.058, 1.6, 4.2);
+            const widthScale = avgRawW > 1e-3 ? hwClamp(targetMeanW / avgRawW, scale * 0.85, Math.max(scale * 1.4, targetMeanW / avgRawW)) : scale;
+
+            const normalizedStrokes = strokes.map(st => ({
+                color: st.color,
+                baseWidth: hwClamp(st.baseWidth * widthScale, minInkWidth, maxInkWidth),
+                points: st.points.map(pt => ({
+                    x: (pt.x - bounds.minX) * scale,
+                    y: (pt.y - bounds.minY) * scale,
+                    width: hwClamp(pt.width * widthScale, minInkWidth, maxInkWidth)
+                }))
+            }));
+
+            return {
+                word: {
+                    id: id || ('hw_' + Date.now() + '_' + Math.floor(Math.random() * 10000)),
+                    strokes: normalizedStrokes,
+                    normWidth: Math.max(3, bounds.width * scale),
+                    normHeight: Math.max(3, bounds.height * scale),
+                    normBaselineY: Math.max(1, (detectedBaselineY - bounds.minY) * scale),
+                    refLineHeight: safeLineH,
+                    verticalAlign
+                },
+                sourceBounds: bounds,
+                appliedScale: scale
+            };
+        }
+
+        function layoutHandwritingPage(words, config) {
+            const marginLeft = config.marginLeft;
+            const marginRight = config.marginRight;
+            const marginTop = config.marginTop;
+            const lineHeight = hwClamp(config.lineHeight, 24, 96);
+            const usableWidth = Math.max(80, config.pageWidth - marginLeft - marginRight);
+            const wordGap = Math.max(8, Math.round(lineHeight * (config.wordGapRatio ?? 0.34)));
+            const minLines = Math.max(4, config.minLines ?? 8);
+
+            const placed = [];
+            let cursorLine = 0;
+            let cursorX = marginLeft;
+
+            const computeWordTopY = (lineIdx, h, baselineOffset, align) => {
+                const lineTop = marginTop + lineIdx * lineHeight;
+                const baselineY = lineTop + lineHeight * 0.80;
+                if (align === 'center') return lineTop + (lineHeight * 0.80 - h) * 0.5;
+                if (align === 'bottom') return baselineY - h;
+                return baselineY - baselineOffset;
+            };
+
+            for (const item of words || []) {
+                if (item.isLineBreak) {
+                    cursorLine += 1;
+                    cursorX = marginLeft;
+                    continue;
+                }
+                if (item.isSpace) {
+                    const spaceW = Math.round(lineHeight * 0.45);
+                    if (cursorX + spaceW <= marginLeft + usableWidth) {
+                        cursorX += spaceW;
+                    } else {
+                        cursorLine += 1;
+                        cursorX = marginLeft;
+                    }
+                    continue;
+                }
+
+                const refLH = Math.max(16, item.refLineHeight || lineHeight);
+                let scaleFromRef = lineHeight / refLH;
+                let w = item.normWidth * scaleFromRef;
+                let h = item.normHeight * scaleFromRef;
+
+                if (w > usableWidth) {
+                    const fitRatio = usableWidth / w;
+                    scaleFromRef *= fitRatio;
+                    w *= fitRatio;
+                    h *= fitRatio;
+                }
+
+                if (cursorX > marginLeft + 1 && cursorX + w > marginLeft + usableWidth) {
+                    cursorLine += 1;
+                    cursorX = marginLeft;
+                }
+
+                const baselineOffset =
+                    typeof item.normBaselineY === 'number' && Number.isFinite(item.normBaselineY)
+                        ? item.normBaselineY * scaleFromRef
+                        : h;
+                const y = computeWordTopY(cursorLine, h, baselineOffset, item.verticalAlign || 'baseline');
+                placed.push({ item, lineIndex: cursorLine, x: cursorX, y, width: w, height: h, scaleFromRef });
+
+                cursorX += w + wordGap;
+                if (cursorX > marginLeft + usableWidth) {
+                    cursorLine += 1;
+                    cursorX = marginLeft;
+                }
+            }
+
+            return {
+                placed,
+                cursorLine,
+                cursorX,
+                totalLines: Math.max(minLines, cursorLine + 2)
+            };
+        }
+
+        function drawCalligraphicStroke(ctx, stroke, offsetX = 0, offsetY = 0, scale = 1, widthMultiplier = 1) {
+            const pts = stroke && stroke.points ? stroke.points : [];
+            if (pts.length === 0) return;
+
+            ctx.save();
+            ctx.fillStyle = stroke.color || '#1d4ed8';
+
+            if (pts.length === 1) {
+                const p = pts[0];
+                const r = Math.max(0.8, (p.width || stroke.baseWidth || 3) * scale * widthMultiplier * 0.5);
+                ctx.beginPath();
+                ctx.arc(offsetX + p.x * scale, offsetY + p.y * scale, r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                return;
+            }
+
+            const scaledPts = pts.map(p => ({
+                x: offsetX + p.x * scale,
+                y: offsetY + p.y * scale,
+                width: Math.max(0.75, (p.width || stroke.baseWidth || 3) * scale * widthMultiplier)
+            }));
+
+            const { left, right } = buildCalligraphicPolygonOutline(scaledPts);
+            if (left.length >= 2 && right.length >= 2) {
+                ctx.beginPath();
+                ctx.moveTo(left[0].x, left[0].y);
+                for (let i = 1; i < left.length - 1; i++) {
+                    const mx = (left[i].x + left[i + 1].x) * 0.5;
+                    const my = (left[i].y + left[i + 1].y) * 0.5;
+                    ctx.quadraticCurveTo(left[i].x, left[i].y, mx, my);
+                }
+                ctx.lineTo(left[left.length - 1].x, left[left.length - 1].y);
+
+                for (let i = right.length - 1; i >= 1; i--) {
+                    const prev = right[i - 1];
+                    const mx = (right[i].x + prev.x) * 0.5;
+                    const my = (right[i].y + prev.y) * 0.5;
+                    ctx.quadraticCurveTo(right[i].x, right[i].y, mx, my);
+                }
+                ctx.lineTo(right[0].x, right[0].y);
+                ctx.closePath();
+                ctx.fill();
+
+                // Rounded start & end ink caps
+                const first = scaledPts[0];
+                const last = scaledPts[scaledPts.length - 1];
+                ctx.beginPath();
+                ctx.arc(first.x, first.y, Math.max(0.5, first.width * 0.5), 0, Math.PI * 2);
+                ctx.arc(last.x, last.y, Math.max(0.5, last.width * 0.5), 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        function resizeHandwritingOverlayCanvases() {
+            const ws = document.getElementById('workspace');
+            if (!ws) return;
+            const rect = ws.getBoundingClientRect();
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            ['handwriting-capture-canvas', 'handwriting-fly-canvas'].forEach(id => {
+                const cv = document.getElementById(id);
+                if (!cv) return;
+                const w = Math.max(1, Math.round(rect.width * dpr));
+                const h = Math.max(1, Math.round(rect.height * dpr));
+                if (cv.width !== w || cv.height !== h) {
+                    cv.width = w;
+                    cv.height = h;
+                }
+            });
+            renderLiveHandwritingCapture();
+            renderHandwritingPage();
+        }
+
+        function renderLiveHandwritingCapture() {
+            const cv = document.getElementById('handwriting-capture-canvas');
+            if (!cv) return;
+            const ctx = cv.getContext('2d');
+            if (!ctx) return;
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, cv.width / dpr, cv.height / dpr);
+
+            const hw = ensureHandwritingPageState();
+            const allStrokes = [...hwRuntime.pendingStrokes];
+            if (hwRuntime.isDrawing && hwRuntime.activeRawPoints.length > 0) {
+                allStrokes.push({
+                    color: hw.inkColor,
+                    baseWidth: hw.baseWidth,
+                    points: computeCalligraphicStrokePoints(hwRuntime.activeRawPoints, {
+                        baseWidth: hw.baseWidth,
+                        smartThickThin: hw.smartThickThin
+                    })
+                });
+            }
+
+            if (allStrokes.length === 0) return;
+
+            // Subtle dashed capture box around the active word/phrase while writing
+            const b = computeStrokesBoundingBox(allStrokes);
+            if (b) {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(37, 99, 235, 0.34)';
+                ctx.fillStyle = 'rgba(239, 246, 255, 0.14)';
+                ctx.lineWidth = 1.25;
+                ctx.setLineDash([5, 4]);
+                const pad = 12;
+                const rx = b.minX - pad, ry = b.minY - pad;
+                const rw = b.width + pad * 2, rh = b.height + pad * 2;
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(rx, ry, rw, rh, 10);
+                } else {
+                    ctx.rect(rx, ry, rw, rh);
+                }
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            for (const st of allStrokes) {
+                drawCalligraphicStroke(ctx, st, 0, 0, 1, 1);
+            }
+        }
+
+        function updateHandwritingLivePill(visible, progressFraction = 0) {
+            const pill = document.getElementById('handwriting-live-pill');
+            const bar = document.getElementById('hw-live-progress-bar');
+            const txt = document.getElementById('hw-live-pill-text');
+            if (!pill) return;
+            pill.classList.toggle('visible', Boolean(visible));
+            if (bar) bar.style.width = `${Math.round(hwClamp(progressFraction, 0, 1) * 100)}%`;
+            if (txt) {
+                if (hwRuntime.isDrawing) {
+                    txt.textContent = t('Đang viết... (dừng tay sẽ tự đưa về dòng)', 'Writing... (pause to auto-flow to line)');
+                } else {
+                    txt.textContent = t('Đang chờ nét tiếp theo...', 'Waiting for next stroke...');
+                }
+            }
+        }
+
+        function cancelHandwritingPauseTimer() {
+            if (hwRuntime.pauseTimerId) {
+                clearTimeout(hwRuntime.pauseTimerId);
+                hwRuntime.pauseTimerId = null;
+            }
+            if (hwRuntime.pauseProgressRafId) {
+                cancelAnimationFrame(hwRuntime.pauseProgressRafId);
+                hwRuntime.pauseProgressRafId = null;
+            }
+        }
+
+        function startHandwritingPauseTimer() {
+            cancelHandwritingPauseTimer();
+            const hw = ensureHandwritingPageState();
+            const delay = hwClamp(hw.pauseMs || 900, 350, 2500);
+            hwRuntime.pauseStartAt = performance.now();
+            hwRuntime.pauseDurationMs = delay;
+
+            const tickProgress = () => {
+                if (!hwRuntime.pauseTimerId) return;
+                const elapsed = performance.now() - hwRuntime.pauseStartAt;
+                const frac = hwClamp(elapsed / delay, 0, 1);
+                updateHandwritingLivePill(true, frac);
+                if (frac < 1) {
+                    hwRuntime.pauseProgressRafId = requestAnimationFrame(tickProgress);
+                }
+            };
+            hwRuntime.pauseProgressRafId = requestAnimationFrame(tickProgress);
+
+            hwRuntime.pauseTimerId = setTimeout(() => {
+                hwRuntime.pauseTimerId = null;
+                commitPendingHandwritingNow();
+            }, delay);
+        }
+
+        function discardPendingHandwriting() {
+            cancelHandwritingPauseTimer();
+            hwRuntime.isDrawing = false;
+            hwRuntime.activePointerId = null;
+            hwRuntime.activeRawPoints = [];
+            hwRuntime.pendingStrokes = [];
+            updateHandwritingLivePill(false, 0);
+            renderLiveHandwritingCapture();
+        }
+
+        function getHandwritingPageLayoutConfig() {
+            const hw = ensureHandwritingPageState();
+            const scrollEl = document.getElementById('hw-paper-scroll');
+            const panelEl = document.getElementById('handwriting-page-panel');
+            const cssW = Math.max(260, (scrollEl && scrollEl.clientWidth) || (panelEl && panelEl.clientWidth) || 400);
+            return {
+                pageWidth: cssW,
+                marginLeft: 32,
+                marginRight: 16,
+                marginTop: 18,
+                lineHeight: hw.lineHeight || 44,
+                wordGapRatio: 0.34,
+                minLines: 8
+            };
+        }
+
+        function renderHandwritingPage() {
+            const panel = document.getElementById('handwriting-page-panel');
+            const cv = document.getElementById('handwriting-page-canvas');
+            const scrollEl = document.getElementById('hw-paper-scroll');
+            const hintEl = document.getElementById('hw-paper-hint');
+            if (!panel || !cv || !scrollEl) return;
+
+            const hw = ensureHandwritingPageState();
+            const config = getHandwritingPageLayoutConfig();
+            const layout = layoutHandwritingPage(hw.words, config);
+            hwRuntime.lastLayout = layout;
+
+            if (hintEl) {
+                const hasRealWords = hw.words.some(w => !w.isLineBreak && !w.isSpace);
+                hintEl.classList.toggle('hidden', hasRealWords || hw.words.length > 0);
+            }
+
+            const cssW = config.pageWidth;
+            const minCssH = Math.max(scrollEl.clientHeight || 300, 260);
+            const contentH = config.marginTop + layout.totalLines * config.lineHeight + 36;
+            const cssH = Math.max(minCssH, contentH);
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+            cv.style.width = `${cssW}px`;
+            cv.style.height = `${cssH}px`;
+            const targetW = Math.max(1, Math.round(cssW * dpr));
+            const targetH = Math.max(1, Math.round(cssH * dpr));
+            if (cv.width !== targetW || cv.height !== targetH) {
+                cv.width = targetW;
+                cv.height = targetH;
+            }
+
+            const ctx = cv.getContext('2d');
+            if (!ctx) return;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            // Warm ruled notebook paper fill
+            ctx.fillStyle = '#fffef8';
+            ctx.fillRect(0, 0, cssW, cssH);
+
+            // Highlight active line subtly
+            const activeLineTop = config.marginTop + layout.cursorLine * config.lineHeight;
+            ctx.fillStyle = currentTool === 'handwriting-pen' ? 'rgba(59, 130, 246, 0.075)' : 'rgba(148, 163, 184, 0.05)';
+            ctx.fillRect(0, activeLineTop, cssW, config.lineHeight);
+
+            // Horizontal ruled lines & faint mid-guides
+            const lineCount = Math.ceil((cssH - config.marginTop) / config.lineHeight) + 1;
+            for (let i = 0; i < lineCount; i++) {
+                const lineTop = config.marginTop + i * config.lineHeight;
+                const baselineY = Math.round(lineTop + config.lineHeight * 0.80) + 0.5;
+                const midY = Math.round(lineTop + config.lineHeight * 0.40) + 0.5;
+
+                // Subtle dashed x-height guide on the active line only
+                if (i === layout.cursorLine && currentTool === 'handwriting-pen') {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(59, 130, 246, 0.16)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([3, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(config.marginLeft, midY);
+                    ctx.lineTo(cssW - 10, midY);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // Main ruled line
+                ctx.strokeStyle = i === layout.cursorLine ? 'rgba(59, 130, 246, 0.34)' : 'rgba(148, 163, 184, 0.32)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, baselineY);
+                ctx.lineTo(cssW, baselineY);
+                ctx.stroke();
+            }
+
+            // Classic notebook left vertical margin rule
+            const marginRuleX = Math.round(config.marginLeft - 9) + 0.5;
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.28)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(marginRuleX, 0);
+            ctx.lineTo(marginRuleX, cssH);
+            ctx.stroke();
+
+            // Render all committed handwritten words (skipping the one currently mid-flight)
+            for (const entry of layout.placed) {
+                if (hwRuntime.flyingWordId && entry.item.id === hwRuntime.flyingWordId) continue;
+                for (const st of entry.item.strokes || []) {
+                    drawCalligraphicStroke(ctx, st, entry.x, entry.y, entry.scaleFromRef, 1);
+                }
+            }
+
+            // Blinking insertion caret on the active line
+            if (currentTool === 'handwriting-pen' && hwRuntime.cursorVisible) {
+                const caretX = Math.round(layout.cursorX) + 0.5;
+                const caretTop = activeLineTop + config.lineHeight * 0.16;
+                const caretBottom = activeLineTop + config.lineHeight * 0.80;
+                ctx.save();
+                ctx.strokeStyle = '#2563eb';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(caretX, caretTop);
+                ctx.lineTo(caretX, caretBottom);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function scrollHandwritingActiveLineIntoView() {
+            const scrollEl = document.getElementById('hw-paper-scroll');
+            if (!scrollEl || !hwRuntime.lastLayout) return;
+            const cfg = getHandwritingPageLayoutConfig();
+            const activeBottom = cfg.marginTop + (hwRuntime.lastLayout.cursorLine + 1) * cfg.lineHeight + 16;
+            const activeTop = cfg.marginTop + hwRuntime.lastLayout.cursorLine * cfg.lineHeight - 8;
+            if (activeBottom > scrollEl.scrollTop + scrollEl.clientHeight) {
+                scrollEl.scrollTop = activeBottom - scrollEl.clientHeight;
+            } else if (activeTop < scrollEl.scrollTop) {
+                scrollEl.scrollTop = Math.max(0, activeTop);
+            }
+        }
+
+        function animateHandwritingFlyToLine(wordItem, sourceBounds, placedEntry) {
+            const flyCv = document.getElementById('handwriting-fly-canvas');
+            const ws = document.getElementById('workspace');
+            const pageCv = document.getElementById('handwriting-page-canvas');
+            const panel = document.getElementById('handwriting-page-panel');
+            if (!flyCv || !ws || !pageCv || !panel || panel.classList.contains('collapsed') || !panel.classList.contains('open')) {
+                hwRuntime.flyingWordId = null;
+                renderHandwritingPage();
+                return;
+            }
+
+            if (hwRuntime.flyAnimRafId) {
+                cancelAnimationFrame(hwRuntime.flyAnimRafId);
+                hwRuntime.flyAnimRafId = null;
+            }
+
+            const wsRect = ws.getBoundingClientRect();
+            const pageRect = pageCv.getBoundingClientRect();
+            const dstX = (pageRect.left - wsRect.left) + placedEntry.x;
+            const dstY = (pageRect.top - wsRect.top) + placedEntry.y;
+
+            const srcX = sourceBounds.minX;
+            const srcY = sourceBounds.minY;
+            const srcScale = sourceBounds.width / Math.max(1, wordItem.normWidth);
+            const dstScale = placedEntry.scaleFromRef;
+
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const ctx = flyCv.getContext('2d');
+            if (!ctx) {
+                hwRuntime.flyingWordId = null;
+                renderHandwritingPage();
+                return;
+            }
+
+            hwRuntime.flyingWordId = wordItem.id;
+            renderHandwritingPage();
+
+            const startT = performance.now();
+            const duration = 260;
+
+            const step = (now) => {
+                const rawT = hwClamp((now - startT) / duration, 0, 1);
+                // Cubic ease-out for silky glide
+                const ease = 1 - Math.pow(1 - rawT, 3);
+
+                const curX = srcX + (dstX - srcX) * ease;
+                const curY = srcY + (dstY - srcY) * ease;
+                const curScale = srcScale + (dstScale - srcScale) * ease;
+
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctx.clearRect(0, 0, flyCv.width / dpr, flyCv.height / dpr);
+
+                // Subtle trailing highlight box that fades as the word lands
+                const boxAlpha = (1 - ease) * 0.35;
+                if (boxAlpha > 0.02) {
+                    ctx.save();
+                    ctx.strokeStyle = `rgba(37, 99, 235, ${boxAlpha.toFixed(3)})`;
+                    ctx.lineWidth = 1.2;
+                    ctx.setLineDash([4, 4]);
+                    ctx.strokeRect(curX - 6, curY - 6, wordItem.normWidth * curScale + 12, wordItem.normHeight * curScale + 12);
+                    ctx.restore();
+                }
+
+                for (const st of wordItem.strokes || []) {
+                    drawCalligraphicStroke(ctx, st, curX, curY, curScale, 1);
+                }
+
+                if (rawT < 1) {
+                    hwRuntime.flyAnimRafId = requestAnimationFrame(step);
+                } else {
+                    hwRuntime.flyAnimRafId = null;
+                    hwRuntime.flyingWordId = null;
+                    ctx.clearRect(0, 0, flyCv.width / dpr, flyCv.height / dpr);
+                    renderHandwritingPage();
+                }
+            };
+
+            hwRuntime.flyAnimRafId = requestAnimationFrame(step);
+        }
+
+        function commitPendingHandwritingNow() {
+            cancelHandwritingPauseTimer();
+            const hw = ensureHandwritingPageState();
+
+            if (hwRuntime.isDrawing && hwRuntime.activeRawPoints.length > 0) {
+                const finalizedPts = computeCalligraphicStrokePoints(hwRuntime.activeRawPoints, {
+                    baseWidth: hw.baseWidth,
+                    smartThickThin: hw.smartThickThin
+                });
+                if (finalizedPts.length > 0) {
+                    hwRuntime.pendingStrokes.push({
+                        color: hw.inkColor,
+                        baseWidth: hw.baseWidth,
+                        points: finalizedPts
+                    });
+                }
+                hwRuntime.isDrawing = false;
+                hwRuntime.activePointerId = null;
+                hwRuntime.activeRawPoints = [];
+            }
+
+            if (hwRuntime.pendingStrokes.length === 0) {
+                updateHandwritingLivePill(false, 0);
+                renderLiveHandwritingCapture();
+                return false;
+            }
+
+            const cluster = hwRuntime.pendingStrokes.slice();
+            hwRuntime.pendingStrokes = [];
+            updateHandwritingLivePill(false, 0);
+            renderLiveHandwritingCapture();
+
+            const normalized = normalizeHandwritingClusterToWord(cluster, hw.lineHeight || 44);
+            if (!normalized) return false;
+
+            saveHistory();
+            hw.visible = true;
+            hw.words.push(normalized.word);
+
+            const panel = document.getElementById('handwriting-page-panel');
+            if (panel) panel.classList.add('open');
+
+            const cfg = getHandwritingPageLayoutConfig();
+            const layout = layoutHandwritingPage(hw.words, cfg);
+            hwRuntime.lastLayout = layout;
+            const placedEntry = layout.placed.find(p => p.item.id === normalized.word.id);
+
+            renderHandwritingPage();
+            scrollHandwritingActiveLineIntoView();
+
+            if (placedEntry) {
+                animateHandwritingFlyToLine(normalized.word, normalized.sourceBounds, placedEntry);
+            }
+            scheduleAutoSaveState();
+            return true;
+        }
+
+        function insertHandwritingLineBreak() {
+            commitPendingHandwritingNow();
+            const hw = ensureHandwritingPageState();
+            saveHistory();
+            hw.words.push({
+                id: 'hw_br_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                strokes: [],
+                normWidth: 0,
+                normHeight: 0,
+                refLineHeight: hw.lineHeight || 44,
+                verticalAlign: 'baseline',
+                isLineBreak: true
+            });
+            renderHandwritingPage();
+            scrollHandwritingActiveLineIntoView();
+            scheduleAutoSaveState();
+        }
+
+        function insertHandwritingSpace() {
+            commitPendingHandwritingNow();
+            const hw = ensureHandwritingPageState();
+            saveHistory();
+            hw.words.push({
+                id: 'hw_sp_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                strokes: [],
+                normWidth: 0,
+                normHeight: 0,
+                refLineHeight: hw.lineHeight || 44,
+                verticalAlign: 'baseline',
+                isSpace: true
+            });
+            renderHandwritingPage();
+            scrollHandwritingActiveLineIntoView();
+            scheduleAutoSaveState();
+        }
+
+        function deleteLastHandwritingWord() {
+            if (hwRuntime.pendingStrokes.length > 0) {
+                hwRuntime.pendingStrokes.pop();
+                if (hwRuntime.pendingStrokes.length === 0) {
+                    cancelHandwritingPauseTimer();
+                    updateHandwritingLivePill(false, 0);
+                } else {
+                    startHandwritingPauseTimer();
+                }
+                renderLiveHandwritingCapture();
+                return;
+            }
+            const hw = ensureHandwritingPageState();
+            if (hw.words.length === 0) return;
+            saveHistory();
+            hw.words.pop();
+            renderHandwritingPage();
+            scrollHandwritingActiveLineIntoView();
+            scheduleAutoSaveState();
+        }
+
+        function clearHandwritingPage() {
+            discardPendingHandwriting();
+            const hw = ensureHandwritingPageState();
+            if (hw.words.length === 0) return;
+            saveHistory();
+            hw.words = [];
+            renderHandwritingPage();
+            scheduleAutoSaveState();
+        }
+
+        function setHandwritingInkColor(color) {
+            const hw = ensureHandwritingPageState();
+            hw.inkColor = color;
+            syncHandwritingControlsUI();
+            scheduleAutoSaveState();
+        }
+
+        function setHandwritingBaseWidth(w) {
+            const hw = ensureHandwritingPageState();
+            hw.baseWidth = hwClamp(Number(w) || 4.2, 2.0, 8.0);
+            syncHandwritingControlsUI();
+            scheduleAutoSaveState();
+        }
+
+        function toggleHandwritingSmartThickThin() {
+            const hw = ensureHandwritingPageState();
+            hw.smartThickThin = !hw.smartThickThin;
+            syncHandwritingControlsUI();
+            scheduleAutoSaveState();
+        }
+
+        function adjustHandwritingLineHeight(delta) {
+            const hw = ensureHandwritingPageState();
+            hw.lineHeight = hwClamp((hw.lineHeight || 44) + delta, 28, 76);
+            renderHandwritingPage();
+            scrollHandwritingActiveLineIntoView();
+            scheduleAutoSaveState();
+        }
+
+        function setHandwritingPauseMs(val) {
+            const hw = ensureHandwritingPageState();
+            const parsed = parseInt(val, 10);
+            if (!isNaN(parsed)) {
+                hw.pauseMs = hwClamp(parsed, 350, 2500);
+            }
+            scheduleAutoSaveState();
+        }
+
+        function toggleHandwritingPenMode() {
+            if (currentTool === 'handwriting-pen') {
+                commitPendingHandwritingNow();
+                selectTool('view');
+            } else {
+                selectTool('handwriting-pen');
+            }
+        }
+
+        function toggleHandwritingPanelCollapse() {
+            const panel = document.getElementById('handwriting-page-panel');
+            const btn = document.getElementById('hw-collapse-btn');
+            if (!panel) return;
+            const collapsed = panel.classList.toggle('collapsed');
+            if (btn) btn.textContent = collapsed ? '▸' : '▾';
+            if (!collapsed) {
+                requestAnimationFrame(() => renderHandwritingPage());
+            }
+        }
+
+        function closeHandwritingPagePanel() {
+            commitPendingHandwritingNow();
+            const hw = ensureHandwritingPageState();
+            hw.visible = false;
+            const panel = document.getElementById('handwriting-page-panel');
+            if (panel) panel.classList.remove('open');
+            if (currentTool === 'handwriting-pen') {
+                selectTool('view');
+            }
+            scheduleAutoSaveState();
+        }
+
+        function handleHandwritingEnterKey() {
+            if (hwRuntime.pendingStrokes.length > 0 || hwRuntime.isDrawing) {
+                commitPendingHandwritingNow();
+            } else {
+                insertHandwritingLineBreak();
+            }
+        }
+
+        function handleHandwritingSpaceKey() {
+            if (hwRuntime.pendingStrokes.length > 0 || hwRuntime.isDrawing) {
+                commitPendingHandwritingNow();
+            } else {
+                insertHandwritingSpace();
+            }
+        }
+
+        function handleHandwritingBackspaceKey() {
+            deleteLastHandwritingWord();
+        }
+
+        function syncHandwritingControlsUI() {
+            const hw = ensureHandwritingPageState();
+            document.querySelectorAll('#hw-ink-swatches .hw-swatch').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-hw-color') === hw.inkColor);
+            });
+            document.querySelectorAll('[data-hw-width]').forEach(btn => {
+                const bw = parseFloat(btn.getAttribute('data-hw-width'));
+                btn.classList.toggle('active', Math.abs(bw - hw.baseWidth) < 0.45);
+            });
+            const smartBtn = document.getElementById('hw-smart-calligraphy-btn');
+            if (smartBtn) {
+                smartBtn.classList.toggle('active', hw.smartThickThin !== false);
+                smartBtn.setAttribute('aria-pressed', hw.smartThickThin !== false ? 'true' : 'false');
+            }
+            const pauseSel = document.getElementById('hw-pause-select');
+            if (pauseSel) {
+                const targetVal = String(hw.pauseMs || 900);
+                if (Array.from(pauseSel.options).some(o => o.value === targetVal)) {
+                    pauseSel.value = targetVal;
+                }
+            }
+        }
+
+        function toggleHandwritingToolsVisibility(forceVal) {
+            hwRuntime.toolsVisible = (typeof forceVal === 'boolean') ? forceVal : !hwRuntime.toolsVisible;
+            const panel = document.getElementById('handwriting-page-panel');
+            if (panel && hwRuntime.toolsVisible) {
+                panel.classList.remove('collapsed');
+                const colBtn = document.getElementById('hw-collapse-btn');
+                if (colBtn) colBtn.textContent = '▾';
+            }
+            syncHandwritingModeUI();
+            requestAnimationFrame(() => renderHandwritingPage());
+        }
+
+        function syncHandwritingLanguageUI() {
+            const setTxt = (id, vi, en) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = t(vi, en);
+            };
+            setTxt('hw-panel-title-text', 'Trang viết tay', 'Handwriting Page');
+            setTxt('hw-width-thin', 'Mảnh', 'Thin');
+            setTxt('hw-width-med', 'Vừa', 'Med');
+            setTxt('hw-width-bold', 'Đậm', 'Bold');
+            setTxt('hw-smart-calligraphy-btn', '✦ Đậm nhạt', '✦ Calligraphy');
+            setTxt('hw-space-btn', 'Cách', 'Space');
+            setTxt('hw-newline-btn', '↵ Dòng', '↵ Line');
+            setTxt('hw-backspace-btn', '⌫ Xóa từ', '⌫ Undo');
+            setTxt('hw-clear-btn', 'Xóa trang', 'Clear');
+            setTxt('hw-live-commit-btn', '↵ Đưa vào dòng', '↵ Flow Now');
+            setTxt('hw-live-cancel-btn', 'Hủy', 'Cancel');
+            setTxt(
+                'hw-paper-hint',
+                'Viết tay tự do lên bất kỳ vị trí nào trên màn hình — khi dừng tay, cụm từ sẽ tự động thu cỡ đồng bộ và đưa về đúng dòng hiện hành.',
+                'Handwrite freely anywhere on screen — when you pause, your phrase automatically scales and flows into the active line.'
+            );
+            const cornerBtn = document.getElementById('hw-corner-tools-btn');
+            if (cornerBtn) {
+                cornerBtn.title = t('Hiện / Ẩn công cụ trang viết', 'Show / Hide writing page tools');
+                cornerBtn.setAttribute('aria-label', t('Ẩn / Hiện công cụ trang viết tay', 'Toggle handwriting page tools'));
+            }
+            syncHandwritingModeUI();
+        }
+
+        function syncHandwritingModeUI() {
+            const isPen = currentTool === 'handwriting-pen';
+            const captureCv = document.getElementById('handwriting-capture-canvas');
+            const panel = document.getElementById('handwriting-page-panel');
+            const modeTag = document.getElementById('hw-mode-tag');
+            const togglePenBtn = document.getElementById('hw-toggle-pen-btn');
+            const cornerBtn = document.getElementById('hw-corner-tools-btn');
+            const hw = ensureHandwritingPageState();
+
+            if (captureCv) {
+                captureCv.classList.toggle('active', isPen);
+            }
+            if (panel) {
+                const shouldOpen = isPen || hw.visible;
+                panel.classList.toggle('open', shouldOpen);
+                const hideTools = !hwRuntime.toolsVisible;
+                panel.classList.toggle('tools-hidden', hideTools);
+                if (hideTools) panel.classList.remove('collapsed');
+            }
+            if (cornerBtn) {
+                cornerBtn.classList.toggle('active', Boolean(hwRuntime.toolsVisible));
+                cornerBtn.setAttribute('aria-expanded', hwRuntime.toolsVisible ? 'true' : 'false');
+            }
+            if (modeTag) {
+                modeTag.textContent = isPen ? t('Đang viết', 'Writing') : t('Đang xem', 'Viewing');
+                modeTag.classList.toggle('paused', !isPen);
+            }
+            if (togglePenBtn) {
+                togglePenBtn.textContent = isPen ? t('Tắt bút', 'Stop Pen') : t('Viết tiếp', 'Resume Pen');
+                togglePenBtn.classList.toggle('active-pen', isPen);
+            }
+            syncHandwritingControlsUI();
+            resizeHandwritingOverlayCanvases();
+            startOrStopHandwritingCaretBlink(isPen);
+        }
+
+        function syncHandwritingUIAndRender() {
+            syncHandwritingModeUI();
+            renderHandwritingPage();
+        }
+
+        function startOrStopHandwritingCaretBlink(active) {
+            if (hwRuntime.cursorBlinkRafId) {
+                cancelAnimationFrame(hwRuntime.cursorBlinkRafId);
+                hwRuntime.cursorBlinkRafId = null;
+            }
+            hwRuntime.cursorVisible = true;
+            if (!active) {
+                renderHandwritingPage();
+                return;
+            }
+            hwRuntime.lastBlinkAt = performance.now();
+            const blinkLoop = (now) => {
+                if (currentTool !== 'handwriting-pen') {
+                    hwRuntime.cursorBlinkRafId = null;
+                    return;
+                }
+                if (now - hwRuntime.lastBlinkAt >= 560) {
+                    hwRuntime.lastBlinkAt = now;
+                    hwRuntime.cursorVisible = !hwRuntime.cursorVisible;
+                    renderHandwritingPage();
+                }
+                hwRuntime.cursorBlinkRafId = requestAnimationFrame(blinkLoop);
+            };
+            hwRuntime.cursorBlinkRafId = requestAnimationFrame(blinkLoop);
+        }
+
+        function initHandwritingSystem() {
+            if (hwRuntime.initialized) return;
+            hwRuntime.initialized = true;
+
+            const captureCv = document.getElementById('handwriting-capture-canvas');
+            const panel = document.getElementById('handwriting-page-panel');
+            const dragHandle = document.getElementById('hw-panel-drag-handle');
+            const resizeHandle = document.getElementById('hw-resize-handle');
+
+            if (captureCv) {
+                const toLocalPoint = (ev) => {
+                    const rect = captureCv.getBoundingClientRect();
+                    return {
+                        x: ev.clientX - rect.left,
+                        y: ev.clientY - rect.top,
+                        t: ev.timeStamp || performance.now(),
+                        pressure: typeof ev.pressure === 'number' ? ev.pressure : 0.5,
+                        pointerType: ev.pointerType || 'mouse'
+                    };
+                };
+
+                captureCv.addEventListener('pointerdown', (e) => {
+                    if (currentTool !== 'handwriting-pen') return;
+                    if (e.pointerType === 'mouse' && e.button !== 0) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    cancelHandwritingPauseTimer();
+                    hwRuntime.isDrawing = true;
+                    hwRuntime.activePointerId = e.pointerId;
+                    hwRuntime.activeRawPoints = [toLocalPoint(e)];
+                    try { captureCv.setPointerCapture(e.pointerId); } catch (err) {}
+
+                    updateHandwritingLivePill(true, 0);
+                    renderLiveHandwritingCapture();
+                });
+
+                captureCv.addEventListener('pointermove', (e) => {
+                    if (!hwRuntime.isDrawing || e.pointerId !== hwRuntime.activePointerId) return;
+                    e.preventDefault();
+                    const coalesced = typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : null;
+                    if (coalesced && coalesced.length > 0) {
+                        for (const ce of coalesced) {
+                            hwRuntime.activeRawPoints.push(toLocalPoint(ce));
+                        }
+                    } else {
+                        hwRuntime.activeRawPoints.push(toLocalPoint(e));
+                    }
+                    renderLiveHandwritingCapture();
+                });
+
+                const finishStroke = (e) => {
+                    if (!hwRuntime.isDrawing || e.pointerId !== hwRuntime.activePointerId) return;
+                    e.preventDefault();
+                    try { captureCv.releasePointerCapture(e.pointerId); } catch (err) {}
+
+                    const hw = ensureHandwritingPageState();
+                    const pts = computeCalligraphicStrokePoints(hwRuntime.activeRawPoints, {
+                        baseWidth: hw.baseWidth,
+                        smartThickThin: hw.smartThickThin
+                    });
+                    if (pts.length > 0) {
+                        hwRuntime.pendingStrokes.push({
+                            color: hw.inkColor,
+                            baseWidth: hw.baseWidth,
+                            points: pts
+                        });
+                    }
+                    hwRuntime.isDrawing = false;
+                    hwRuntime.activePointerId = null;
+                    hwRuntime.activeRawPoints = [];
+                    renderLiveHandwritingCapture();
+
+                    if (hwRuntime.pendingStrokes.length > 0) {
+                        startHandwritingPauseTimer();
+                    }
+                };
+
+                captureCv.addEventListener('pointerup', finishStroke);
+                captureCv.addEventListener('pointercancel', finishStroke);
+            }
+
+            // Draggable Writing Page panel (both header when tools open & subtle top paper edge when tools hidden)
+            const attachPanelDrag = (handleEl) => {
+                if (!panel || !handleEl) return;
+                let dragging = false, sx = 0, sy = 0, initL = 0, initT = 0;
+                handleEl.addEventListener('pointerdown', (e) => {
+                    if (e.target.closest('button')) return;
+                    dragging = true;
+                    const rect = panel.getBoundingClientRect();
+                    const pRect = (panel.offsetParent || document.body).getBoundingClientRect();
+                    initL = rect.left - pRect.left;
+                    initT = rect.top - pRect.top;
+                    sx = e.clientX;
+                    sy = e.clientY;
+                    panel.style.left = `${initL}px`;
+                    panel.style.top = `${initT}px`;
+                    panel.style.right = 'auto';
+                    try { handleEl.setPointerCapture(e.pointerId); } catch (err) {}
+                    e.preventDefault();
+                });
+                handleEl.addEventListener('pointermove', (e) => {
+                    if (!dragging) return;
+                    const pRect = (panel.offsetParent || document.body).getBoundingClientRect();
+                    const nl = hwClamp(initL + (e.clientX - sx), 8, Math.max(8, pRect.width - panel.offsetWidth - 8));
+                    const nt = hwClamp(initT + (e.clientY - sy), 8, Math.max(8, pRect.height - panel.offsetHeight - 8));
+                    panel.style.left = `${nl}px`;
+                    panel.style.top = `${nt}px`;
+                });
+                const stopPanelDrag = (e) => {
+                    if (!dragging) return;
+                    dragging = false;
+                    try { handleEl.releasePointerCapture(e.pointerId); } catch (err) {}
+                };
+                handleEl.addEventListener('pointerup', stopPanelDrag);
+                handleEl.addEventListener('pointercancel', stopPanelDrag);
+            };
+            attachPanelDrag(dragHandle);
+            attachPanelDrag(document.getElementById('hw-paper-drag-strip'));
+
+            // Resizable Writing Page panel (reflows all words cleanly on resize)
+            if (panel && resizeHandle) {
+                let resizing = false, sx = 0, sy = 0, initW = 0, initH = 0;
+                resizeHandle.addEventListener('pointerdown', (e) => {
+                    resizing = true;
+                    sx = e.clientX;
+                    sy = e.clientY;
+                    initW = panel.offsetWidth;
+                    initH = panel.offsetHeight;
+                    try { resizeHandle.setPointerCapture(e.pointerId); } catch (err) {}
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                resizeHandle.addEventListener('pointermove', (e) => {
+                    if (!resizing) return;
+                    const pRect = (panel.offsetParent || document.body).getBoundingClientRect();
+                    const nw = hwClamp(initW + (e.clientX - sx), 300, Math.max(320, pRect.width - 24));
+                    const nh = hwClamp(initH + (e.clientY - sy), 240, Math.max(260, pRect.height - 64));
+                    panel.style.width = `${nw}px`;
+                    panel.style.height = `${nh}px`;
+                    renderHandwritingPage();
+                });
+                const stopResize = (e) => {
+                    if (!resizing) return;
+                    resizing = false;
+                    try { resizeHandle.releasePointerCapture(e.pointerId); } catch (err) {}
+                    renderHandwritingPage();
+                };
+                resizeHandle.addEventListener('pointerup', stopResize);
+                resizeHandle.addEventListener('pointercancel', stopResize);
+            }
+
+            window.addEventListener('resize', resizeHandwritingOverlayCanvases);
+            resizeHandwritingOverlayCanvases();
         }
 
         window.addEventListener('DOMContentLoaded', init);
